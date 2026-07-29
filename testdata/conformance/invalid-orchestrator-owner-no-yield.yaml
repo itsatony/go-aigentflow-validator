@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: owner-orchestrator-no-yield
+version: '1.0.0'
+description: owner mode over a self-terminating DAG with no next-orchestrator yield edge (DC-COND-1 refuses this).
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: owner
+  agentic: true
+  exons: |
+    ---
+    name: owner
+    description: drive completion
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}drive{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message

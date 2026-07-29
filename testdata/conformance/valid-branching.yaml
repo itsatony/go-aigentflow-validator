@@ -1,0 +1,45 @@
+aigentflow_version: '2.0.0'
+name: branching-with-loop
+version: '1.2.0'
+start: classify
+constraints:
+  budget: 5.0
+  currency: USD
+  max_duration: 10m
+steps:
+  classify:
+    executor: ai://openai/chat
+    query:
+      model: gpt-4o
+      prompt: 'Classify: {{ .query.text }}'
+    credentials:
+      api:
+        source: stored/openai/default
+        inject_as: OPENAI_API_KEY
+    next:
+      conditions:
+        - if: '{{ eq .data.classify.label "urgent" }}'
+          goto_step: escalate
+      default: archive
+  escalate:
+    executor: function://notify/send
+    query:
+      channel: ops
+    next:
+      default: 'end'
+  archive:
+    executor: db://postgres/insert
+    query:
+      table: tickets
+    next:
+      default: 'end'
+query:
+  text:
+    type: string
+input_schema:
+  version: 1
+  fields:
+    - name: text
+      type: multiline
+      required: true
+      max_length: 2000

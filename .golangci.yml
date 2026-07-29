@@ -1,0 +1,48 @@
+# golangci-lint v2 configuration, matching the vAI house shape.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # The standard set (errcheck, govet, ineffassign, staticcheck, unused) plus a
+  # few high-signal additions.
+  default: standard
+  enable:
+    - misspell    # Catch common spelling mistakes in comments/strings.
+    - unconvert   # Flag unnecessary type conversions.
+    - errorlint   # errors.Is/As/wrapping discipline.
+    - gosec       # Security-sensitive patterns.
+  exclusions:
+    rules:
+      # G101 fires on the FINDING-CODE constants whose names contain "cred" or
+      # "while" (codeCredInvalidSource, codeLoopWhileRequired, …). They are
+      # machine-readable diagnostic identifiers, and this library has no I/O at
+      # all: it never reads, resolves, or transports a credential — the
+      # credential-binding validator checks the `stored/{provider}/{name}`
+      # reference SHAPE and nothing else. Scoped to the two files that declare or
+      # exercise those names; every other file keeps full G101 coverage.
+      - path: (keys\.go|validate\.credentialbindings\.go|_test\.go)
+        linters:
+          - gosec
+        text: "^G101"
+      # G304/G703 in the test files: the conformance and parity harnesses read
+      # fixture paths composed from a directory constant and a directory listing,
+      # and the parity harness stats a checkout path a developer supplies via
+      # AIF_JS_VALIDATOR_REPO. Reading developer-named local files is the entire
+      # function of these harnesses; there is no untrusted input in the path.
+      - path: _test\.go
+        linters:
+          - gosec
+        text: "^(G304|G703)"
+      # G204 in parity_test.go: it shells out to the sibling JS CLI, whose path is
+      # built from the same developer-supplied checkout. It runs only when
+      # AIF_JS_VALIDATOR_REPO is set, never in default CI.
+      - path: parity_test\.go
+        linters:
+          - gosec
+        text: "^G204"
+
+formatters:
+  enable:
+    - gofmt

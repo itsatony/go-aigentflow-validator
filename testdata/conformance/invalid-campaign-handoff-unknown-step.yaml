@@ -1,0 +1,43 @@
+aigentflow_version: '2.0.0'
+name: campaign-handoff
+version: '1.0.0'
+description: A monitor-mode campaign whose on_children_complete references a nonexistent step (DC-COND-2).
+start: coordinate
+steps:
+  coordinate:
+    executor: function://text/template
+    query:
+      message: 'coordinating'
+    next:
+      default: 'orchestrator'
+  gather_findings:
+    executor: function://text/template
+    query:
+      message: 'gathering'
+    next:
+      default: 'null'
+campaign:
+  child_flows:
+    - flow_name: expert-unit
+      alias: expert
+  max_concurrent: 3
+  max_total_children: 15
+  on_children_complete: no_such_step
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate a campaign
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+  triggers:
+    - type: mission_started
+    - type: campaign_child_completed
+output:
+  - message

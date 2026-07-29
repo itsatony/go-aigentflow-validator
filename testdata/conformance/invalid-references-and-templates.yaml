@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: broken-references
+start: first
+steps:
+  first:
+    executor: not-a-uri
+    query:
+      bad: '{{ if .query.flag }}missing end'
+    next:
+      default: does_not_exist
+  second:
+    executor: ai://openai/chat
+    error_strategy:
+      action: leap
+    next:
+      conditions:
+        - if: '{{ .x }}'
+          goto_step: also_missing
+      default: 'end'

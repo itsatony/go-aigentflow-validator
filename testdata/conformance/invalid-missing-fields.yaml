@@ -1,0 +1,6 @@
+# Missing aigentflow_version, missing name, start points nowhere, step has no executor.
+start: ghost
+steps:
+  real:
+    query:
+      x: '1'

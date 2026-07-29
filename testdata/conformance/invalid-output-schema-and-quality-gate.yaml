@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: broken-gate-and-output-schema
+version: '1.0.0'
+description: >
+  A flow that violates the DC-CP-7 output_schema and DC-CP-8 quality_gate rules
+  in several ways at once, so the validator must reject it.
+start: gen
+steps:
+  gen:
+    executor: ai://openai/chat
+    output_schema:
+      version: 2 # unsupported input_schema version
+      fields:
+        - name: BadName # illegal field name (must be snake_case)
+          type: string
+    quality_gate:
+      # rubric missing → quality_gate_missing_rubric
+      threshold: 1.5 # out of [0,1] range
+      on_fail: human # in the Go enum but validation-rejected
+    next:
+      default: 'end'

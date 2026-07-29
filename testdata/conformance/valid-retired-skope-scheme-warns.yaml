@@ -1,0 +1,18 @@
+# Skope was retired in AIgentFlow v2.435.0; the `skope://` scheme was removed
+# from the executor-scheme enum. Per the mirror's divergence policy (unknown
+# scheme → warning, not error), a flow still referencing `skope://` must now
+# parse as VALID with an `unknown_executor_scheme` warning — NOT a hard error.
+aigentflow_version: '2.0.0'
+name: retired-skope-scheme
+version: '1.0.0'
+description: A flow referencing the retired skope:// scheme; must warn, not reject.
+start: do
+steps:
+  do:
+    executor: skope://agent/execute
+    query:
+      prompt: 'anything'
+    next:
+      default: 'end'
+output:
+  - result

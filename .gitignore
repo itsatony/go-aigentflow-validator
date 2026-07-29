@@ -1,0 +1,5 @@
+# Build/test artifacts. There is nothing else to ignore: this library has no
+# generated code and no vendor directory (Go vendor mode is not used).
+*.test
+*.out
+coverage.*

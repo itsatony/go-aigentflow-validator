@@ -1,0 +1,45 @@
+aigentflow_version: '2.0.0'
+name: durable-review-pipeline
+version: '1.0.0'
+description: >
+  Exercises the CLEANER POWER Phase 2 grammar additions: a step output_schema,
+  a quality_gate on a sequential step, a wait:// durable step, and the eval://
+  judge scheme.
+start: draft
+steps:
+  draft:
+    executor: ai://openai/chat
+    query:
+      prompt: 'Summarise the input: {{ .query.topic }}'
+    output_schema:
+      version: 1
+      fields:
+        - name: summary
+          type: string
+          required: true
+        - name: score
+          type: number
+    quality_gate:
+      rubric: 'The summary must be faithful, concise, and free of hallucinations.'
+      threshold: 0.8
+      on_fail: retry
+      max_retries: 2
+    next:
+      default: cool_off
+  cool_off:
+    executor: wait://timer/30s
+    next:
+      default: judge
+  judge:
+    executor: eval://judge/evaluate
+    query:
+      rubric: 'Rate the summary quality from 0 to 1.'
+      content: '{{ .data.draft.summary }}'
+    next:
+      default: 'end'
+query:
+  topic:
+    type: string
+    description: The topic to summarise.
+output:
+  - summary
