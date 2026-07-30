@@ -10,6 +10,13 @@ This document defines how this Go implementation stays in step with two things:
 **Tracks AIgentFlow flow schema: `v2.485.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)).
 
+> **Upstream state, 2026-07-30.** `v2.485.0` currently lives on the JavaScript repo's
+> `feat/cond-1-orchestrator-mode` branch ([PR #3](https://github.com/itsatony/aigentflow-flow-validator-js/pull/3),
+> open); its `main` is at `v2.478.0`. So the byte-equality and verdict checks below pass against a
+> checkout of that BRANCH and will report drift against `main` until the PR lands — which is the
+> check working, not failing. If you are running `make parity-check`, point `JS_VALIDATOR_REPO` at a
+> checkout on that branch. When PR #3 merges, nothing here changes.
+
 ## The comparison contract
 
 **Error `code` + the `valid` verdict.** Never message wording. `Message`, `Context`, and
