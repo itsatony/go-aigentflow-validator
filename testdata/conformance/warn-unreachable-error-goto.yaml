@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: unreachable-error-goto
+version: '1.0.0'
+description: >-
+  Both error_strategy blocks name a goto_step beside an action that never reads
+  it. The engine switches on `action` and reads goto_step in the `goto` branch
+  only, so `handle_error` is unreachable and a failing step ends the mission.
+  The flow still SAVES and RUNS — the declaration is inert, not fatal — so this
+  is a warning on a valid flow.
+start: work
+error_strategy:
+  action: retry
+  max_retries: 2
+  goto_step: handle_error
+steps:
+  work:
+    executor: function://text/template
+    error_strategy:
+      action: continue
+      goto_step: handle_error
+    next:
+      default: 'null'
+  handle_error:
+    executor: function://utils/log
+    query:
+      message: 'failed'
+      level: error
+    next:
+      default: 'null'

@@ -3,6 +3,7 @@ package aifvalidate
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -169,6 +170,33 @@ func isValidGoDuration(s string) bool {
 	}
 	_, err := time.ParseDuration(s)
 	return err == nil
+}
+
+// scalarText renders a YAML scalar the way yaml.v3 decodes it into a Go
+// `string` field: a string as itself, a number or boolean as its text. The
+// reference's typed fields (max_duration, a mock delay, tool_discovery, a child
+// flow's flow_id) accept any scalar this way, so `max_duration: 90` arrives as
+// "90" and is judged as that text. Mappings, sequences and null are not scalars.
+//
+// A float's original spelling is lost at parse time (`1.50` becomes "1.5"),
+// which can change a message, never a verdict: no float text is a Go duration.
+func scalarText(v any) (string, bool) {
+	switch x := v.(type) {
+	case string:
+		return x, true
+	case bool:
+		return strconv.FormatBool(x), true
+	case int:
+		return strconv.Itoa(x), true
+	case int64:
+		return strconv.FormatInt(x, 10), true
+	case uint64:
+		return strconv.FormatUint(x, 10), true
+	case float64:
+		return strconv.FormatFloat(x, 'g', -1, 64), true
+	default:
+		return "", false
+	}
 }
 
 // trimmed returns a string value with surrounding whitespace removed, passing

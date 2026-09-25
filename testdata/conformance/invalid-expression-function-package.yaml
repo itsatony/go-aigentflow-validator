@@ -1,0 +1,16 @@
+# `package:` is refused: the expression-function catalog is compiled into
+# AIgentFlow and nothing is loaded at run time, so a flow could never have
+# gotten functions this way.
+aigentflow_version: '2.0.0'
+name: expression-functions-package
+version: '1.0.0'
+start: build
+expression_functions:
+  - package: github.com/example/helpers
+steps:
+  build:
+    executor: function://text/template
+    query:
+      value: 'plain'
+    next:
+      default: 'end'

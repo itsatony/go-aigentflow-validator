@@ -1,0 +1,20 @@
+# Calling a catalog function the flow does not declare is refused: the
+# `expression_functions:` block is load-bearing, not decorative. `fn_slugfy` is
+# additionally a typo for a real name, which is caught as its own verdict.
+aigentflow_version: '2.0.0'
+name: expression-functions-undeclared-use
+version: '1.0.0'
+start: build
+expression_functions:
+  - function: 'fn_round'
+steps:
+  build:
+    executor: function://text/template
+    query:
+      slug: '{{ fn_slugify .query.company }}'
+      typo: '{{ fn_slugfy .query.company }}'
+    next:
+      default: 'end'
+query:
+  company:
+    type: string

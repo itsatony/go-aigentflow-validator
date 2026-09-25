@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: retired-campaign-budget-max-per-child
+version: '1.0.0'
+description: >-
+  `campaign.budget_max_per_child` (USD) was deleted from the grammar in
+  AIgentFlow v2.728.0 because it capped nothing. Its replacement is
+  `max_credits_per_child`, a whole number of credits.
+start: coordinate
+steps:
+  coordinate:
+    executor: function://text/template
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate children
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+campaign:
+  child_flows:
+    - flow_name: child
+  budget_max_per_child: 1.0

@@ -1,0 +1,25 @@
+aigentflow_version: '2.0.0'
+name: loop-substep-next-sentinel
+version: '1.0.0'
+description: >
+  'null' cannot end a mission from inside a loop body and 'orchestrator' cannot
+  yield from one — the loop driver has no sentinel awareness at all, so both
+  land in the same miss path as a typo.
+start: crawl
+steps:
+  crawl:
+    loop:
+      while: '{{ lt .loop.index 3 }}'
+      max_iterations: 3
+      steps:
+        - id: fetch
+          executor: function://text/template
+          next:
+            default: 'null'
+        - id: record
+          executor: db://postgres/insert
+    next:
+      default: 'end'
+query:
+  seed:
+    type: string

@@ -15,5 +15,5 @@ steps:
     next:
       conditions:
         - if: '{{ .x }}'
-          goto_step: also_missing
+          goto: also_missing
       default: 'end'

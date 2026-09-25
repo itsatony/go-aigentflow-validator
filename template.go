@@ -69,7 +69,7 @@ func stubFunc(...any) any { return nil }
 // Unknown function names are discovered by registering a stub and re-parsing,
 // so a document with an unknown function still has the REST of its syntax
 // checked (a single-pass parse would stop at the first unknown name).
-func checkGoTemplateSyntax(src string, strictFunctions bool) []templateIssue {
+func checkGoTemplateSyntax(src string) []templateIssue {
 	funcs := make(template.FuncMap, len(knownFuncMap)+4)
 	for name, fn := range knownFuncMap {
 		funcs[name] = fn
@@ -97,11 +97,11 @@ func checkGoTemplateSyntax(src string, strictFunctions bool) []templateIssue {
 		unknown = append(unknown, name)
 	}
 
-	if !strictFunctions || len(unknown) == 0 {
-		// Matching the JS contract: unknown-function findings are produced ONLY
-		// under strict registries, because the vendored allow-list can lag the live
-		// AIgentFlow function registry and a false positive here is worse than a
-		// missed lint.
+	// Unknown functions are ALWAYS reported; the caller decides severity
+	// (warning by default, error under StrictRegistries — divergence #4). Until
+	// v0.3.0 they were dropped entirely outside strict mode, which said nothing
+	// at all about a name the reference refuses.
+	if len(unknown) == 0 {
 		return nil
 	}
 	out := make([]templateIssue, 0, len(unknown))

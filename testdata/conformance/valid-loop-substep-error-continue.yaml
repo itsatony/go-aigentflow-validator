@@ -1,0 +1,38 @@
+aigentflow_version: '2.0.0'
+name: loop-substep-error-continue
+version: '1.0.0'
+description: >-
+  The counter-fixture. `continue` is the one action a loop body honours, and it
+  carries no goto_step — so nothing here is unreachable. The loop STEP's own
+  error_strategy does name a goto_step beside `action: goto`, which is exactly
+  where the warning's remedy sends an author, so it must stay silent too.
+start: spin
+error_strategy:
+  action: goto
+  goto_step: handle_error
+steps:
+  spin:
+    loop:
+      while: '{{ lt (atoi .loop.vars.n) 3 }}'
+      max_iterations: 3
+      vars:
+        n: '0'
+      steps:
+        - id: work
+          executor: function://text/template
+          error_strategy:
+            action: continue
+          query:
+            template: 'x'
+    error_strategy:
+      action: goto
+      goto_step: handle_error
+    next:
+      default: 'null'
+  handle_error:
+    executor: function://utils/log
+    query:
+      message: 'failed'
+      level: error
+    next:
+      default: 'null'

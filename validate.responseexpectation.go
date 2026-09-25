@@ -1,6 +1,10 @@
 package aifvalidate
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 // validateResponseExpectations checks each step's `response_expectation` fields.
 //
@@ -29,6 +33,8 @@ func validateResponseExpectations(flow doc, iss *issues) {
 			})
 			continue
 		}
+
+		warnIfExpectationUnread(stepID, step, re, iss)
 
 		for _, fieldName := range sortedKeys(re) {
 			base := stepField(stepID, keyResponseExpectation, fieldName)
@@ -74,4 +80,36 @@ func validateResponseExpectations(flow doc, iss *issues) {
 			}
 		}
 	}
+}
+
+// asyncExecutorPrefix is the scheme whose respond route enforces a
+// response_expectation on its own, with no evaluation mode.
+const asyncExecutorPrefix = "async://"
+
+// warnIfExpectationUnread ports response_expectation_unread (reference:
+// validateResponseExpectationIsRead, AIF DC-FORGE-145). The engine reads a
+// step's response_expectation ONLY when response_evaluation is set; with no
+// evaluation mode it returns the raw response untouched, so required, type and
+// fallback are never consulted. async:// is exempt.
+//
+// A WARNING, as in the reference: consulted at the run door over stored flows,
+// and the declaration is inert, not fatal. Loop sub-steps cannot declare an
+// expectation, so there is no loop-body walk.
+func warnIfExpectationUnread(stepID string, step, re doc, iss *issues) {
+	if len(re) == 0 {
+		return
+	}
+	if evaluation, _ := scalarText(get(step, keyResponseEvaluation)); evaluation != "" {
+		return
+	}
+	if executor, ok := getString(step, keyExecutor); ok && strings.HasPrefix(executor, asyncExecutorPrefix) {
+		return
+	}
+	iss.warn(Issue{
+		Field: stepField(stepID, keyResponseExpectation), Code: codeRespExpUnread, StepID: stepID,
+		Message: fmt.Sprintf("response_expectation on step %s is never checked: the engine reads it only when "+
+			"response_evaluation is set, and this step sets none, so required, type and fallback do nothing. "+
+			"Add response_evaluation: \"raw-text\" to check these fields against the executor's response "+
+			"unchanged, or remove response_expectation.", strconv.Quote(stepID)),
+	})
 }

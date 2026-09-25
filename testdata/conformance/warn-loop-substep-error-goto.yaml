@@ -1,0 +1,36 @@
+aigentflow_version: '2.0.0'
+name: loop-substep-error-goto
+version: '1.0.0'
+description: >-
+  The loop sub-step declares a goto_step, and the loop engine never reads one
+  under ANY action. executeLoopStep's failure switch has exactly two arms —
+  `continue` (skip to the next sub-step) and a default that aborts the whole
+  loop step — so `goto` lands in the default and the loop FAILS. Writing
+  `action: goto` (as here) is what fixes the top-level unreachable_error_goto
+  and does nothing at all inside a loop body, which is why this needs its own
+  code. The flow still saves and runs, so it is a warning on a valid flow.
+start: spin
+steps:
+  spin:
+    loop:
+      while: '{{ lt (atoi .loop.vars.n) 3 }}'
+      max_iterations: 3
+      vars:
+        n: '0'
+      steps:
+        - id: work
+          executor: function://text/template
+          error_strategy:
+            action: goto
+            goto_step: handle_error
+          query:
+            template: 'x'
+    next:
+      default: handle_error
+  handle_error:
+    executor: function://utils/log
+    query:
+      message: 'failed'
+      level: error
+    next:
+      default: 'null'

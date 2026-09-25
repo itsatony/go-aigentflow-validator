@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: processing-unknown-config-keys
+version: '1.0.0'
+description: >-
+  Config keys the handlers never read. The interesting one is asset_id under
+  binary.transform: it is a real key for binary.get/update/delete, so any check
+  that unions the key sets across operations passes it.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'hello'
+    post_processing:
+      - binary.transform:
+          # Wrong half: binary.transform reads source_asset_id.
+          asset_id: '{{ .data.upload.asset_id }}'
+          # Wrong name: the handler reads transformer.
+          transformation: 'base64-encode'
+          result_key: encoded
+      - parse:
+          source: '{{ .step.response }}'
+          format: json
+          target: parsed
+          # Misspelling of on_error.
+          onerror: continue
+    next:
+      default: 'end'
+output:
+  - parsed

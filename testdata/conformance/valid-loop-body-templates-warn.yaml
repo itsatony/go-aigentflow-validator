@@ -1,0 +1,38 @@
+aigentflow_version: '2.0.0'
+name: loop-body-templates-warn
+version: '1.0.0'
+description: >-
+  DC-FORGE-78. Every template inside a loop sub-step is broken, and the flow must
+  still be VALID: the reference's validator is consulted at its RUN door over
+  flows stored before a loop body was walked by anything, and four of the loop
+  engine's six evaluation sites swallow a template failure and carry on. So every
+  loop-body finding is a warning. The codes survive the demotion; only the
+  severity changes.
+start: looper
+steps:
+  looper:
+    loop:
+      while: 'true'
+      max_iterations: 3
+      vars:
+        counter: '0'
+      steps:
+        - id: body
+          executor: function://text/template
+          condition: '{{ eq .loop.vars.counter '
+          query:
+            message: '{{ .data.x '
+          pre_processing:
+            - data.set:
+                pre_key: '{{ upper '
+          post_processing:
+            - loop.set:
+                counter: '{{ add (atoi .loop.vars.counter) 1 '
+          next:
+            conditions:
+              - if: '{{ gt .loop.vars.counter '
+                goto: body
+    next:
+      default: 'end'
+output:
+  - done

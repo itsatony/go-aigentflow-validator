@@ -1,0 +1,15 @@
+aigentflow_version: '2.0.0'
+name: retired-flow-budget
+version: '1.0.0'
+description: >-
+  The flow-level `budget:` key was deleted from the grammar in AIgentFlow
+  v2.721.0 because nothing read it. `0` is still a declaration — the strict
+  parser refuses the key whatever it holds.
+currency: USD
+budget: 0
+start: a
+steps:
+  a:
+    executor: function://text/template
+    next:
+      default: 'null'

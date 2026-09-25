@@ -1,0 +1,26 @@
+aigentflow_version: '2.0.0'
+name: processing-unknown-operation
+version: '1.0.0'
+description: >-
+  Two processing operations the standard handler cannot dispatch: a misspelled
+  data.set, and loop.set, which is only handled inside a loop sub-step.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'hello'
+    post_processing:
+      # Misspelled operation type — the engine's dispatch switch has no case for
+      # it, so at run time the step fails with "unsupported operation type".
+      - data.setx:
+          greeting: '{{ .step.response }}'
+      # loop.set is dispatched by a loop sub-step's post-processing only; the
+      # standard handler cannot see it. Its config key is NOT reported a second
+      # time — one verdict per defect.
+      - loop.set:
+          counter: 1
+    next:
+      default: 'end'
+output:
+  - greeting

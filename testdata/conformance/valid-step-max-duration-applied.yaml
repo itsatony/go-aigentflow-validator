@@ -1,0 +1,63 @@
+aigentflow_version: '2.0.0'
+name: step-max-duration-applied
+version: '1.0.0'
+description: >-
+  Step max_duration values the engine does apply: Go durations, including
+  compound ones, and the three no-bound spellings. The "bounded" step sits next
+  to a loop step that declares no max_duration, and must not inherit its
+  warning. None of these may warn.
+start: seconds
+steps:
+  seconds:
+    executor: function://text/template
+    query:
+      message: 'Seconds.'
+    max_duration: 90s
+    next:
+      default: compound
+  compound:
+    executor: function://text/template
+    query:
+      message: 'Compound.'
+    max_duration: 1h30m
+    next:
+      default: unbounded_none
+  unbounded_none:
+    executor: function://text/template
+    query:
+      message: 'None.'
+    max_duration: none
+    next:
+      default: unbounded_never
+  unbounded_never:
+    executor: function://text/template
+    query:
+      message: 'Never.'
+    max_duration: never
+    next:
+      default: unbounded_infinite
+  unbounded_infinite:
+    executor: function://text/template
+    query:
+      message: 'Infinite.'
+    max_duration: infinite
+    next:
+      default: bounded
+  bounded:
+    executor: function://text/template
+    query:
+      message: 'Bounded.'
+    max_duration: 30s
+    next:
+      default: repeat
+  repeat:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: work
+          executor: function://text/template
+          query:
+            message: 'Work.'
+    next:
+      default: 'null'

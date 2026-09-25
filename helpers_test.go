@@ -61,6 +61,16 @@ func assertCodesPresent(t *testing.T, label string, list []Issue, want []string)
 	}
 }
 
+// assertCodesAbsent checks that no forbidden code appears in list.
+func assertCodesAbsent(t *testing.T, label string, list []Issue, forbid []string) {
+	t.Helper()
+	for _, code := range forbid {
+		if hasCode(list, code) {
+			t.Errorf("forbidden %s code %q is present; got: %s", label, code, formatIssues(list))
+		}
+	}
+}
+
 // assertError asserts the result is invalid and carries code on field.
 func assertError(t *testing.T, result Result, code, field string) {
 	t.Helper()
@@ -107,5 +117,5 @@ version: 1.0.0
 start: only
 steps:
   only:
-    executor: function://noop
+    executor: function://text/noop
 `

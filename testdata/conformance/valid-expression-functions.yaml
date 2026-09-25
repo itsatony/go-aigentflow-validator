@@ -1,0 +1,25 @@
+# Two declared catalog functions, both used — including one inside a multi-line
+# template action, which the scan must see whole.
+aigentflow_version: '2.0.0'
+name: expression-functions-declared
+version: '1.0.0'
+start: build
+expression_functions:
+  - function: 'fn_slugify'
+  - function: 'fn_round'
+steps:
+  build:
+    executor: function://text/template
+    query:
+      slug: '{{ fn_slugify .query.company }}'
+      price: |
+        {{
+          fn_round .query.amount 2
+        }}
+    next:
+      default: 'end'
+query:
+  company:
+    type: string
+  amount:
+    type: number

@@ -2,6 +2,7 @@ package aifvalidate
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -181,12 +182,33 @@ func validateLoop(step, loop doc, stepID string, iss *issues) {
 					})
 				}
 				seen[id] = struct{}{}
+				// A WARNING in the reference: the sub-step still runs, and its
+				// result stays reachable through the flat `index .data "<loop>.<sub>"`
+				// key. Reported on loop.steps, naming the parent step, as upstream.
+				if loopResultSummaryFields.has(id) {
+					iss.warn(Issue{
+						Field: base + "." + keySteps, Code: codeLoopSubStepIDReserved, StepID: stepID,
+						Message: fmt.Sprintf("loop sub-step id '%s' is also a field of the loop's own result, "+
+							"so {{ .data.%s.%s }} reads the loop's %s instead of this sub-step's output",
+							id, stepID, id, id),
+						Suggestion: "rename the sub-step; ids reserved by the loop result: " +
+							joinNames(sortedSet(loopResultSummaryFields)),
+					})
+				}
 			}
 			if !isNonEmptyString(get(sub, keyExecutor)) {
 				iss.error(Issue{
 					Field: subPath + "." + keyExecutor, Code: codeLoopStepExecRequired, StepID: stepID,
 					Message: fmt.Sprintf("loop sub-step at index %d requires an 'executor'", i),
 				})
+			}
+		}
+
+		// Second pass, deliberately: a FORWARD jump is legal, so the whole id
+		// set has to exist before any target can be judged.
+		for i, raw := range subs {
+			if sub, isMap := asRecord(raw); isMap {
+				validateLoopSubStepNext(sub, seen, base, i, stepID, iss)
 			}
 		}
 	}
@@ -201,6 +223,127 @@ func validateLoop(step, loop doc, stepID string, iss *issues) {
 		iss.error(Issue{
 			Field: stepField(stepID, keyExecutor), Code: codeLoopMutualExclExec, StepID: stepID,
 			Message: "A loop step must not define its own executor (it defines sub-steps)",
+		})
+	}
+}
+
+// loopResultSummaryFields are the loop result's own summary fields (reference:
+// LoopResultSummaryFields, AIF v2.648.0 / DC-FORGE-78). The loop step's
+// committed result carries these AND one entry per sub-step under its id, so a
+// sub-step named `vars` is unreadable through {{ .data.<loop>.vars }}.
+var loopResultSummaryFields = newSet([]string{"iterations", "break", "vars", "duration_ms"})
+
+// loopSubStepNextSentinels are the two top-level next: sentinels, which carry no
+// meaning inside a loop body: the reference's resolveLoopSubStepNext has no
+// sentinel awareness, so both take the same miss path as a typo.
+//
+// `end` is deliberately NOT listed. The reference refuses only these two by
+// name and lets everything else fall through to the existence check, so `end`
+// is reported as a missing target. Divergence #2 ("end is terminal") is about
+// TOP-LEVEL next targets and is not extended into a loop body.
+var loopSubStepNextSentinels = newSet([]string{nextMarkerNull, nextMarkerOrch})
+
+// validateLoopSubStepNext checks one loop sub-step's `next:` block against the
+// LOOP's own sub-step table and nothing else (reference: validateLoopSubStepNext,
+// parser.go, AIF v2.672.0 / DC-FORGE-102).
+//
+// A loop body is a SECOND step table: validateNextLogic and connectivity walk
+// flow.steps only, so before this rule a sub-step could route to `pol` when the
+// sub-step is called `poll`, and the loop driver silently advanced
+// sequentially. Both jump directions are legal, and an EMPTY target is the
+// documented "advance sequentially".
+func validateLoopSubStepNext(sub doc, subStepIDs map[string]struct{}, base string, index int, stepID string, iss *issues) {
+	raw := get(sub, keyNext)
+	if raw == nil {
+		return
+	}
+	path := fmt.Sprintf("%s.%s.%s", base, indexed(keySteps, index), keyNext)
+	subStepID, ok := getString(sub, keyID)
+	if !ok {
+		subStepID = fmt.Sprintf("[%d]", index)
+	}
+	next, isMap := asRecord(raw)
+	if !isMap {
+		iss.error(Issue{
+			Field: path, Code: codeInvalidType, StepID: stepID,
+			Message: fmt.Sprintf("loop sub-step '%s' next must be a mapping", subStepID),
+		})
+		return
+	}
+
+	// The loop driver reads conditions and default only, so a parallel block
+	// never fans out. The reference returns on this one without looking at the
+	// targets; so does this port.
+	if _, hasPar := getRecord(next, keyParallel); hasPar {
+		iss.error(Issue{
+			Field: path + "." + keyParallel, Code: codeLoopSubstepNextParallel, StepID: stepID,
+			Message: fmt.Sprintf("loop sub-step '%s' declares next.parallel, which a loop body does not "+
+				"support (sub-steps run sequentially)", subStepID),
+			Suggestion: "Use next.conditions/default to branch within the iteration, or a top-level step for parallel fan-out",
+		})
+		return
+	}
+
+	type target struct {
+		field string
+		value any
+	}
+	targets := []target{{field: path + "." + keyDefault, value: get(next, keyDefault)}}
+	if conds, ok := getSlice(next, keyConditions); ok {
+		for j, rawCond := range conds {
+			cond, isCond := asRecord(rawCond)
+			if !isCond {
+				continue
+			}
+			targets = append(targets, target{
+				field: fmt.Sprintf("%s.%s.%s", path, indexed(keyConditions, j), keyGoto),
+				value: get(cond, keyGoto),
+			})
+		}
+	}
+
+	available := make([]string, 0, len(subStepIDs))
+	for id := range subStepIDs {
+		available = append(available, id)
+	}
+	sort.Strings(available)
+
+	for _, t := range targets {
+		if t.value == nil {
+			continue
+		}
+		value, isStr := asString(t.value)
+		if !isStr {
+			iss.error(Issue{
+				Field: t.field, Code: codeInvalidType, StepID: stepID,
+				Message: fmt.Sprintf("loop sub-step '%s' next target must be a string", subStepID),
+			})
+			continue
+		}
+		if value == "" {
+			continue // the documented sequential advance
+		}
+		if loopSubStepNextSentinels.has(value) {
+			iss.error(Issue{
+				Field: t.field, Code: codeLoopSubstepNextSentinel, StepID: stepID,
+				Message: fmt.Sprintf("loop sub-step '%s' routes next to the reserved marker '%s', which has "+
+					"no meaning inside a loop body", subStepID, value),
+				Suggestion: "Name another sub-step of the same loop, or leave the target empty for sequential advance",
+			})
+			continue
+		}
+		if _, ok := subStepIDs[value]; ok {
+			continue
+		}
+		suggestion := "A sub-step's next: resolves only against loop.steps of the SAME loop"
+		if len(available) > 0 {
+			suggestion += ". Available: " + joinNames(available)
+		}
+		iss.error(Issue{
+			Field: t.field, Code: codeLoopSubstepNextNotFound, StepID: stepID,
+			Message: fmt.Sprintf("loop sub-step '%s' routes next to '%s', which is not a sub-step of that loop",
+				subStepID, value),
+			Suggestion: suggestion,
 		})
 	}
 }

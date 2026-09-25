@@ -1,0 +1,35 @@
+aigentflow_version: '2.0.0'
+name: limit-keys-one-level-down
+version: '1.0.0'
+description: >-
+  Every WORKING limit key that sits one level below a retired one: flow- and
+  step-level `error_strategy.max_retries`, `quality_gate.max_retries`,
+  `billing.max_credits`, plus the surviving `currency` and `max_duration`.
+  None of them may be reported as a retired key.
+currency: USD
+max_duration: 10m
+billing:
+  max_credits: 500
+error_strategy:
+  action: retry
+  max_retries: 2
+start: draft
+steps:
+  draft:
+    executor: ai://openai/chat
+    query:
+      prompt: 'Summarise: {{ .query.topic }}'
+    error_strategy:
+      action: retry
+      max_retries: 3
+    quality_gate:
+      rubric: 'The summary must be faithful and concise.'
+      threshold: 0.8
+      on_fail: retry
+      max_retries: 1
+    next:
+      default: 'end'
+query:
+  topic:
+    type: string
+    description: The topic to summarise.

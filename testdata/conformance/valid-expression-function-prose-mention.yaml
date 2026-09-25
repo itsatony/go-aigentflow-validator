@@ -1,0 +1,19 @@
+# An `fn_` name in prose is NOT a call. Only the text between `{{` and `}}` is
+# scanned, so this flow declares nothing and is still valid.
+aigentflow_version: '2.0.0'
+name: expression-functions-prose-mention
+version: '1.0.0'
+description: 'Could use fn_slugify here later; fn_uniq would also help.'
+start: build
+steps:
+  build:
+    executor: function://text/template
+    description: 'Not a call: fn_round is only named in this sentence.'
+    query:
+      note: 'fn_sha256 is mentioned but never invoked'
+      rendered: '{{ .query.company }}'
+    next:
+      default: 'end'
+query:
+  company:
+    type: string

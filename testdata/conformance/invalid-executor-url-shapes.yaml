@@ -1,0 +1,33 @@
+aigentflow_version: '2.0.0'
+name: executor-url-shapes
+version: '1.0.0'
+description: >-
+  Executor URLs that AIgentFlow's ONE parser (URL_PATTERN_REGEX) cannot parse.
+  Since v2.598.0 (DC-FORGE-30) these are refused at SAVE, not at dispatch, so an
+  offline validator that accepts them is a false pass.
+start: empty_authority
+steps:
+  empty_authority:
+    # Measured live on AIgentFlow 2.597.0: saved with a 201, failed at dispatch.
+    executor: 'openai:///gpt-4'
+    next:
+      default: 'one_segment'
+  one_segment:
+    # No path segment at all — the parser needs scheme://authority/path.
+    executor: 'ai://openai'
+    next:
+      default: 'dotted_authority'
+  dotted_authority:
+    # The authority segment is [a-zA-Z0-9_-]+ — a hostname does not parse.
+    executor: 'http://api.example.com/v1'
+    next:
+      default: 'loop_sub_step'
+  loop_sub_step:
+    # DC-FORGE-38: a loop sub-step executor is dispatched through the very same
+    # GetExecutor, and AIgentFlow validates it from v2.608.0.
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: work
+          executor: 'openai:///gpt-4'

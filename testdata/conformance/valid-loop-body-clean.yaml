@@ -1,0 +1,32 @@
+aigentflow_version: '2.0.0'
+name: loop-body-clean
+version: '1.0.0'
+description: >-
+  DC-FORGE-78, the control. Correct loop-body authoring must produce NO finding
+  of any kind: loop.set and loop.break ARE dispatchable on a loop sub-step, and
+  atoi / mod / int are registered template functions — five bundled reference
+  flows used them while they existed nowhere, because loop vars are strings by
+  type and `add` on two strings concatenates.
+start: looper
+steps:
+  looper:
+    loop:
+      while: '{{ lt (atoi .loop.vars.counter) 3 }}'
+      max_iterations: 5
+      vars:
+        counter: '0'
+      steps:
+        - id: body
+          executor: function://text/template
+          condition: '{{ eq (mod .loop.vars.counter 2) 0 }}'
+          query:
+            message: 'iteration {{ .loop.iteration }} of {{ int 3 }}'
+          post_processing:
+            - loop.set:
+                counter: '{{ add (atoi .loop.vars.counter) 1 }}'
+            - loop.break:
+                if: '{{ ge (atoi .loop.vars.counter) 3 }}'
+    next:
+      default: 'end'
+output:
+  - done

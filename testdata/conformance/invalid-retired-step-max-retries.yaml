@@ -1,0 +1,13 @@
+aigentflow_version: '2.0.0'
+name: retired-step-max-retries
+version: '1.0.0'
+description: >-
+  A `max_retries:` directly on a step was deleted from the grammar in
+  AIgentFlow v2.721.0; `max_retries: 0` still made two attempts.
+start: a
+steps:
+  a:
+    executor: function://text/template
+    max_retries: 0
+    next:
+      default: 'null'
