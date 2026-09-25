@@ -93,7 +93,9 @@ func routesToOrchestrator(next doc) bool {
 		if !isMap {
 			continue
 		}
-		if target, ok := getString(cond, keyGotoStep); ok && target == nextMarkerOrch {
+		// A condition's target key is `goto` (never `goto_step`): reading the Go
+		// field name here missed every conditional yield to the orchestrator.
+		if target, ok := getString(cond, keyGoto); ok && target == nextMarkerOrch {
 			return true
 		}
 	}

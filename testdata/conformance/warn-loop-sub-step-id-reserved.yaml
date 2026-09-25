@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: loop-sub-step-id-reserved
+version: '1.0.0'
+description: >-
+  A loop sub-step named `vars` collides with the loop result's own summary
+  field, so `.data.poll.vars` reads the loop's vars, not the sub-step's output.
+  A warning: the flow still saves and runs.
+start: poll
+steps:
+  poll:
+    loop:
+      while: 'true'
+      max_iterations: 3
+      steps:
+        - id: vars
+          executor: function://text/template
+          query:
+            message: 'tick'
+    next:
+      default: 'null'

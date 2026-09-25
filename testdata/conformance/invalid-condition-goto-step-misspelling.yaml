@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: condition-goto-misspelling
+version: '1.0.0'
+description: >-
+  A condition's branch target key is `goto`. `goto_step` is the spelling used by
+  error_strategy and quality_gate, and AIgentFlow's strict parser refuses a flow
+  that uses it here — the branch would otherwise vanish silently.
+start: decide
+steps:
+  decide:
+    executor: function://text/template
+    next:
+      default: 'null'
+      conditions:
+        - if: '{{ eq .data.decide.verdict "escalate" }}'
+          goto_step: escalate
+  escalate:
+    executor: function://text/template
+    next:
+      default: 'null'

@@ -44,6 +44,8 @@ type rawSpec struct {
 	ForEachResolutions     []string `json:"forEachResolutions"`
 	LoopMaxIterationsLimit int      `json:"loopMaxIterationsLimit"`
 	CredentialRefPrefix    string   `json:"credentialReferencePrefix"`
+	ExecutorURLPattern     string   `json:"executorUrlPattern"`
+	TemplateActionOpen     string   `json:"templateActionOpen"`
 	EvalJudgeURL           string   `json:"evalJudgeUrl"`
 	QualityGate            struct {
 		OnFailActions  []string `json:"onFailActions"`
@@ -67,6 +69,17 @@ type rawSpec struct {
 		Tools    []string `json:"tools"`
 		Modes    []string `json:"modes"`
 	} `json:"orchestrator"`
+	ExpressionFunctions struct {
+		NamePrefix string   `json:"namePrefix"`
+		Catalog    []string `json:"catalog"`
+	} `json:"expressionFunctions"`
+	ProcessingOperations struct {
+		GuardKey         string              `json:"guardKey"`
+		StandardTypes    []string            `json:"standardTypes"`
+		LoopSubStepTypes []string            `json:"loopSubStepTypes"`
+		OpenKeyTypes     []string            `json:"openKeyTypes"`
+		ClosedConfigKeys map[string][]string `json:"closedConfigKeys"`
+	} `json:"processingOperations"`
 	TemplateFunctions []string `json:"templateFunctions"`
 }
 
@@ -90,7 +103,21 @@ var (
 	inputStringTypes     set
 	inputParametricTypes set
 
+	// expressionFunctionCatalog is the fixed `expression_functions:` catalog
+	// compiled into the AIgentFlow binary (v2.642.0). Nothing is loaded at run
+	// time, so a name outside it is an error, not a lag-prone warning.
+	expressionFunctionCatalog set
+
+	// The processing-operation dispatch sets. They are a PARTITION, never a
+	// union: loop.set / loop.break are dispatchable only on a loop sub-step.
+	processingStandardTypes    set
+	processingLoopSubStepTypes set
+	processingOpenKeyTypes     set
+
 	fieldNameRe *regexp.Regexp
+	// executorURLRe is the ONE executor-URL shape, mirrored verbatim from the
+	// reference's URL_PATTERN_REGEX.
+	executorURLRe *regexp.Regexp
 )
 
 // Enum surfaces the vendored spec carries that NO static rule consumes yet —
@@ -140,6 +167,17 @@ func init() {
 	inputStringTypes = newSet(spec.InputSchema.StringTypes)
 	inputParametricTypes = newSet(spec.InputSchema.ParametricTypes)
 	fieldNameRe = regexp.MustCompile(spec.InputSchema.FieldNamePattern)
+	executorURLRe = regexp.MustCompile(spec.ExecutorURLPattern)
+	expressionFunctionCatalog = newSet(spec.ExpressionFunctions.Catalog)
+	processingStandardTypes = newSet(spec.ProcessingOperations.StandardTypes)
+	processingLoopSubStepTypes = newSet(spec.ProcessingOperations.LoopSubStepTypes)
+	processingOpenKeyTypes = newSet(spec.ProcessingOperations.OpenKeyTypes)
+}
+
+// ExpressionFunctionCatalog returns the fixed expression-function catalog
+// (sorted). A flow opts into entries with `expression_functions: [{function: …}]`.
+func ExpressionFunctionCatalog() []string {
+	return sortedSet(expressionFunctionCatalog)
 }
 
 // SpecVersion is the AIgentFlow flow-schema version whose static rules this

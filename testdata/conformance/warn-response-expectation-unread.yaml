@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: response-expectation-unread
+version: '1.0.0'
+description: >-
+  The step declares a response_expectation and no response_evaluation. The
+  engine reads the expectation only when an evaluation mode is set, so
+  `required`, `type` and `fallback` here do nothing and a response without
+  `summary` passes. The flow still SAVES and RUNS — the declaration is inert,
+  not fatal — so this is a warning on a valid flow.
+start: summarise
+steps:
+  summarise:
+    executor: function://text/template
+    query:
+      message: 'A short summary.'
+    response_expectation:
+      summary:
+        type: string
+        required: true
+    next:
+      default: 'null'

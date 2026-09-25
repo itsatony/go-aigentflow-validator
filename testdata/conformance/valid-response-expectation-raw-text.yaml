@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: response-expectation-raw-text
+version: '1.0.0'
+description: >-
+  The same expectation, now read: response_evaluation raw-text checks the
+  declared fields against the executor's response without re-parsing it.
+start: summarise
+steps:
+  summarise:
+    executor: function://text/template
+    query:
+      message: 'A short summary.'
+    response_evaluation: raw-text
+    response_expectation:
+      summary:
+        type: string
+        required: true
+    next:
+      default: 'null'

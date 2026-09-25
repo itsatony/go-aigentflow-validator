@@ -83,6 +83,18 @@ func validateBasicStructure(flow doc, iss *issues) {
 			})
 		}
 
+		// "orchestrator" is the engine-reserved step ID for orchestrator-originated
+		// signals and a reserved next: marker (AIF v2.484.0, DC-COND-1): a worker
+		// step with this ID could have its soft completion coerced into the
+		// mission-complete lifecycle key. The reference refuses it at save.
+		if stepID == nextMarkerOrch {
+			iss.error(Issue{
+				Field: stepField(stepID), Code: codeReservedStepIDOrch, StepID: stepID,
+				Message:    fmt.Sprintf("Step ID '%s' is reserved by the engine", stepID),
+				Suggestion: "Rename the step; 'orchestrator' is the orchestrator's own ID and a next: marker",
+			})
+		}
+
 		step, isMap := asRecord(steps[stepID])
 		if !isMap {
 			iss.error(Issue{

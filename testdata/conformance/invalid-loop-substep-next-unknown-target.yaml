@@ -1,0 +1,32 @@
+aigentflow_version: '2.0.0'
+name: loop-substep-next-unknown-target
+version: '1.0.0'
+description: >
+  The interesting miss: 'report' is a real step of this flow, but a loop
+  sub-step's next: resolves ONLY against loop.steps of the same loop, so the
+  jump is never taken and the loop advances sequentially instead.
+start: crawl
+steps:
+  crawl:
+    loop:
+      while: '{{ lt .loop.index 3 }}'
+      max_iterations: 3
+      steps:
+        - id: fetch
+          executor: function://text/template
+          next:
+            conditions:
+              - if: '{{ .data.fetch.failed }}'
+                goto: report
+            default: ''
+        - id: record
+          executor: db://postgres/insert
+    next:
+      default: report
+  report:
+    executor: function://text/template
+    next:
+      default: 'end'
+query:
+  seed:
+    type: string

@@ -7,27 +7,78 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.485.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.738.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)).
 
-> **Upstream state, 2026-07-30.** In sync: the JavaScript repo's `main` is at `v2.485.0`
-> ([PR #3](https://github.com/itsatony/aigentflow-flow-validator-js/pull/3) merged) and all three
-> mechanisms below pass against a clean checkout of it. If you see a byte-equality failure, the two
-> have genuinely drifted — follow "Discipline for a schema bump".
-
-> **v0.2.0 (2026-09-25) — connectivity brought to the reference's current walk (aigentflow#149).**
-> Reachability now follows all five edge kinds (next.default, next.conditions[].goto,
-> next.parallel.steps[], next.parallel.rendezvous, the step error_strategy.goto_step) plus the
-> flow-level error_strategy.goto_step, as AIgentFlow has since v2.598.0 (DC-FORGE-30). A condition's
-> target key is `goto`: v0.1.0 read `goto_step` (the Go field name, not the yaml tag), so every
-> conditional branch looked unreachable, and a `goto_step` under a condition, which AIgentFlow
-> refuses, was accepted; it is now `unknown_yaml_key`, as in the JS port.
+> **v0.3.0 (2026-09-25) — parity refresh, v2.485.0 → v2.738.0.** The spec and all 48 conformance
+> fixtures are byte-identical to the JS port's `main` (package 0.12.0), and every rule that port
+> added in that window is ported here:
 >
-> ⚠️ **The rest of this port is still at spec `v2.485.0`, about 250 releases behind.** Known
-> accept/refuse differences include the flow-root `budget:` and `max_retries:` keys (refused since
-> v2.721.0) and `campaign.budget_max_per_child` (refused since v2.728.0). A full refresh against
-> the JS port's `main` is owed. Until then, treat an ACCEPT from this validator as "probably", and a
-> reachability or reference ERROR as reliable.
+> - **Refused keys (`unknown_yaml_key`, error):** flow-root `budget:` and `max_retries:`, a
+>   `max_retries:` on a step or loop sub-step (v2.721.0), and `campaign.budget_max_per_child`
+>   (v2.728.0). On key presence, so `budget: 0` and `budget: null` are refused too.
+> - **Executor URL shape (error):** the reference's one URL regex, vendored in the spec. Templated
+>   URLs are skipped. `openai:///gpt-4`, `ai://openai`, `http://api.example.com/v1` and
+>   `ai://openai/gpt-4.1` are now refused.
+> - **Expression-function catalog (errors):** `package:` is refused, a `function:` outside the fixed
+>   20-entry catalog is refused, and a template that calls an `fn_` name must name a catalog entry
+>   the flow declares (v2.642.0).
+> - **Loop body (v2.648.0, v2.672.0):** sub-step `next:` targets (`loop_substep_next_target_not_found`,
+>   `_sentinel`, `_parallel`, errors); `loop_sub_step_id_reserved` (warning); templates and
+>   processing operations inside a loop body are checked, always as warnings.
+> - **Processing-operation shape (warnings, v2.647.0):** `unknown_processing_operation` and
+>   `unknown_processing_config_key`, with the loop-only `loop.set` / `loop.break` partition.
+> - **Warnings:** `unreachable_error_goto` (v2.651.0), `loop_substep_error_goto_ignored` (v2.652.0),
+>   `response_expectation_unread` (DC-FORGE-145), `step_max_duration_ignored` (DC-FORGE-147).
+> - **Orchestrator / campaign (errors):** `orchestrator_human_question_timeout_invalid` (v2.695.0;
+>   unparseable or non-positive), `campaign.max_credits_per_child` must decode as an integer and be
+>   `>= 0` (v2.728.0).
+> - **Registries:** seven orchestrator tools (`aif_memory_recall`, `aif_memory_reflect`, five
+>   `aif_e2b_*`), the registered executor-scheme set (43, `web` added, nine unregistered legacy
+>   names removed), and template functions `mod`, `atoi`, `int`, `addf`, `subf`, `mulf`, `divf`,
+>   `float64` plus the 20 catalog names. The template list was checked against the reference's
+>   registry: identical.
+> - **Behaviour changes:** a condition's yield `goto: orchestrator` now counts as the owner-mode
+>   yield edge (v0.2.0 still read `goto_step` there), and an unknown template function is now a
+>   **warning** by default instead of silent (error under `StrictRegistries`, as divergence #4
+>   in the JS port always said).
+>
+> **Measured, not assumed.** A throwaway program (outside both repositories, with its own `go.mod`
+> and a local `replace`) ran every YAML file under the reference's `example_flows/` (216 files)
+> through the reference's save door — `NewStrictFlowParser().ParseFromYAMLBytes` then
+> `ValidateFlowWithDetails` — and through this library:
+>
+> | 216 bundled flows | reference | v0.2.0 | v0.3.0 |
+> | --- | --- | --- | --- |
+> | valid, default options | 206 | 210 | 210 |
+> | valid, `StrictRegistries` | 206 | 197 | **206** |
+> | same verdict, default | — | 212 | 212 |
+> | same verdict, `StrictRegistries` | — | 207 | **216** |
+> | `unreachable_step` / `potential_infinite_loop` | 25 / 1 | 25 / 1 | 25 / 1 (same `(file, field)` pairs) |
+>
+> The four default-mode differences are the same four files both times: the reference refuses a
+> template calling an unknown function (`{{ query.x }}`), and this library warns by default
+> (divergence #7). With `StrictRegistries` every verdict matches. On the conformance fixtures
+> (normalised for divergences #8 and #9) the verdict matches on 48 of 48, and on every fixture the
+> reference parses the error and warning `(code, field)` sets are identical, apart from the one
+> intended `unknown_executor_scheme` warning.
+
+> **Ahead of the JS port.** These reference save-door refusals are ported here and not yet in the
+> JS port. They are pure functions of the document, and each was checked against the reference with
+> both a refused and an accepted shape:
+>
+> | Code | Reference rule |
+> | --- | --- |
+> | `reserved_step_id_orchestrator` | a top-level step may not be called `orchestrator` (v2.484.0) |
+> | `tool_discovery_invalid` | `tool_discovery` on the flow, the orchestrator or a step `query` must be `eager`, `lazy` or `off` (empty and templated values are skipped) |
+> | `mock_delay_invalid` | a `mock_scenarios` step `delay` must be a Go duration (`100` is refused, `100ms` is not) |
+> | `output_param_empty` | an `output:` entry may not be the empty string (a YAML null entry saves) |
+> | `campaign_no_child_flows`, `campaign_child_flow_no_id` | `campaign.child_flows` must be non-empty and each entry needs `flow_id` or `flow_name` |
+>
+> One JS rule is deliberately **looser** here: `campaign.max_credits_per_child: 1.5` is accepted.
+> The reference decodes it into an `int64` field, which truncates, and saves the flow; the JS port
+> refuses any non-integer (`invalid_type`), which is stricter than the door. None of the shared
+> fixtures exercises either shape, so the cross-implementation checks still agree.
 
 ## The comparison contract
 
@@ -116,11 +167,83 @@ useless). Purely additive: no verdict depends on it.
 
 `src/cli.ts` has no counterpart. The Go consumer is a library.
 
+### 7. Unknown template functions: a warning by default (shared with JS, divergence #4 there)
+
+The reference refuses a template that calls a function its registry does not have, and reports it
+as `template_syntax_error`. This library reports it as `template_function_unknown`: a **warning** by
+default and an **error** under `StrictRegistries`. The vendored list can lag the live registry (a
+real new function must not block a publish), which is the same reason unknown orchestrator tools and
+executor schemes warn. At v0.3.0 the vendored list equals the reference's registry exactly.
+
+**Direction: looser than the reference by default.** Measured: 4 of the reference's 216 bundled
+flows are refused by the reference for this alone and are valid here without `StrictRegistries`.
+v0.2.0 said nothing at all in that case; v0.3.0 at least warns.
+
+### 8. `end` as a next target (shared with JS, divergence #2 there)
+
+Both ports treat `null`, `end` and `orchestrator` as terminal markers. The reference's
+connectivity check exempts `end`, but its save-door parser (`validateNextLogic`) does **not**: it
+refuses `next: { default: end }` because no step is called `end`. Measured at v2.738.0: 23 of the
+48 shared fixtures route to `end`, and the reference's save door refuses 16 of them with "step_id
+(end) … not found" (14 are fixtures both ports call valid; the rest fail earlier on another rule).
+
+**Direction: looser than the reference.** Kept because the shared fixtures and the JS port depend
+on it, and changing it is a cross-repository decision. **Owed:** decide it in both ports together.
+
+### 9. Unknown keys are not rejected in general (shared with JS)
+
+The reference's save door parses with `KnownFields(true)`, so any key its types do not declare is
+refused. This library reports unknown keys only where the reference names them: the retired keys
+above and a condition's `goto_step`. For example the shared fixture `valid-branching.yaml` carries a
+flow-root `constraints:` block, which both ports accept and the reference refuses. Porting the rule
+means a full field inventory of every flow, step, loop and orchestrator type. **Owed, as in JS.**
+
+### 10. The loop body is walked for every step (shared with JS)
+
+The reference walks the loop body only for steps reachable from `start`. This library walks every
+step. All loop-body findings are warnings, so no verdict changes.
+
+### 11. The `fn_` usage scan walks the document (shared with JS, divergence #10 there)
+
+The reference re-serialises its typed `Flow` and scans that, so it sees only declared fields. This
+library walks every string leaf of the parsed document. The two agree on every flow the reference
+would accept, because anything else is refused by divergence #9's rule.
+
+### 12. A malformed processing-operation entry gets no shape verdict (shared with JS, #11 there)
+
+The reference's unmarshaller refuses an entry that is not a one-key map. This library has no typed
+unmarshal, so such an entry produces neither `unknown_processing_operation` nor
+`unknown_processing_config_key`.
+
+### 13. `human_question_timeout`: the refusal is ported, the log line is not (shared with JS, #12 there)
+
+The reference also logs (not a validation warning) when the timeout exceeds its orchestrator
+mission clock. That threshold is a deployment constant this package cannot observe.
+
+### 14. Warnings the reference does not emit
+
+- `unknown_executor_scheme`: the reference never warns on a scheme; it fails at dispatch. The
+  bundled `voiceagent://` flow warns here for that reason.
+- `unknown_data_type` on a top-level `query` type such as `bool` (shared with JS). Nine bundled
+  flows carry it.
+- `step_max_duration_ignored` on a boolean `max_duration` (`true`): the reference warns too (it
+  decodes the boolean as the text "true"); the JS port ignores booleans.
+- The reference's runtime template field-resolution warnings (`template_missing_field`,
+  `condition_not_boolean`) and `compliance_catalog_missing` are not produced here (scope).
+
+## Not ported (owed)
+
+- `ValidateExecutorConfigEnvScopes` (reference v2.597.0): `executor_config` may expand only the
+  environment variables of the provider it is written under. Needs four vendored scope tables. Owed
+  in both ports.
+- General unknown-key rejection (divergence #9).
+- The `end` decision (divergence #8).
+
 ## Enum surfaces carried but not yet consumed
 
 The vendored spec includes values no static rule reads yet: `parallelResolutions`,
 `inputSchema.datePattern`, `inputSchema.maxInputKeyCount`, `inputSchema.maxStringInputLength`, and
-`evalJudgeUrl`. They are unused in the JS implementation too — the reference validates them at
+`evalJudgeUrl`. (`templateActionOpen` is mirrored by the `templateOpenDelim` constant.) They are unused in the JS implementation too — the reference validates them at
 runtime, not statically. They stay in the embedded document so it remains byte-identical upstream;
 **do not prune them**, that would break mechanism 1.
 

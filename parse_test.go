@@ -73,7 +73,7 @@ func TestParseFlowRejectsOversizeAndAliasBombs(t *testing.T) {
 
 func TestTemplateSyntaxChecks(t *testing.T) {
 	wrap := func(tmpl string) string {
-		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: ai://chat\n    query:\n      prompt: " +
+		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: ai://openai/chat\n    query:\n      prompt: " +
 			quoteYAML(tmpl) + "\n"
 	}
 	t.Run("unclosed action", func(t *testing.T) {
@@ -118,11 +118,11 @@ func TestTemplateSyntaxChecks(t *testing.T) {
 			}
 		}
 	})
-	t.Run("unknown function is silent by default, an error under StrictRegistries", func(t *testing.T) {
+	t.Run("unknown function is a warning by default, an error under StrictRegistries", func(t *testing.T) {
+		// v0.3.0: it used to be SILENT by default, which said nothing about a name
+		// AIgentFlow refuses. Divergence #4 promises a warning.
 		src := wrap("{{ notARealFunction .a }}")
-		if result := ValidateFlow(src, Options{}); !result.Valid {
-			t.Errorf("an unknown function must not block by default: %s", formatIssues(result.Errors))
-		}
+		assertWarningNotError(t, ValidateFlow(src, Options{}), codeTemplateFuncUnkn)
 		assertError(t, ValidateFlow(src, Options{StrictRegistries: true}),
 			codeTemplateFuncUnkn, "steps.a.query.prompt")
 	})
@@ -138,7 +138,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       conditions:
         - if: "{{ if .a }}"
@@ -148,8 +148,8 @@ steps:
 			codeTemplateSyntax, "steps.a.next.conditions[0].if")
 	})
 	t.Run("response_expectation templates are counted but not checked", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://noop",
-			"    executor: function://noop\n    response_expectation:\n      out:\n        type: string\n        required: \"{{ if .a }}\"", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+			"    executor: function://text/noop\n    response_expectation:\n      out:\n        type: string\n        required: \"{{ if .a }}\"", 1)
 		result := ValidateFlow(src, Options{})
 		if hasCode(result.Errors, codeTemplateSyntax) {
 			t.Errorf("response_expectation templates must not be syntax-checked: %s",
@@ -167,12 +167,12 @@ name: f
 start: a
 steps:
   a:
-    executor: ai://chat
+    executor: ai://openai/chat
     query:
       good: "{{ .query.x }}"
       bad: "{{ .query.y "
   b:
-    executor: function://n
+    executor: function://text/n
 `
 	result := ValidateFlow(src, Options{})
 	if result.Summary.TotalSteps != 2 {
@@ -202,7 +202,7 @@ func TestFindingsCarrySourcePositions(t *testing.T) {
 		"start: a\n" + // 3
 		"steps:\n" + // 4
 		"  a:\n" + // 5
-		"    executor: function://n\n" + // 6
+		"    executor: function://text/n\n" + // 6
 		"    next:\n" + // 7
 		"      default: ghost\n" // 8
 
@@ -253,7 +253,7 @@ func TestResultSlicesMarshalAsArraysNotNull(t *testing.T) {
 		source string
 	}{
 		{"valid flow", minimalFlow},
-		{"invalid flow", strings.Replace(minimalFlow, "function://noop", "notauri", 1)},
+		{"invalid flow", strings.Replace(minimalFlow, "function://text/noop", "notauri", 1)},
 		{"unparseable", "- not a mapping\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -284,7 +284,7 @@ func TestResultSlicesMarshalAsArraysNotNull(t *testing.T) {
 func TestValidateFlowObjectMatchesValidateFlow(t *testing.T) {
 	// The two entry points must agree on the verdict; only positions differ,
 	// because the object form has no source to locate findings in.
-	src := strings.Replace(minimalFlow, "function://noop", "notauri", 1)
+	src := strings.Replace(minimalFlow, "function://text/noop", "notauri", 1)
 	fromText := ValidateFlow(src, Options{})
 	flow, _, _ := ParseFlow(src)
 	fromObject := ValidateFlowObject(flow, Options{})
@@ -319,11 +319,11 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       default: ghost1
   b:
-    executor: function://n
+    executor: function://text/n
     next:
       default: ghost2
   c:

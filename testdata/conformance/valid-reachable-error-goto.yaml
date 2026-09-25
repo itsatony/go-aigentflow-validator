@@ -1,0 +1,28 @@
+aigentflow_version: '2.0.0'
+name: reachable-error-goto
+version: '1.0.0'
+description: >-
+  Every goto_step here is reachable. The flow-level strategy says action goto,
+  and the step-level one declares no goto_step at all. Saying action goto does
+  not lose retries — max_retries is the budget and the goto is what happens once
+  it is spent.
+start: work
+error_strategy:
+  action: goto
+  max_retries: 2
+  goto_step: handle_error
+steps:
+  work:
+    executor: function://text/template
+    error_strategy:
+      action: retry
+      max_retries: 3
+    next:
+      default: 'null'
+  handle_error:
+    executor: function://utils/log
+    query:
+      message: 'failed'
+      level: error
+    next:
+      default: 'null'

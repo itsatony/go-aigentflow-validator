@@ -62,6 +62,11 @@ so an unrecognised-but-real name is reported as a warning on purpose.
 Set `Options{StrictRegistries: true}` to promote unrecognised-name findings to errors. That is
 right for an authoring-time lint and wrong for admission control.
 
+Know the cost of leaving it off: AIgentFlow itself refuses a template that calls a function it does
+not have. Without `StrictRegistries` this library only warns (`template_function_unknown`), so such
+a flow passes here and is refused at AIgentFlow's save door. At spec v2.738.0 the vendored function
+list equals AIgentFlow's registry, so the warning is a real problem unless your AIgentFlow is newer.
+
 `Errors` and `Warnings` are always non-nil, so they encode as `[]` and never `null`.
 
 ### Reporting which schema version judged a flow
@@ -75,22 +80,31 @@ version rejected them has no way to understand it.
 
 | Area | Examples |
 | --- | --- |
-| Basic structure | required top-level fields, step-map shape, per-step executor, reserved `.` in step IDs |
-| Executors | `scheme://path` well-formedness (error), unknown scheme (warning) |
-| Connectivity | `next.default` / `next.conditions[].goto_step` existence (error), unreachable steps + cycles (warning) |
+| Basic structure | required top-level fields, step-map shape, per-step executor, reserved `.` in step IDs, reserved step ID `orchestrator` |
+| Retired keys | flow-root `budget:` and `max_retries:`, step and loop sub-step `max_retries:`, `campaign.budget_max_per_child` (all refused as `unknown_yaml_key`) |
+| Executors | the reference's executor-URL shape, `scheme://authority/path` (error; templated URLs skipped), unknown scheme (warning) |
+| Connectivity | `next.default` / `next.conditions[].goto` existence (error), unreachable steps + cycles (warning) |
 | `next.parallel` | rendezvous + member existence, non-empty fan-out, `next: orchestrator` needs an orchestrator |
-| `error_strategy` | action enum, `goto_step` existence, Go durations, `backoff_multiplier > 0`, `retry_on` categories |
+| `error_strategy` | action enum, `goto_step` existence, Go durations, `backoff_multiplier > 0`, `retry_on` categories, a `goto_step` no action can take (warning) |
 | `query` schema | param types, nested `properties`, array `items` types, `min_items`/`max_items` |
-| `response_expectation` | field data types, array `items`, `required` as bool-or-template |
-| `for_each` / `loop` / `throttle` | mutual exclusions, `max_iterations` bounds, sub-step ids, throttle ceilings |
+| `response_expectation` | field data types, array `items`, `required` as bool-or-template, an expectation nothing reads (warning) |
+| `for_each` / `loop` / `throttle` | mutual exclusions, `max_iterations` bounds, sub-step ids, loop sub-step `next:` targets, throttle ceilings |
+| Loop body | templates and processing operations inside `loop.steps` (warnings), `goto_step` in a sub-step (warning), reserved sub-step ids (warning) |
+| Processing operations | undispatchable operation type, config keys the handler never reads (warnings) |
+| Step `max_duration` | unparseable, or on a loop step (warning) |
 | Credential bindings | `credential` vs `credentials` exclusivity, `stored/{provider}/{name}` form, `inject_as` |
 | `input_schema` / `output_schema` | version, field names, types, constraint/type compatibility, `visible_when`, RE2 patterns |
 | `quality_gate` | rubric, threshold range, `on_fail` enum, self-goto, composite/parallel-member scope |
-| Orchestrator / campaign | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, campaign handoff |
+| Orchestrator / campaign | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `child_flows`, `max_credits_per_child`, campaign handoff |
 | Templates | Go `text/template` syntax across `query`, `pre_processing`, `post_processing`, `conditions[].if` |
-| `expression_functions` | exactly one of `package` / `function`, non-empty |
+| `expression_functions` | exactly one of `package` / `function`; `package:` refused; `function:` must be in the fixed catalog; a template calling an `fn_` name must declare it |
+| Other save-door rules | `tool_discovery` vocabulary, mock-scenario `delay` durations, empty `output:` entries |
 
 ## What it does not check
+
+- **Unknown keys in general.** AIgentFlow refuses any key its types do not declare. This library
+  reports only the keys AIgentFlow names specifically (the retired keys, a condition's `goto_step`).
+  See PARITY.md, divergence #9.
 
 - **Credentials.** Only the reference *form* is validated. Nothing is read, resolved, or transported.
 - **The model-compliance catalogue.** Whether a named model is permitted is a server question.

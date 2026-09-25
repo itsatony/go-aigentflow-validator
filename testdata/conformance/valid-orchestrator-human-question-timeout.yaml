@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: good-human-question-timeout
+version: '1.0.0'
+description: >
+  AIF v2.695.0 (DC-FORGE-125, aigentflow#124). A declared per-question HITL
+  deadline with its response. Valid, and the rule must not fire on it.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  human_question_timeout: '30m'
+  human_question_timeout_response: 'nobody answered; proceed without approval'
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}

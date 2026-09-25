@@ -15,9 +15,9 @@ func TestBasicStructureRequiredFields(t *testing.T) {
 		source string
 		field  string
 	}{
-		{"no aigentflow_version", "name: f\nstart: a\nsteps:\n  a:\n    executor: function://n\n", keyAigentflowVersion},
-		{"no name", "aigentflow_version: \"2.0.0\"\nstart: a\nsteps:\n  a:\n    executor: function://n\n", keyName},
-		{"no start", "aigentflow_version: \"2.0.0\"\nname: f\nsteps:\n  a:\n    executor: function://n\n", keyStart},
+		{"no aigentflow_version", "name: f\nstart: a\nsteps:\n  a:\n    executor: function://text/n\n", keyAigentflowVersion},
+		{"no name", "aigentflow_version: \"2.0.0\"\nstart: a\nsteps:\n  a:\n    executor: function://text/n\n", keyName},
+		{"no start", "aigentflow_version: \"2.0.0\"\nname: f\nsteps:\n  a:\n    executor: function://text/n\n", keyStart},
 		{"no steps", "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\n", keySteps},
 		{"empty steps", "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps: {}\n", keySteps},
 	}
@@ -35,7 +35,7 @@ func TestBasicStructureRequiredFields(t *testing.T) {
 func TestStructuralChecksAreASupersetOfTheFourKeyGate(t *testing.T) {
 	// start present but not a defined step: must be step_not_found on `start`,
 	// NOT a generic missing-field.
-	result := ValidateFlow("aigentflow_version: \"2.0.0\"\nname: f\nstart: nope\nsteps:\n  a:\n    executor: function://n\n", Options{})
+	result := ValidateFlow("aigentflow_version: \"2.0.0\"\nname: f\nstart: nope\nsteps:\n  a:\n    executor: function://text/n\n", Options{})
 	assertError(t, result, codeStepNotFound, keyStart)
 	if hasCode(result.Errors, codeMissingField) {
 		t.Errorf("a defined-but-unknown start must not also report missing_required_field: %s",
@@ -45,7 +45,7 @@ func TestStructuralChecksAreASupersetOfTheFourKeyGate(t *testing.T) {
 
 func TestBasicStructureStepShape(t *testing.T) {
 	t.Run("step id containing a dot is reserved", func(t *testing.T) {
-		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a.b\nsteps:\n  a.b:\n    executor: function://n\n"
+		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a.b\nsteps:\n  a.b:\n    executor: function://text/n\n"
 		assertError(t, ValidateFlow(src, Options{}), codeReservedStepID, "steps.a.b")
 	})
 	t.Run("step missing an executor", func(t *testing.T) {
@@ -67,7 +67,7 @@ steps:
       max_iterations: 3
       steps:
         - id: inner
-          executor: function://n
+          executor: function://text/n
 `
 		result := ValidateFlow(src, Options{})
 		if hasCode(result.Errors, codeMissingField) {
@@ -78,22 +78,22 @@ steps:
 
 func TestExecutorURIs(t *testing.T) {
 	t.Run("malformed URI is an error", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "function://noop", "notauri", 1)
+		src := strings.Replace(minimalFlow, "function://text/noop", "notauri", 1)
 		assertError(t, ValidateFlow(src, Options{}), codeInvalidExecutorURL, "steps.only.executor")
 	})
 	t.Run("empty path is an error", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "function://noop", "function://", 1)
+		src := strings.Replace(minimalFlow, "function://text/noop", "function://", 1)
 		assertError(t, ValidateFlow(src, Options{}), codeInvalidExecutorURL, "steps.only.executor")
 	})
 	t.Run("unknown scheme is a WARNING, still valid", func(t *testing.T) {
 		// The load-bearing classification: the vendored scheme list lags the live
 		// registry, so an unknown scheme must never block a publish.
-		src := strings.Replace(minimalFlow, "function://noop", "aif://nope", 1)
+		src := strings.Replace(minimalFlow, "function://text/noop", "aif://nope/x", 1)
 		assertWarningNotError(t, ValidateFlow(src, Options{}), codeUnknownExecScheme)
 	})
 	t.Run("every spec scheme is accepted", func(t *testing.T) {
 		for _, scheme := range ExecutorSchemes() {
-			src := strings.Replace(minimalFlow, "function://noop", scheme+"://x/y", 1)
+			src := strings.Replace(minimalFlow, "function://text/noop", scheme+"://x/y", 1)
 			result := ValidateFlow(src, Options{})
 			if hasCode(result.Warnings, codeUnknownExecScheme) || hasCode(result.Errors, codeInvalidExecutorURL) {
 				t.Errorf("scheme %q from the spec was not accepted: %s / %s",
@@ -110,7 +110,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       default: ghost
 `
@@ -122,7 +122,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       conditions:
         - if: "{{ eq .a 1 }}"
@@ -136,19 +136,19 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       conditions:
         - if: "{{ eq .a 1 }}"
           goto_step: b
   b:
-    executor: function://n
+    executor: function://text/n
 `
 		assertError(t, ValidateFlow(src, Options{}), codeUnknownYAMLKey, "steps.a.next.conditions[0].goto_step")
 	})
 	t.Run("terminal markers are not step references", func(t *testing.T) {
 		for _, marker := range spec.NextMarkers {
-			src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://n\n    next:\n      default: " +
+			src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://text/n\n    next:\n      default: " +
 				marker + "\n"
 			if marker == nextMarkerOrch {
 				continue // routing to the orchestrator needs an orchestrator block
@@ -165,9 +165,9 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
   orphan:
-    executor: function://n
+    executor: function://text/n
 `
 		assertWarningNotError(t, ValidateFlow(src, Options{}), codeUnreachableStep)
 	})
@@ -177,11 +177,11 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       default: b
   b:
-    executor: function://n
+    executor: function://text/n
     next:
       default: a
 `
@@ -195,14 +195,14 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       parallel:
 %s
   worker:
-    executor: function://n
+    executor: function://text/n
   join:
-    executor: function://n
+    executor: function://text/n
 `
 	t.Run("missing rendezvous", func(t *testing.T) {
 		src := sprintfYAML(base, "        steps: [worker]")
@@ -235,7 +235,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       default: orchestrator
 `
@@ -244,7 +244,7 @@ steps:
 
 func TestErrorStrategy(t *testing.T) {
 	wrap := func(body string) string {
-		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://n\n    error_strategy:\n" + body
+		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://text/n\n    error_strategy:\n" + body
 	}
 	t.Run("unknown action", func(t *testing.T) {
 		assertError(t, ValidateFlow(wrap("      action: explode\n"), Options{}),
@@ -298,7 +298,7 @@ steps:
       max_iterations: 100000
       steps:
         - id: inner
-          executor: function://n
+          executor: function://text/n
 `
 		assertError(t, ValidateFlow(src, Options{}), codeLoopMaxIterRange, "steps.a.loop.max_iterations")
 	})
@@ -313,9 +313,9 @@ steps:
       max_iterations: 3
       steps:
         - id: inner
-          executor: function://n
+          executor: function://text/n
         - id: inner
-          executor: function://n
+          executor: function://text/n
 `
 		assertError(t, ValidateFlow(src, Options{}), codeLoopStepIDDuplicate, "steps.a.loop.steps[1].id")
 	})
@@ -325,13 +325,13 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     loop:
       while: "{{ true }}"
       max_iterations: 3
       steps:
         - id: inner
-          executor: function://n
+          executor: function://text/n
 `
 		assertError(t, ValidateFlow(src, Options{}), codeLoopMutualExclExec, "steps.a.executor")
 	})
@@ -341,7 +341,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     for_each:
       as: item
 `
@@ -353,7 +353,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     for_each:
       items: "{{ .query.list }}"
       throttle:
@@ -368,7 +368,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     for_each:
       items: "{{ .query.list }}"
       throttle:
@@ -386,7 +386,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     credential: stored/openai/main
     credentials:
       api:
@@ -396,13 +396,13 @@ steps:
 		assertError(t, ValidateFlow(src, Options{}), codeCredMutualExclusive, "steps.a.credential")
 	})
 	t.Run("shorthand without the stored/ prefix", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://noop",
-			"    executor: function://noop\n    credential: vault/openai/main", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+			"    executor: function://text/noop\n    credential: vault/openai/main", 1)
 		assertError(t, ValidateFlow(src, Options{}), codeCredShorthandSource, "steps.only.credential")
 	})
 	t.Run("shorthand missing the name segment", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://noop",
-			"    executor: function://noop\n    credential: stored/openai", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+			"    executor: function://text/noop\n    credential: stored/openai", 1)
 		assertError(t, ValidateFlow(src, Options{}), codeCredShorthandFormat, "steps.only.credential")
 	})
 	t.Run("binding without inject_as", func(t *testing.T) {
@@ -411,7 +411,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     credentials:
       api:
         source: stored/openai/main
@@ -423,10 +423,10 @@ steps:
 
 func TestInputSchema(t *testing.T) {
 	wrap := func(fields string) string {
-		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://n\ninput_schema:\n  version: 1\n  fields:\n" + fields
+		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://text/n\ninput_schema:\n  version: 1\n  fields:\n" + fields
 	}
 	t.Run("wrong schema version", func(t *testing.T) {
-		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://n\ninput_schema:\n  version: 99\n  fields: []\n"
+		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://text/n\ninput_schema:\n  version: 99\n  fields: []\n"
 		assertError(t, ValidateFlow(src, Options{}), codeISInvalidVersion, "input_schema.version")
 	})
 	t.Run("invalid field name", func(t *testing.T) {
@@ -484,7 +484,7 @@ func TestInputSchema(t *testing.T) {
 
 func TestQualityGate(t *testing.T) {
 	wrap := func(gate string) string {
-		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: ai://chat\n    quality_gate:\n" + gate + "  b:\n    executor: function://n\n"
+		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: ai://openai/chat\n    quality_gate:\n" + gate + "  b:\n    executor: function://text/n\n"
 	}
 	t.Run("missing rubric", func(t *testing.T) {
 		assertError(t, ValidateFlow(wrap("      threshold: 0.8\n"), Options{}),
@@ -516,7 +516,7 @@ name: f
 start: a
 steps:
   a:
-    executor: ai://chat
+    executor: ai://openai/chat
     for_each:
       items: "{{ .query.list }}"
     quality_gate:
@@ -545,7 +545,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://n
+    executor: function://text/n
     next:
       default: orchestrator
 orchestrator:
@@ -606,21 +606,21 @@ func TestQueryAndResponseExpectation(t *testing.T) {
 		assertError(t, ValidateFlow(src, Options{}), codeArrayMaxItemsInvalid, "query.list.max_items")
 	})
 	t.Run("response_expectation with an unknown type", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://noop",
-			"    executor: function://noop\n    response_expectation:\n      out:\n        type: quaternion", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+			"    executor: function://text/noop\n    response_expectation:\n      out:\n        type: quaternion", 1)
 		assertError(t, ValidateFlow(src, Options{}),
 			codeInvalidDataType, "steps.only.response_expectation.out.type")
 	})
 	t.Run("response_expectation array without items", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://noop",
-			"    executor: function://noop\n    response_expectation:\n      out:\n        type: array", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+			"    executor: function://text/noop\n    response_expectation:\n      out:\n        type: array", 1)
 		assertError(t, ValidateFlow(src, Options{}),
 			codeRespExpArrayItems, "steps.only.response_expectation.out.items")
 	})
 	t.Run("response_expectation required accepts a bool or a template string", func(t *testing.T) {
 		for _, value := range []string{"true", "\"{{ .query.flag }}\""} {
-			src := strings.Replace(minimalFlow, "    executor: function://noop",
-				"    executor: function://noop\n    response_expectation:\n      out:\n        type: string\n        required: "+value, 1)
+			src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+				"    executor: function://text/noop\n    response_expectation:\n      out:\n        type: string\n        required: "+value, 1)
 			result := ValidateFlow(src, Options{})
 			if hasCode(result.Errors, codeInvalidValue) {
 				t.Errorf("required: %s must be accepted: %s", value, formatIssues(result.Errors))
@@ -628,8 +628,8 @@ func TestQueryAndResponseExpectation(t *testing.T) {
 		}
 	})
 	t.Run("response_expectation required rejects other shapes", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://noop",
-			"    executor: function://noop\n    response_expectation:\n      out:\n        type: string\n        required: [1]", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
+			"    executor: function://text/noop\n    response_expectation:\n      out:\n        type: string\n        required: [1]", 1)
 		assertError(t, ValidateFlow(src, Options{}),
 			codeInvalidValue, "steps.only.response_expectation.out.required")
 	})
@@ -654,7 +654,7 @@ func TestExpressionFunctions(t *testing.T) {
 			codeInvalidExprFunction, "expression_functions[0].package")
 	})
 	t.Run("valid entries", func(t *testing.T) {
-		src := minimalFlow + "expression_functions:\n  - package: sprig\n  - function: upper\n"
+		src := minimalFlow + "expression_functions:\n  - function: fn_slugify\n  - function: fn_round\n"
 		assertValid(t, ValidateFlow(src, Options{}))
 	})
 }
@@ -679,17 +679,17 @@ error_strategy:
   goto_step: flow_handler
 steps:
   fan:
-    executor: function://n
+    executor: function://text/n
     next:
       parallel:
         steps: [v1, v2]
         rendezvous: quorum
   v1:
-    executor: function://n
+    executor: function://text/n
   v2:
-    executor: function://n
+    executor: function://text/n
   quorum:
-    executor: function://n
+    executor: function://text/n
     error_strategy:
       action: goto
       goto_step: step_handler
@@ -699,11 +699,11 @@ steps:
           goto: conditional
       default: "end"
   conditional:
-    executor: function://n
+    executor: function://text/n
   step_handler:
-    executor: function://n
+    executor: function://text/n
   flow_handler:
-    executor: function://n
+    executor: function://text/n
 `
 	res := ValidateFlow(src, Options{})
 	for _, w := range res.Warnings {
@@ -713,7 +713,7 @@ steps:
 	}
 	// Control: an orphan IS reported, so the check still runs.
 	orphan := ValidateFlow(src+`  orphan:
-    executor: function://n
+    executor: function://text/n
 `, Options{})
 	found := false
 	for _, w := range orphan.Warnings {
@@ -725,4 +725,3 @@ steps:
 		t.Error("control: a step with no edge into it must still be reported unreachable")
 	}
 }
-

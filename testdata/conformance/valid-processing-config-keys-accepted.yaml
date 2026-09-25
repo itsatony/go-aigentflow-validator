@@ -1,0 +1,63 @@
+aigentflow_version: '2.0.0'
+name: processing-config-keys-accepted
+version: '1.0.0'
+description: >-
+  Every processing operation here is correct and must produce no shape warning:
+  closed key sets used exactly, and the open-key operations, whose keys are the
+  author's own names for a data key, an output key and a conversation id.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'hello'
+    pre_processing:
+      # data.set chooses its own key names — every one of them is a data key.
+      - data.set:
+          anything_at_all: 'value'
+          another_invented_key: '{{ .query.name }}'
+    post_processing:
+      # binary.get genuinely reads asset_id; the wrong-half rule must not
+      # generalise from binary.transform.
+      - binary.get:
+          asset_id: '{{ .query.asset_id }}'
+          include_data: true
+          result_key: fetched
+      - binary.transform:
+          source_asset_id: '{{ .data.work.fetched.id }}'
+          transformer: 'base64-encode'
+          parameters:
+            # Sub-keys of parameters are the transformer's vocabulary, not the
+            # handler's, and are out of scope.
+            whatever: 1
+          metadata:
+            # Same for metadata, which is forwarded to the asset store.
+            filename: 'out.txt'
+          result_key: transformed
+      # The `if:` guard is a sibling of the operation, not a config key.
+      - output.set:
+          summary: '{{ .step.response }}'
+        if: '{{ eq .query.emit "yes" }}'
+      - conversation.append:
+          my_conversation_id:
+            role: assistant
+            content: '{{ .step.response }}'
+      - parse:
+          source: '{{ .step.response }}'
+          format: json
+          target: parsed
+          on_error: continue
+    next:
+      default: 'end'
+query:
+  name:
+    type: string
+    description: Who to greet.
+  asset_id:
+    type: string
+    description: An asset to fetch.
+  emit:
+    type: string
+    description: Whether to emit the summary.
+output:
+  - parsed

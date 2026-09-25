@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: templated-executor-url
+version: '1.0.0'
+description: >-
+  A templated executor URL is legitimate: the engine renders it as a Go template
+  before dispatch, so its shape cannot be judged statically. AIgentFlow's own
+  rule skips these, and omitting that exception rejected eight working bundled
+  flows when the rule was first written.
+start: child
+steps:
+  child:
+    executor: 'flow://stored/{{ .query.child_flow_id }}'
+    next:
+      default: 'spin'
+  spin:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: work
+          executor: 'ai://openai/chat'

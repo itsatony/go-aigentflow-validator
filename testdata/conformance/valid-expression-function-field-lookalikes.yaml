@@ -1,0 +1,20 @@
+# A FIELD whose name begins with `fn_` is not a call. `\b` matches between the
+# dot and the `f`, so a naive call pattern refuses this valid flow with a message
+# about a function it never called — and a quoted string inside an action names a
+# DATA KEY, never an identifier. This flow declares no expression functions and
+# must still be accepted. The step itself is named `fn_build`.
+aigentflow_version: '2.0.0'
+name: expression-function-field-lookalikes
+version: '1.0.0'
+start: fn_build
+steps:
+  fn_build:
+    executor: function://text/template
+    query:
+      dotted_data: '{{ .data.fn_total }}'
+      dotted_step: '{{ .step.response.fn_score }}'
+      quoted_key: '{{ index .data "fn_result" }}'
+      quoted_dotted_key: '{{ index .data "step.fn_result" }}'
+      own_step_output: '{{ .data.fn_build.value }}'
+    next:
+      default: 'end'

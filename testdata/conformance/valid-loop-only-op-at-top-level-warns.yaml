@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: loop-only-op-at-top-level
+version: '1.0.0'
+description: >-
+  DC-FORGE-78: the PARTITION, from the side that is easy to lose. loop.set is
+  dispatchable on a loop sub-step and NOT by the standard handler, so declaring
+  it on a top-level step is an operation the engine cannot dispatch. Merging the
+  two sets into one would accept this silently.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'hello'
+    post_processing:
+      - loop.set:
+          counter: '1'
+    next:
+      default: 'end'
+output:
+  - done

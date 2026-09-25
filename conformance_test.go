@@ -33,10 +33,106 @@ type conformanceCase struct {
 	wantErrorCodes []string
 	// wantWarningCodes must ALL be present among the actual warning codes.
 	wantWarningCodes []string
+	// forbidWarningCodes must NOT be present. A rule whose whole risk is a false
+	// positive needs a fixture that goes red when it fires, and `valid: true`
+	// cannot say that: a warning never changes the verdict.
+	forbidWarningCodes []string
+	// forbidErrorCodes must NOT be present. `valid: true` already fails on any
+	// error; this NAMES the rule under test so a regression reads clearly.
+	forbidErrorCodes []string
 }
 
+// conformanceCases mirrors CASES in the JS repo's conformance.test.ts, case for
+// case, and TestConformanceFixturesAreAllCovered keeps the table complete.
 var conformanceCases = []conformanceCase{
 	{file: "valid-minimal.yaml", valid: true},
+	{
+		// v2.648.0 (DC-FORGE-78): the loop body is walked. Every template here is
+		// unparseable and the flow must still be VALID: loop-body findings are
+		// warnings.
+		file: "valid-loop-body-templates-warn.yaml", valid: true,
+		wantWarningCodes: []string{codeTemplateSyntax},
+	},
+	{
+		// The control: nothing in a clean loop body may warn.
+		file: "valid-loop-body-clean.yaml", valid: true,
+		forbidWarningCodes: []string{codeTemplateSyntax, codeTemplateFuncUnkn,
+			codeUnknownProcessingOp, codeUnknownProcessingConfigKey},
+	},
+	{
+		// The partition: loop.set is dispatchable ONLY on a loop sub-step.
+		file: "valid-loop-only-op-at-top-level-warns.yaml", valid: true,
+		wantWarningCodes: []string{codeUnknownProcessingOp},
+	},
+	{
+		// v2.651.0 (DC-FORGE-81): goto_step beside a non-goto action.
+		file: "warn-unreachable-error-goto.yaml", valid: true,
+		wantWarningCodes: []string{codeUnreachableErrorGoto},
+	},
+	{
+		file: "valid-reachable-error-goto.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnreachableErrorGoto},
+	},
+	{
+		// v2.652.0 (DC-FORGE-82): goto_step inside a loop body is read by nothing.
+		file: "warn-loop-substep-error-goto.yaml", valid: true,
+		wantWarningCodes:   []string{codeLoopSubstepErrGotoIgnore},
+		forbidWarningCodes: []string{codeUnreachableErrorGoto},
+	},
+	{
+		// The counter-fixture: the warning's own remedy must not warn.
+		file: "valid-loop-substep-error-continue.yaml", valid: true,
+		forbidWarningCodes: []string{codeLoopSubstepErrGotoIgnore, codeUnreachableErrorGoto},
+	},
+	{
+		// v2.672.0 (DC-FORGE-102): forward jump, backward jump, empty target.
+		file: "valid-loop-substep-next.yaml", valid: true,
+		forbidErrorCodes: []string{codeLoopSubstepNextNotFound, codeLoopSubstepNextSentinel,
+			codeLoopSubstepNextParallel},
+	},
+	{
+		file: "invalid-loop-substep-next-unknown-target.yaml", valid: false,
+		wantErrorCodes: []string{codeLoopSubstepNextNotFound},
+	},
+	{
+		file: "invalid-loop-substep-next-sentinel.yaml", valid: false,
+		wantErrorCodes: []string{codeLoopSubstepNextSentinel},
+	},
+	{
+		file: "invalid-loop-substep-next-parallel.yaml", valid: false,
+		wantErrorCodes: []string{codeLoopSubstepNextParallel},
+	},
+	{
+		// DC-FORGE-145: response_expectation is read only with response_evaluation.
+		file: "warn-response-expectation-unread.yaml", valid: true,
+		wantWarningCodes: []string{codeRespExpUnread},
+	},
+	{
+		file: "valid-response-expectation-raw-text.yaml", valid: true,
+		forbidWarningCodes: []string{codeRespExpUnread},
+	},
+	{
+		file: "valid-response-expectation-async.yaml", valid: true,
+		forbidWarningCodes: []string{codeRespExpUnread},
+	},
+	{
+		file: "valid-response-expectation-absent.yaml", valid: true,
+		forbidWarningCodes: []string{codeRespExpUnread},
+	},
+	{
+		// A condition's target key is `goto`; `goto_step` there is refused.
+		file: "invalid-condition-goto-step-misspelling.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		// v2.608.0: executor URLs are parsed with the reference's ONE parser.
+		file: "invalid-executor-url-shapes.yaml", valid: false,
+		wantErrorCodes: []string{codeInvalidExecutorURL},
+	},
+	{
+		// The `{{` exception is load-bearing.
+		file: "valid-templated-executor-url.yaml", valid: true,
+	},
 	{file: "valid-branching.yaml", valid: true},
 	{
 		// CLEANER POWER Phase 2: wait:// + eval:// schemes, output_schema, quality_gate.
@@ -54,8 +150,8 @@ var conformanceCases = []conformanceCase{
 		},
 	},
 	{
-		// Skope retired in v2.435.0 → skope:// is now an unknown scheme: warns, does
-		// not reject. This fixture is the guard against re-hardening scheme checks.
+		// Skope retired in v2.435.0 → skope:// is an unknown scheme: warns, does
+		// not reject. The guard against re-hardening scheme checks.
 		file: "valid-retired-skope-scheme-warns.yaml", valid: true,
 		wantWarningCodes: []string{codeUnknownExecScheme},
 	},
@@ -69,9 +165,12 @@ var conformanceCases = []conformanceCase{
 		file: "valid-orchestrator-monitor.yaml", valid: true,
 	},
 	{
-		file:           "invalid-orchestrator-owner-no-yield.yaml",
-		valid:          false,
-		wantErrorCodes: []string{codeOrchOwnerNeedsYield},
+		// v2.695.0 (DC-FORGE-125): a NEGATIVE duration is well-formed Go and still refused.
+		file: "invalid-orchestrator-human-question-timeout.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchHumanQTimeoutInvalid},
+	},
+	{
+		file: "valid-orchestrator-human-question-timeout.yaml", valid: true,
 	},
 	{
 		// DC-COND-2: campaign.on_children_complete naming a real step.
@@ -83,9 +182,85 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeCampaignHandoffStep},
 	},
 	{
-		file:           "invalid-references-and-templates.yaml",
+		file:           "invalid-orchestrator-owner-no-yield.yaml",
 		valid:          false,
-		wantErrorCodes: []string{codeStepNotFound, codeTemplateSyntax},
+		wantErrorCodes: []string{codeOrchOwnerNeedsYield},
+	},
+	{
+		// v2.642.0 (DC-FORGE-72): the expression-function catalog.
+		file: "invalid-expression-function-package.yaml", valid: false,
+		wantErrorCodes: []string{codeExprFnPackageUnsupported},
+	},
+	{
+		file: "invalid-expression-function-unknown-name.yaml", valid: false,
+		wantErrorCodes: []string{codeExprFnUnknown},
+	},
+	{
+		file: "invalid-expression-function-undeclared-use.yaml", valid: false,
+		wantErrorCodes: []string{codeExprFnUndeclaredUse, codeExprFnUnknownUse},
+	},
+	{file: "valid-expression-functions.yaml", valid: true},
+	{file: "valid-expression-function-prose-mention.yaml", valid: true},
+	{
+		// A FIELD, a data KEY or a STEP whose name begins with fn_ is not a call.
+		file: "valid-expression-function-field-lookalikes.yaml", valid: true,
+	},
+	{
+		// v2.647.0: an operation type the standard handler cannot dispatch.
+		file: "valid-processing-operation-unknown-type-warns.yaml", valid: true,
+		wantWarningCodes:   []string{codeUnknownProcessingOp},
+		forbidWarningCodes: []string{codeUnknownProcessingConfigKey},
+	},
+	{
+		// asset_id under binary.transform: real for binary.get, wrong here.
+		file: "valid-processing-config-key-wrong-half-warns.yaml", valid: true,
+		wantWarningCodes: []string{codeUnknownProcessingConfigKey},
+	},
+	{
+		file: "valid-processing-config-keys-accepted.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnknownProcessingOp, codeUnknownProcessingConfigKey},
+	},
+	{
+		// v2.728.0 (DC-FORGE-155): campaign.budget_max_per_child was deleted.
+		file: "invalid-retired-campaign-budget-max-per-child.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		// v2.648.0: a sub-step id that is also a loop-result summary field.
+		file: "warn-loop-sub-step-id-reserved.yaml", valid: true,
+		wantWarningCodes: []string{codeLoopSubStepIDReserved},
+	},
+	{
+		// v2.721.0 (DC-FORGE-150): budget and max_retries were deleted.
+		file: "invalid-retired-flow-budget.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		file: "invalid-retired-flow-max-retries.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		file: "invalid-retired-step-max-retries.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		// The working keys one level down must not be refused.
+		file: "valid-limit-keys-one-level-down.yaml", valid: true,
+	},
+	{
+		file:  "invalid-references-and-templates.yaml",
+		valid: false,
+		wantErrorCodes: []string{codeInvalidExecutorURL, codeTemplateSyntax,
+			codeStepNotFound, codeInvalidErrStrategy},
+	},
+	{
+		// DC-FORGE-147: a max_duration the engine cannot apply.
+		file: "warn-step-max-duration-ignored.yaml", valid: true,
+		wantWarningCodes: []string{codeStepMaxDurationIgnored},
+	},
+	{
+		file: "valid-step-max-duration-applied.yaml", valid: true,
+		forbidWarningCodes: []string{codeStepMaxDurationIgnored},
 	},
 }
 
@@ -101,6 +276,8 @@ func TestConformance(t *testing.T) {
 			}
 			assertCodesPresent(t, "error", result.Errors, tc.wantErrorCodes)
 			assertCodesPresent(t, "warning", result.Warnings, tc.wantWarningCodes)
+			assertCodesAbsent(t, "error", result.Errors, tc.forbidErrorCodes)
+			assertCodesAbsent(t, "warning", result.Warnings, tc.forbidWarningCodes)
 
 			// Valid ⇔ no errors is the definition, not an incidental property; assert
 			// it on every fixture so a validator that reports an error without

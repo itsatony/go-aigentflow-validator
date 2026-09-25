@@ -2,22 +2,23 @@ package aifvalidate
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
 
-// schemePattern is the identifier grammar for an executor URI scheme.
-var schemePattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.\-_]*$`)
-
 // validateExecutors checks executor URIs.
 //
-// The Go reference's static validator does NOT reject executor URIs — the live
-// executor registry is the source of truth and schemes are added frequently.
-// This module adds two authoring-time aids, classified conservatively:
-//   - a malformed URI (no scheme://path) is an ERROR: always genuinely broken;
-//   - an unknown scheme is a WARNING: the vendored list can lag the registry.
+// Since AIgentFlow v2.598.0 (DC-FORGE-30) the reference applies its ONE
+// executor-URL parser (URL_PATTERN_REGEX) at save time, and since v2.608.0
+// (DC-FORGE-38) to loop sub-step executors too. The shape check here is that
+// same regex, vendored verbatim in the spec:
+//   - an unparsable URL is an ERROR: AIgentFlow refuses it at save;
+//   - an unknown scheme is a WARNING: the vendored list can lag the registry,
+//     and the reference never rejects on scheme.
 //
+// TEMPLATED URLs ARE SKIPPED, as the reference skips them: the engine renders
+// step.executor as a template before dispatch, so
+// `flow://stored/{{ .query.child_flow_id }}` cannot be judged statically.
 // See PARITY.md.
 func validateExecutors(flow doc, iss *issues) {
 	steps := stepsOf(flow)
@@ -69,29 +70,27 @@ func subStepID(stepID string, sub doc, i int) string {
 
 func checkExecutor(executor, field, stepID string, iss *issues) {
 	sepIdx := strings.Index(executor, schemeSeparator)
-	if sepIdx <= 0 {
-		iss.error(Issue{
-			Field: field, Code: codeInvalidExecutorURL, StepID: stepID,
-			Message:    fmt.Sprintf("Executor '%s' is not a valid '<scheme>://<path>' URI", executor),
-			Suggestion: "Use the form 'scheme://path' (e.g., 'ai://openai/chat')",
-		})
-		return
+	scheme := ""
+	if sepIdx > 0 {
+		scheme = executor[:sepIdx]
 	}
-	scheme := executor[:sepIdx]
-	path := executor[sepIdx+len(schemeSeparator):]
 
-	if !schemePattern.MatchString(scheme) {
+	// A templated URL is rendered by the engine before dispatch, so its shape
+	// cannot be judged here. The scheme is still checked when the scheme itself
+	// carries no template, because that half is knowable.
+	templated := strings.Contains(executor, templateOpenDelim)
+
+	if !templated && !executorURLRe.MatchString(executor) {
 		iss.error(Issue{
 			Field: field, Code: codeInvalidExecutorURL, StepID: stepID,
-			Message: fmt.Sprintf("Executor scheme '%s' is not a valid identifier", scheme),
+			Message: fmt.Sprintf("Executor '%s' is not a usable executor URL", executor),
+			Suggestion: "Use the form 'scheme://authority/path' with a non-empty authority " +
+				"(e.g., 'ai://openai/chat'). Authority and path accept letters, digits, underscore and hyphen only.",
 		})
 		return
 	}
-	if path == "" {
-		iss.error(Issue{
-			Field: field, Code: codeInvalidExecutorURL, StepID: stepID,
-			Message: fmt.Sprintf("Executor '%s' has an empty path after '%s'", executor, schemeSeparator),
-		})
+
+	if scheme == "" || strings.Contains(scheme, templateOpenDelim) {
 		return
 	}
 	if !executorSchemes.has(strings.ToLower(scheme)) {

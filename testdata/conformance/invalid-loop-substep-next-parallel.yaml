@@ -1,0 +1,27 @@
+aigentflow_version: '2.0.0'
+name: loop-substep-next-parallel
+version: '1.0.0'
+description: >
+  A loop body runs its sub-steps sequentially. next.parallel here is inert —
+  it never fans out and its rendezvous never runs.
+start: crawl
+steps:
+  crawl:
+    loop:
+      while: '{{ lt .loop.index 3 }}'
+      max_iterations: 3
+      steps:
+        - id: fetch
+          executor: function://text/template
+          next:
+            parallel:
+              steps:
+                - record
+              rendezvous: record
+        - id: record
+          executor: db://postgres/insert
+    next:
+      default: 'end'
+query:
+  seed:
+    type: string

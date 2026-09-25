@@ -1,0 +1,15 @@
+# A `function:` outside the fixed catalog is refused; the catalog is the whole
+# security envelope and is compile-time linked.
+aigentflow_version: '2.0.0'
+name: expression-functions-unknown-name
+version: '1.0.0'
+start: build
+expression_functions:
+  - function: 'fn_exfiltrate'
+steps:
+  build:
+    executor: function://text/template
+    query:
+      value: 'plain'
+    next:
+      default: 'end'

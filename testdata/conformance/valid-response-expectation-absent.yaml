@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: response-expectation-absent
+version: '1.0.0'
+description: >-
+  No response_expectation and no response_evaluation — nothing is declared, so
+  there is nothing left unread. An empty expectation mapping is the same.
+start: summarise
+steps:
+  summarise:
+    executor: function://text/template
+    query:
+      message: 'A short summary.'
+    next:
+      default: finish
+  finish:
+    executor: function://text/template
+    query:
+      message: 'Done.'
+    response_expectation: {}
+    next:
+      default: 'null'

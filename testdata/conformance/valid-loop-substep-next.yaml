@@ -1,0 +1,35 @@
+aigentflow_version: '2.0.0'
+name: loop-substep-branching
+version: '1.0.0'
+description: >
+  A loop body that branches within one iteration. Both jump directions are
+  legal: 'fetch' jumps FORWARD past 'inspect' when the page is already cached,
+  and 'inspect' jumps BACKWARD to 'fetch' to re-read a page it found stale.
+start: crawl
+steps:
+  crawl:
+    loop:
+      while: '{{ lt .loop.index 5 }}'
+      max_iterations: 5
+      steps:
+        - id: fetch
+          executor: function://text/template
+          next:
+            conditions:
+              - if: '{{ .data.fetch.cached }}'
+                goto: record
+            default: ''
+        - id: inspect
+          executor: function://text/template
+          next:
+            conditions:
+              - if: '{{ .data.inspect.stale }}'
+                goto: fetch
+            default: record
+        - id: record
+          executor: db://postgres/insert
+    next:
+      default: 'end'
+query:
+  seed:
+    type: string

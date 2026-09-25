@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: response-expectation-async
+version: '1.0.0'
+description: >-
+  An async:// step with an expectation and no evaluation mode. This one IS
+  read: the respond route validates the posted output against the expectation
+  on its own, so nothing here is inert.
+start: ask
+steps:
+  ask:
+    executor: async://human/approve
+    query:
+      prompt: 'Approve the draft?'
+    response_expectation:
+      approved:
+        type: boolean
+        required: true
+    next:
+      default: 'null'

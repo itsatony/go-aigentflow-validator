@@ -1,0 +1,47 @@
+aigentflow_version: '2.0.0'
+name: step-max-duration-ignored
+version: '1.0.0'
+description: >-
+  Four step max_duration declarations the engine cannot turn into a deadline.
+  Three do not parse as a Go duration (there is no day unit, no spelled-out
+  unit, and templates are not rendered), so each step runs with no time limit;
+  the fourth sits on a loop step, which makes no executor call of its own. The
+  flow still SAVES and RUNS, so these are warnings on a valid flow.
+start: days
+steps:
+  days:
+    executor: function://text/template
+    query:
+      message: 'Days.'
+    max_duration: 2d
+    next:
+      default: spelled
+  spelled:
+    executor: function://text/template
+    query:
+      message: 'Spelled.'
+    max_duration: 5 minutes
+    next:
+      default: templated
+  templated:
+    executor: function://text/template
+    query:
+      message: 'Templated.'
+    max_duration: '{{ .query.timeout }}'
+    next:
+      default: repeat
+  repeat:
+    max_duration: 5m
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: work
+          executor: function://text/template
+          query:
+            message: 'Work.'
+    next:
+      default: 'null'
+query:
+  timeout:
+    type: string

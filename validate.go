@@ -62,6 +62,7 @@ func ValidateFlowObject(flow map[string]any, opts Options) Result {
 	// document missing its identity reports that before anything else. No
 	// validator depends on another's findings.
 	validateBasicStructure(flow, iss)
+	validateRetiredKeys(flow, iss)
 	validateExecutors(flow, iss)
 	validateQuerySchema(flow, iss)
 	validateResponseExpectations(flow, iss)
@@ -75,6 +76,9 @@ func ValidateFlowObject(flow map[string]any, opts Options) Result {
 	validateInputSchema(flow, iss)
 	validateOutputSchemas(flow, iss)
 	validateQualityGates(flow, iss)
+	validateProcessingOperations(flow, iss)
+	validateStepMaxDuration(flow, iss)
+	validateSaveDoorExtras(flow, iss)
 	stats := validateTemplates(flow, iss, opts)
 
 	return finish(iss, flow, stats)

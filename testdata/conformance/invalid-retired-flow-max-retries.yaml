@@ -1,0 +1,13 @@
+aigentflow_version: '2.0.0'
+name: retired-flow-max-retries
+version: '1.0.0'
+description: >-
+  The flow-level `max_retries:` key was deleted from the grammar in AIgentFlow
+  v2.721.0; the retry engine only ever read `error_strategy.max_retries`.
+max_retries: 3
+start: a
+steps:
+  a:
+    executor: function://text/template
+    next:
+      default: 'null'
