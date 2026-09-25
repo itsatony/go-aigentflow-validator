@@ -19,7 +19,7 @@ steps:
     next:
       conditions:
         - if: '{{ eq .data.classify.label "urgent" }}'
-          goto_step: escalate
+          goto: escalate
       default: archive
   escalate:
     executor: function://notify/send

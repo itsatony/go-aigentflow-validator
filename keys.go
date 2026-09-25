@@ -14,6 +14,7 @@ const (
 	keyDefault             = "default"
 	keyConditions          = "conditions"
 	keyGotoStep            = "goto_step"
+	keyGoto                = "goto"
 	keyIf                  = "if"
 	keyParallel            = "parallel"
 	keyRendezvous          = "rendezvous"
@@ -133,6 +134,7 @@ const (
 	codeMissingField   = "missing_required_field"
 	codeInvalidValue   = "invalid_field_value"
 	codeStepNotFound   = "step_not_found"
+	codeUnknownYAMLKey = "unknown_yaml_key"
 	codeReservedStepID = "reserved_step_id_char"
 
 	// Executors.

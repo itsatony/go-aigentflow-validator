@@ -126,9 +126,25 @@ steps:
     next:
       conditions:
         - if: "{{ eq .a 1 }}"
-          goto_step: ghost
+          goto: ghost
 `
 		assertError(t, ValidateFlow(src, Options{}), codeStepNotFound, "steps.a.next.conditions[0].goto")
+	})
+	t.Run("goto_step under a condition is the wrong key (AIgentFlow refuses it)", func(t *testing.T) {
+		src := `aigentflow_version: "2.0.0"
+name: f
+start: a
+steps:
+  a:
+    executor: function://n
+    next:
+      conditions:
+        - if: "{{ eq .a 1 }}"
+          goto_step: b
+  b:
+    executor: function://n
+`
+		assertError(t, ValidateFlow(src, Options{}), codeUnknownYAMLKey, "steps.a.next.conditions[0].goto_step")
 	})
 	t.Run("terminal markers are not step references", func(t *testing.T) {
 		for _, marker := range spec.NextMarkers {
@@ -648,3 +664,65 @@ func TestExpressionFunctions(t *testing.T) {
 func sprintfYAML(template, body string) string {
 	return strings.Replace(template, "%s", body, 1)
 }
+
+// aigentflow#149: a parallel fan-out, its rendezvous, a conditional branch and
+// both error redirects are REACHABLE. v0.1.0 reported every one of them "not
+// reachable from start step" (the walk followed next.default and a condition
+// key AIgentFlow does not have). Each step here is reachable by exactly one edge
+// kind, so removing any kind from the walk turns exactly one warning on.
+func TestReachabilityFollowsEveryEdgeKind(t *testing.T) {
+	src := `aigentflow_version: "2.0.0"
+name: f
+start: fan
+error_strategy:
+  action: goto
+  goto_step: flow_handler
+steps:
+  fan:
+    executor: function://n
+    next:
+      parallel:
+        steps: [v1, v2]
+        rendezvous: quorum
+  v1:
+    executor: function://n
+  v2:
+    executor: function://n
+  quorum:
+    executor: function://n
+    error_strategy:
+      action: goto
+      goto_step: step_handler
+    next:
+      conditions:
+        - if: "{{ eq .data.quorum.ok true }}"
+          goto: conditional
+      default: "end"
+  conditional:
+    executor: function://n
+  step_handler:
+    executor: function://n
+  flow_handler:
+    executor: function://n
+`
+	res := ValidateFlow(src, Options{})
+	for _, w := range res.Warnings {
+		if w.Code == codeUnreachableStep {
+			t.Errorf("step %q reported unreachable: %s", w.StepID, w.Message)
+		}
+	}
+	// Control: an orphan IS reported, so the check still runs.
+	orphan := ValidateFlow(src+`  orphan:
+    executor: function://n
+`, Options{})
+	found := false
+	for _, w := range orphan.Warnings {
+		if w.Code == codeUnreachableStep && w.StepID == "orphan" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("control: a step with no edge into it must still be reported unreachable")
+	}
+}
+

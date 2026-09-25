@@ -15,6 +15,20 @@ This document defines how this Go implementation stays in step with two things:
 > mechanisms below pass against a clean checkout of it. If you see a byte-equality failure, the two
 > have genuinely drifted — follow "Discipline for a schema bump".
 
+> **v0.2.0 (2026-09-25) — connectivity brought to the reference's current walk (aigentflow#149).**
+> Reachability now follows all five edge kinds (next.default, next.conditions[].goto,
+> next.parallel.steps[], next.parallel.rendezvous, the step error_strategy.goto_step) plus the
+> flow-level error_strategy.goto_step, as AIgentFlow has since v2.598.0 (DC-FORGE-30). A condition's
+> target key is `goto`: v0.1.0 read `goto_step` (the Go field name, not the yaml tag), so every
+> conditional branch looked unreachable, and a `goto_step` under a condition, which AIgentFlow
+> refuses, was accepted; it is now `unknown_yaml_key`, as in the JS port.
+>
+> ⚠️ **The rest of this port is still at spec `v2.485.0`, about 250 releases behind.** Known
+> accept/refuse differences include the flow-root `budget:` and `max_retries:` keys (refused since
+> v2.721.0) and `campaign.budget_max_per_child` (refused since v2.728.0). A full refresh against
+> the JS port's `main` is owed. Until then, treat an ACCEPT from this validator as "probably", and a
+> reachability or reference ERROR as reliable.
+
 ## The comparison contract
 
 **Error `code` + the `valid` verdict.** Never message wording. `Message`, `Context`, and

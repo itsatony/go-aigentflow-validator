@@ -6,9 +6,22 @@ import "fmt"
 // steps (warnings), and cycles (warning).
 //
 // Mirrors validateStepConnectivity + checkForCycles + findReachableSteps
-// (validation.go). Reachability and cycles follow ONLY next.default and
-// next.conditions[].goto_step, exempting the terminal markers null / end /
-// orchestrator — exactly as the reference does.
+// (AIgentFlow validation.go) and aigentflow-flow-validator-js connectivity.ts.
+//
+// ⚠ REACHABILITY AND CYCLES FOLLOW DIFFERENT EDGE SETS, faithfully. AIgentFlow
+// v2.598.0 (DC-FORGE-30) widened reachability to the five edge kinds —
+// next.default, next.conditions[].goto, next.parallel.steps[],
+// next.parallel.rendezvous and the step-level error_strategy.goto_step — plus
+// the FLOW-level error_strategy.goto_step seeded into the queue. The cycle walk
+// still follows next.default + next.conditions[].goto only: a rendezvous or an
+// error redirect back to an earlier step is an ordinary shape.
+//
+// ⛔ A condition's target key is `goto`, NOT `goto_step` (v0.2.0). This port
+// read `goto_step` (the Go struct FIELD name, not its yaml tag), so every
+// condition branch looked unreachable — and a flow using `goto_step` there,
+// which AIgentFlow refuses outright (KnownFields), was accepted. Together with
+// the narrow walk, a parallel fan-out and every conditional branch of a valid
+// flow were reported "not reachable from start step" (aigentflow#149).
 func validateConnectivity(flow doc, iss *issues) {
 	steps := stepsOf(flow)
 	if steps == nil {
@@ -42,15 +55,21 @@ func validateConnectivity(flow doc, iss *issues) {
 			if !isMap {
 				continue
 			}
-			target, ok := getString(cond, keyGotoStep)
+			if _, wrongKey := getString(cond, keyGotoStep); wrongKey {
+				iss.error(Issue{
+					Field:      stepField(stepID, keyNext, indexed(keyConditions, i), keyGotoStep),
+					Code:       codeUnknownYAMLKey,
+					StepID:     stepID,
+					Message:    "A condition's branch target key is 'goto', not 'goto_step'",
+					Suggestion: "Rename 'goto_step' to 'goto' (only error_strategy and quality_gate use 'goto_step')",
+				})
+			}
+			target, ok := getString(cond, keyGoto)
 			if !ok || target == "" || isNextMarker(target) || has(steps, target) {
 				continue
 			}
-			// Field path mirrors the JS implementation's `…conditions[i].goto`
-			// (not `.goto_step`) — the parity contract is the code, but keeping the
-			// path identical means one consumer can highlight either's findings.
 			iss.error(missingStepIssue(
-				stepField(stepID, keyNext, indexed(keyConditions, i), "goto"), stepID, target, names))
+				stepField(stepID, keyNext, indexed(keyConditions, i), keyGoto), stepID, target, names))
 		}
 	}
 
@@ -64,6 +83,13 @@ func validateConnectivity(flow doc, iss *issues) {
 	// Reachability (BFS from start).
 	reachable := make(map[string]struct{}, len(steps))
 	queue := []string{start}
+	// The FLOW-level error strategy names a step nothing else points at; it
+	// belongs to the flow, so AIgentFlow seeds it into the walk.
+	if fes, ok := getRecord(flow, keyErrorStrategy); ok {
+		if target, ok := getString(fes, keyGotoStep); ok && target != "" && !isNextMarker(target) {
+			queue = append(queue, target)
+		}
+	}
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -71,7 +97,7 @@ func validateConnectivity(flow doc, iss *issues) {
 			continue
 		}
 		reachable[current] = struct{}{}
-		for _, target := range gotoTargets(steps, current) {
+		for _, target := range reachTargets(steps, current) {
 			if _, seen := reachable[target]; !seen {
 				queue = append(queue, target)
 			}
@@ -103,8 +129,9 @@ func validateConnectivity(flow doc, iss *issues) {
 // (null / end / orchestrator) rather than a step reference.
 func isNextMarker(target string) bool { return nextMarkers.has(target) }
 
-// gotoTargets returns the step IDs a step routes to, excluding terminal markers.
-func gotoTargets(steps doc, stepID string) []string {
+// cycleTargets returns the edges the CYCLE detector follows — next.default and
+// next.conditions[].goto only (see the header).
+func cycleTargets(steps doc, stepID string) []string {
 	step, ok := asRecord(steps[stepID])
 	if !ok {
 		return nil
@@ -126,9 +153,40 @@ func gotoTargets(steps doc, stepID string) []string {
 		if !isMap {
 			continue
 		}
-		if target, ok := getString(cond, keyGotoStep); ok && target != "" && !isNextMarker(target) {
+		if target, ok := getString(cond, keyGoto); ok && target != "" && !isNextMarker(target) {
 			out = append(out, target)
 		}
+	}
+	return out
+}
+
+// reachTargets returns the edges REACHABILITY follows — all five kinds.
+// Under-reporting here is wrong in the silent direction: it turns a missing
+// edge into a confident accusation.
+func reachTargets(steps doc, stepID string) []string {
+	out := cycleTargets(steps, stepID)
+	step, ok := asRecord(steps[stepID])
+	if !ok {
+		return out
+	}
+	push := func(target string, ok bool) {
+		if ok && target != "" && !isNextMarker(target) {
+			out = append(out, target)
+		}
+	}
+	if next, ok := getRecord(step, keyNext); ok {
+		if parallel, ok := getRecord(next, keyParallel); ok {
+			if members, ok := getSlice(parallel, keySteps); ok {
+				for _, raw := range members {
+					id, isStr := raw.(string)
+					push(id, isStr)
+				}
+			}
+			push(getString(parallel, keyRendezvous))
+		}
+	}
+	if es, ok := getRecord(step, keyErrorStrategy); ok {
+		push(getString(es, keyGotoStep))
 	}
 	return out
 }
@@ -142,7 +200,7 @@ func hasCycle(steps doc, stepID string, visited, recStack map[string]struct{}) b
 	}
 	visited[stepID] = struct{}{}
 	recStack[stepID] = struct{}{}
-	for _, target := range gotoTargets(steps, stepID) {
+	for _, target := range cycleTargets(steps, stepID) {
 		if hasCycle(steps, target, visited, recStack) {
 			return true
 		}
