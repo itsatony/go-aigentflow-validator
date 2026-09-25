@@ -1,0 +1,34 @@
+aigentflow_version: '2.0.0'
+name: campaign-child-flow-no-id
+version: '1.0.0'
+description: >-
+  Every campaign child flow names a flow_id or a flow_name
+  (CampaignConfig.Validate). An alias alone, or an empty flow_id, names nothing.
+start: coordinate
+steps:
+  coordinate:
+    executor: function://text/template
+    query:
+      message: 'coordinating'
+    next:
+      default: 'orchestrator'
+campaign:
+  child_flows:
+    - flow_name: expert-unit
+    - alias: reviewer
+    - flow_id: ''
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate a campaign
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+output:
+  - message

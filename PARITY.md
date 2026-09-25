@@ -63,22 +63,40 @@ This document defines how this Go implementation stays in step with two things:
 > reference parses the error and warning `(code, field)` sets are identical, apart from the one
 > intended `unknown_executor_scheme` warning.
 
-> **Ahead of the JS port.** These reference save-door refusals are ported here and not yet in the
-> JS port. They are pure functions of the document, and each was checked against the reference with
-> both a refused and an accepted shape:
+> **v0.4.0 (2026-09-25) — the JS port caught up, and one false positive here.** The five
+> reference save-door refusals this library carried first (below) are ported in the JS port's
+> **0.13.0** ([PR #18](https://github.com/itsatony/aigentflow-flow-validator-js/pull/18)), with ten
+> new conformance fixtures, copied here byte-for-byte. The spec is unchanged (`v2.738.0`). Until
+> that PR merges, the parity harness must run against its branch
+> (`parity/go-only-save-door-rules`), because `main` there does not yet carry the fixtures.
 >
 > | Code | Reference rule |
 > | --- | --- |
 > | `reserved_step_id_orchestrator` | a top-level step may not be called `orchestrator` (v2.484.0) |
 > | `tool_discovery_invalid` | `tool_discovery` on the flow, the orchestrator or a step `query` must be `eager`, `lazy` or `off` (empty and templated values are skipped) |
-> | `mock_delay_invalid` | a `mock_scenarios` step `delay` must be a Go duration (`100` is refused, `100ms` is not) |
+> | `mock_delay_invalid` | a `mock_scenarios` step `delay` must be a Go duration (`100` is refused, `100ms` is not; see divergence #15) |
 > | `output_param_empty` | an `output:` entry may not be the empty string (a YAML null entry saves) |
 > | `campaign_no_child_flows`, `campaign_child_flow_no_id` | `campaign.child_flows` must be non-empty and each entry needs `flow_id` or `flow_name` |
 >
-> One JS rule is deliberately **looser** here: `campaign.max_credits_per_child: 1.5` is accepted.
-> The reference decodes it into an `int64` field, which truncates, and saves the flow; the JS port
-> refuses any non-integer (`invalid_type`), which is stricter than the door. None of the shared
-> fixtures exercises either shape, so the cross-implementation checks still agree.
+> **Fixed here: null `child_flows` entries.** The reference decodes `child_flows` into a typed
+> slice, and yaml.v3 drops null list entries while doing so. This library decodes into untyped
+> values, which keep the nil, and v0.3.0 judged a null entry as a non-mapping. Measured on the
+> reference's strict save parser (`NewStrictFlowParser().ParseFromYAMLBytes`, then
+> `ValidateFlowWithDetails`):
+>
+> | `campaign.child_flows` | reference | v0.3.0 | v0.4.0 |
+> | --- | --- | --- | --- |
+> | `[{flow_name: c}, ~]` (either order) | saves, 1 entry | `invalid_type` | valid |
+> | `[~]`, `[~, ~]`, a lone bare `-` | `campaign_no_child_flows` | `invalid_type` | `campaign_no_child_flows` |
+> | `[{flow_name: c}, foo]` | refused (cannot decode `foo`) | `invalid_type` | `invalid_type` |
+>
+> A finding's index is the entry's position in the YAML list, as in the JS port. The reference's
+> own message counts only the non-null entries; messages are not part of the contract.
+>
+> **`max_credits_per_child: 1.5` — both ports now agree.** The reference decodes it into an `int64`
+> field, which truncates, and saves the flow. This library has always accepted it; the JS port
+> refused any non-integer as `invalid_type` and stops doing so in 0.13.0. The new shared fixture
+> `valid-campaign-decoded-shapes.yaml` pins it on both sides.
 
 ## The comparison contract
 
@@ -231,6 +249,21 @@ mission clock. That threshold is a deployment constant this package cannot obser
 - The reference's runtime template field-resolution warnings (`template_missing_field`,
   `condition_not_boolean`) and `compliance_catalog_missing` are not produced here (scope).
 
+### 15. A mock `delay` written as a number is judged by its parsed value (shared with JS, #13 there)
+
+yaml.v3 fills the reference's `string` field with the scalar's **source text**; this library decodes
+into untyped values and only has the parsed number. They agree on every number except those that
+parse to zero without being written `0`, `+0` or `-0`: `delay: 0.0`, `00` and `0x0` are refused by
+the reference (no unit) and accepted here. Measured on the reference's strict save parser: `0`,
+`+0`, `-0` save; `0.0`, `00`, `0x0`, `100` are refused. Every other number is refused on both sides,
+because no number's text carries a unit.
+
+**Direction: looser than the reference.** The fix an author needs is the one the refusal already
+gives: write a unit. The same limit applies to `tool_discovery` and to a campaign `flow_id` /
+`flow_name`, where it cannot change a verdict (no number or boolean spelling is a valid mode, an
+empty value, or a template). Recovering the spelling would need the `yaml.Node` tree this library
+already builds for positions; **owed**, and best decided in both ports together.
+
 ## Not ported (owed)
 
 - `ValidateExecutorConfigEnvScopes` (reference v2.597.0): `executor_config` may expand only the
@@ -238,6 +271,7 @@ mission clock. That threshold is a deployment constant this package cannot obser
   in both ports.
 - General unknown-key rejection (divergence #9).
 - The `end` decision (divergence #8).
+- The numeric-spelling gap for mock `delay` (divergence #15).
 
 ## Enum surfaces carried but not yet consumed
 

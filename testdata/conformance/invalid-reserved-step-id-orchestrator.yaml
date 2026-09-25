@@ -1,0 +1,23 @@
+aigentflow_version: '2.0.0'
+name: reserved-step-id-orchestrator
+version: '1.0.0'
+description: >-
+  A top-level step may not be called 'orchestrator' (AIF v2.484.0, DC-COND-1).
+  It is the engine's step id for orchestrator-originated signals and a reserved
+  next marker. The check is case-sensitive, so 'Orchestrator' below is legal.
+start: Orchestrator
+steps:
+  Orchestrator:
+    executor: function://text/template
+    query:
+      message: 'legal: the check is case-sensitive'
+    next:
+      default: 'null'
+  orchestrator:
+    executor: function://text/template
+    query:
+      message: 'refused'
+    next:
+      default: 'null'
+output:
+  - message

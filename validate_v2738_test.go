@@ -184,11 +184,33 @@ func TestCampaignRules(t *testing.T) {
 		assertError(t, ValidateFlow(camp("  child_flows:\n    - alias: x\n"), Options{}), codeCampaignChildFlowNoID, "campaign.child_flows[0]")
 		assertValid(t, ValidateFlow(camp("  child_flows:\n    - flow_id: 123\n"), Options{}))
 		assertValid(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n"), Options{}))
+
+		// The reference decodes child_flows into a typed slice and yaml.v3 drops
+		// null entries on the way (measured): a null beside a real entry saves,
+		// and a list of nothing but nulls is "no child flows", never invalid_type.
+		for _, list := range []string{
+			"  child_flows:\n    - flow_name: c\n    - ~\n",
+			"  child_flows:\n    - flow_name: c\n    -\n",
+			"  child_flows:\n    - ~\n    - flow_name: c\n",
+		} {
+			assertValid(t, ValidateFlow(camp(list), Options{}))
+		}
+		for _, list := range []string{"  child_flows: [~]\n", "  child_flows: [~, ~]\n", "  child_flows:\n    -\n"} {
+			r := ValidateFlow(camp(list), Options{})
+			assertError(t, r, codeCampaignNoChildFlows, "campaign.child_flows")
+			assertCodesAbsent(t, "error", r.Errors, []string{codeInvalidType})
+		}
+		// A null is skipped, not renumbered: the index is the YAML position.
+		assertError(t, ValidateFlow(camp("  child_flows:\n    - ~\n    - alias: x\n"), Options{}),
+			codeCampaignChildFlowNoID, "campaign.child_flows[1]")
+		// A non-null non-mapping entry is still refused (the reference cannot decode it).
+		assertError(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n    - foo\n"), Options{}),
+			codeInvalidType, "campaign.child_flows[1]")
 	})
 }
 
-// Save-door refusals ported ahead of the JS port (PARITY.md, "Ahead of the JS
-// port"). Each has its accepted shapes pinned beside it.
+// Save-door refusals this library carried before the JS port (PARITY.md, v0.4.0
+// note). Each has its accepted shapes pinned beside it.
 func TestSaveDoorExtras(t *testing.T) {
 	t.Run("reserved step id orchestrator", func(t *testing.T) {
 		src := strings.ReplaceAll(minimalFlow, "only", "orchestrator")

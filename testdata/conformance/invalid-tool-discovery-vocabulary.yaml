@@ -1,0 +1,34 @@
+aigentflow_version: '2.0.0'
+name: tool-discovery-vocabulary
+version: '1.0.0'
+description: >-
+  tool_discovery is a closed vocabulary (eager, lazy, off) on all three surfaces
+  (AIF DC-FORGE-48). Every consumer treats an unknown value as eager, so the typo
+  'of' for 'off' exposed every tool. The flow root and the orchestrator are Go
+  string fields, so the number 5 is the string "5" and is refused there.
+tool_discovery: of
+start: agent
+steps:
+  agent:
+    executor: function://text/template
+    query:
+      message: 'hello'
+      tool_discovery: Lazy
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  tool_discovery: 5
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate a campaign
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+output:
+  - message

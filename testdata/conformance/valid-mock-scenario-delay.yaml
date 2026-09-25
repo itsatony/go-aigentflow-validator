@@ -1,0 +1,43 @@
+aigentflow_version: '2.0.0'
+name: mock-scenario-delay-accepted
+version: '1.0.0'
+description: >-
+  Go durations the reference accepts for a mock delay: a unit, a bare 0,
+  compound, fractional (both '.5s' and '1.s'), signed, and the micro sign. An
+  empty or null delay means none.
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    next:
+      default: 'null'
+mock_scenarios:
+  unit:
+    fetch:
+      delay: 100ms
+  zero:
+    fetch:
+      delay: 0
+  compound:
+    fetch:
+      delay: 1h30m
+  leading_point:
+    fetch:
+      delay: .5s
+  trailing_point:
+    fetch:
+      delay: 1.s
+  signed:
+    fetch:
+      delay: +2s
+  micro:
+    fetch:
+      delay: 250µs
+  empty:
+    fetch:
+      delay: ''
+  none:
+    fetch:
+      delay:
+output:
+  - ok
