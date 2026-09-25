@@ -1,0 +1,33 @@
+aigentflow_version: '2.0.0'
+name: campaign-no-child-flows
+version: '1.0.0'
+description: >-
+  A campaign needs at least one child flow (CampaignConfig.Validate). A list of
+  nothing but nulls counts as empty, because yaml.v3 drops null list entries.
+start: coordinate
+steps:
+  coordinate:
+    executor: function://text/template
+    query:
+      message: 'coordinating'
+    next:
+      default: 'orchestrator'
+campaign:
+  child_flows:
+    -
+  max_concurrent: 3
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate a campaign
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+output:
+  - message

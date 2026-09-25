@@ -263,15 +263,27 @@ func int64OfYAMLNumber(v any) (int64, bool) {
 // max_depth and max_total_children are defaulted when <= 0 before the reference
 // checks them, so their ">= 1" checks can never fire and are not ported.)
 //
-// Ahead of the JS port, which does not carry this rule yet. See PARITY.md.
+// The reference decodes child_flows into a typed slice, and yaml.v3 DROPS a null
+// list entry while doing so: `- ~` beside a real entry is simply ignored, and a
+// list of nothing but nulls is "no child flows" (both measured against the
+// reference's save door). This library decodes into untyped values, which keep
+// the nil, so nulls are filtered here. A finding's index is the entry's position
+// in the YAML list, as in the JS port; the reference's own message counts only
+// the non-null entries.
 func validateCampaignChildFlows(campaign doc, iss *issues) {
 	field := keyCampaign + "." + keyChildFlows
 	children, ok := getSlice(campaign, keyChildFlows)
-	if !ok || len(children) == 0 {
-		if raw := get(campaign, keyChildFlows); raw != nil && !ok {
-			iss.error(Issue{Field: field, Code: codeInvalidType, Message: "campaign.child_flows must be a list"})
-			return
+	if raw := get(campaign, keyChildFlows); raw != nil && !ok {
+		iss.error(Issue{Field: field, Code: codeInvalidType, Message: "campaign.child_flows must be a list"})
+		return
+	}
+	nonNull := 0
+	for _, raw := range children {
+		if raw != nil {
+			nonNull++
 		}
+	}
+	if nonNull == 0 {
 		iss.error(Issue{
 			Field: field, Code: codeCampaignNoChildFlows,
 			Message: "campaign requires at least one entry in child_flows",
@@ -279,6 +291,9 @@ func validateCampaignChildFlows(campaign doc, iss *issues) {
 		return
 	}
 	for i, raw := range children {
+		if raw == nil {
+			continue
+		}
 		child, isMap := asRecord(raw)
 		if !isMap {
 			iss.error(Issue{

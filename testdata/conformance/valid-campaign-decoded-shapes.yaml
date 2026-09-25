@@ -1,0 +1,39 @@
+aigentflow_version: '2.0.0'
+name: campaign-decoded-shapes
+version: '1.0.0'
+description: >-
+  Campaign shapes the reference's strict save parser accepts. A fractional
+  max_credits_per_child is truncated into the int64 field (1.5 is stored as 1).
+  A null child_flows entry is dropped by the decoder. flow_id is a string field,
+  so a number names a flow. max_depth 0 is replaced by its default before the
+  structural check runs, so it never refuses.
+start: coordinate
+steps:
+  coordinate:
+    executor: function://text/template
+    query:
+      message: 'coordinating'
+    next:
+      default: 'orchestrator'
+campaign:
+  child_flows:
+    - flow_name: expert-unit
+    -
+    - flow_id: 123
+  max_credits_per_child: 1.5
+  max_depth: 0
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate a campaign
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+output:
+  - message

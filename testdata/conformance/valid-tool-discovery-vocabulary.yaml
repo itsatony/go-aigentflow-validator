@@ -1,0 +1,64 @@
+aigentflow_version: '2.0.0'
+name: tool-discovery-accepted
+version: '1.0.0'
+description: >-
+  The accepted tool_discovery shapes: the three modes, an empty string (unset),
+  a templated value (rendered at run time), and a non-string value in a step
+  query, which is a free-form key the executor handles itself.
+tool_discovery: lazy
+query:
+  mode:
+    type: string
+start: eager_step
+steps:
+  eager_step:
+    executor: function://text/template
+    query:
+      message: 'eager'
+      tool_discovery: eager
+    next:
+      default: off_step
+  off_step:
+    executor: function://text/template
+    query:
+      message: 'off'
+      tool_discovery: 'off'
+    next:
+      default: empty_step
+  empty_step:
+    executor: function://text/template
+    query:
+      message: 'unset'
+      tool_discovery: ''
+    next:
+      default: templated_step
+  templated_step:
+    executor: function://text/template
+    query:
+      message: 'templated'
+      tool_discovery: '{{ .query.mode }}'
+    next:
+      default: numeric_step
+  numeric_step:
+    executor: function://text/template
+    query:
+      message: 'not a string, not judged'
+      tool_discovery: 5
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  tool_discovery:
+  exons: |
+    ---
+    name: coordinator
+    description: coordinate a campaign
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}coordinate{~/exons.message~}
+output:
+  - message

@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: mock-scenario-delay
+version: '1.0.0'
+description: >-
+  A mock_scenarios delay must be a Go duration (AIF DC-FORGE-51). YAML decodes
+  'delay: 100' into the string "100", which has no unit, and the mock ran with no
+  delay at all. The reference refuses it rather than guessing a unit.
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    next:
+      default: 'null'
+mock_scenarios:
+  slow:
+    fetch:
+      delay: 100
+      content:
+        ok: true
+output:
+  - ok

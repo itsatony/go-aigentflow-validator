@@ -262,6 +262,56 @@ var conformanceCases = []conformanceCase{
 		file: "valid-step-max-duration-applied.yaml", valid: true,
 		forbidWarningCodes: []string{codeStepMaxDurationIgnored},
 	},
+	// Reference save-door refusals this library carried first; the JS port
+	// ported them in its 0.13.0 and added these fixtures. Each invalid fixture
+	// was checked against the reference's strict save parser, and a copy with
+	// only the offending value corrected was checked to SAVE.
+	{
+		file: "invalid-reserved-step-id-orchestrator.yaml", valid: false,
+		wantErrorCodes: []string{codeReservedStepIDOrch},
+	},
+	{
+		// All three surfaces: the flow root, the orchestrator and a step query.
+		file: "invalid-tool-discovery-vocabulary.yaml", valid: false,
+		wantErrorCodes: []string{codeToolDiscoveryInvalid},
+	},
+	{
+		file: "valid-tool-discovery-vocabulary.yaml", valid: true,
+		forbidErrorCodes: []string{codeToolDiscoveryInvalid},
+	},
+	{
+		file: "invalid-mock-scenario-delay.yaml", valid: false,
+		wantErrorCodes: []string{codeMockDelayInvalid},
+	},
+	{
+		file: "valid-mock-scenario-delay.yaml", valid: true,
+		forbidErrorCodes: []string{codeMockDelayInvalid},
+	},
+	{
+		file: "invalid-output-param-empty.yaml", valid: false,
+		wantErrorCodes: []string{codeOutputParamEmpty},
+	},
+	{
+		// yaml.v3 drops a null list entry, so the reference saves this.
+		file: "valid-output-null-entry.yaml", valid: true,
+		forbidErrorCodes: []string{codeOutputParamEmpty},
+	},
+	{
+		// A list of nothing but nulls is empty after the reference decodes it.
+		file: "invalid-campaign-no-child-flows.yaml", valid: false,
+		wantErrorCodes: []string{codeCampaignNoChildFlows},
+	},
+	{
+		file: "invalid-campaign-child-flow-no-id.yaml", valid: false,
+		wantErrorCodes: []string{codeCampaignChildFlowNoID},
+	},
+	{
+		// max_credits_per_child 1.5 truncates and saves; a null child entry is
+		// dropped; flow_id is a Go string, so a number counts.
+		file: "valid-campaign-decoded-shapes.yaml", valid: true,
+		forbidErrorCodes: []string{codeInvalidType, codeCampaignMaxCreditsChild,
+			codeCampaignNoChildFlows, codeCampaignChildFlowNoID},
+	},
 }
 
 func TestConformance(t *testing.T) {

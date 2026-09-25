@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-// Save-door refusals the reference applies in FlowParser.ValidateFlow that the
-// JS port does not carry yet. Each is a pure function of the document, so it is
-// portable; each is an ERROR because AIgentFlow refuses the flow at save. Owed
-// upstream to the JS port (see PARITY.md, "Ahead of the JS port").
+// Save-door refusals the reference applies in FlowParser.ValidateFlow. This
+// library carried them first; the JS port ported them in its 0.13.0 (PARITY.md,
+// v0.4.0 note). Each is a pure function of the document, so it is portable; each
+// is an ERROR because AIgentFlow refuses the flow at save.
 
 // toolDiscoveryModes is the closed tool_discovery vocabulary (reference:
 // IsValidDiscoveryMode). An empty value means "unset" and is legal everywhere.

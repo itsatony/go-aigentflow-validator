@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: output-null-entry
+version: '1.0.0'
+description: >-
+  A YAML null output entry is NOT refused. yaml.v3 drops a null list entry when
+  it decodes the list, so the reference never sees it and the flow saves.
+start: only
+steps:
+  only:
+    executor: function://text/template
+    query:
+      message: 'hello'
+    next:
+      default: 'null'
+output:
+  - message
+  -
+  - ~
