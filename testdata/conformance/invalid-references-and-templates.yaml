@@ -16,4 +16,4 @@ steps:
       conditions:
         - if: '{{ .x }}'
           goto: also_missing
-      default: 'end'
+      default: 'null'

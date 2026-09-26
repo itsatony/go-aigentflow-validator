@@ -1,0 +1,46 @@
+aigentflow_version: '2.0.0'
+name: open-key-sets
+version: '1.0.0'
+description: >-
+  False-positive guard for the unknown-key rule. Every key below is chosen by the
+  author, sits in a Go map or interface, or is declared by an inlined type, and
+  the reference saves this flow. Also: nulls for struct-typed keys, a YAML merge
+  key, and a step whose id is a number.
+currency: USD
+max_duration: 10m
+error_strategy:
+data:
+  anything:
+    nested: [1, 2]
+  shared: &shared
+    executor: mock://api/shared
+executor_config:
+  openai:
+    extra:
+      region: eu
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    description:
+    for_each:
+    query:
+      any_key: 1
+      nested:
+        deeper: { x: true }
+    post_processing:
+      - data.set:
+          author_chosen_key: '{{ .step.response }}'
+    next:
+      default: 1
+  1:
+    <<: *shared
+    next:
+      default: 'null'
+mock_scenarios:
+  happy:
+    fetch:
+      content:
+        any: { shape: [1, 2] }
+output:
+  - author_chosen_key

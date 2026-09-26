@@ -312,6 +312,45 @@ var conformanceCases = []conformanceCase{
 		forbidErrorCodes: []string{codeInvalidType, codeCampaignMaxCreditsChild,
 			codeCampaignNoChildFlows, codeCampaignChildFlowNoID},
 	},
+	{
+		// v0.5.0: `end` is looked up as a STEP by the reference's save door, in a
+		// default and in a condition's goto alike, and no step is `end` here.
+		file: "invalid-next-end-without-step.yaml", valid: false,
+		wantErrorCodes: []string{codeStepNotFound},
+	},
+	{
+		// A real step named `end` saves; the reference's reachability walk still
+		// stops at `end`, so it is unreachable on both sides.
+		file: "valid-next-end-names-a-step.yaml", valid: true,
+		wantWarningCodes: []string{codeUnreachableStep},
+		forbidErrorCodes: []string{codeStepNotFound},
+	},
+	{
+		// KnownFields(true) at every depth: seven keys, seven findings.
+		file: "invalid-unknown-keys.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		// `next: end` is a scalar where a mapping is required; `tags:` a list.
+		file: "invalid-value-kind.yaml", valid: false,
+		wantErrorCodes: []string{codeInvalidType},
+	},
+	{
+		// The false-positive guard for the unknown-key rule.
+		file: "valid-open-key-sets.yaml", valid: true,
+		forbidErrorCodes: []string{codeUnknownYAMLKey, codeInvalidType},
+	},
+	{
+		// A number in a Go `string` duration field is its SOURCE text.
+		file: "invalid-duration-numeric-spellings.yaml", valid: false,
+		wantErrorCodes: []string{codeMockDelayInvalid, codeInvalidDuration},
+	},
+	{
+		// 0, +0, -0 save — and a timer interval of 0.
+		file: "valid-duration-numeric-zero.yaml", valid: true,
+		forbidErrorCodes: []string{codeMockDelayInvalid, codeInvalidDuration,
+			codeOrchTimerNoInterval, codeOrchTimerBadInterv},
+	},
 }
 
 func TestConformance(t *testing.T) {

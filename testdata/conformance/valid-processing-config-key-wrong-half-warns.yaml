@@ -25,6 +25,6 @@ steps:
           # Misspelling of on_error.
           onerror: continue
     next:
-      default: 'end'
+      default: 'null'
 output:
   - parsed

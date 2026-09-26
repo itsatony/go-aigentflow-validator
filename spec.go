@@ -40,14 +40,19 @@ type rawSpec struct {
 	ErrorStrategyActions   []string `json:"errorStrategyActions"`
 	RetryOnCategories      []string `json:"retryOnCategories"`
 	NextMarkers            []string `json:"nextMarkers"`
+	ReachabilityMarkers    []string `json:"reachabilityTerminalMarkers"`
 	ParallelResolutions    []string `json:"parallelResolutions"`
 	ForEachResolutions     []string `json:"forEachResolutions"`
 	LoopMaxIterationsLimit int      `json:"loopMaxIterationsLimit"`
 	CredentialRefPrefix    string   `json:"credentialReferencePrefix"`
 	ExecutorURLPattern     string   `json:"executorUrlPattern"`
 	TemplateActionOpen     string   `json:"templateActionOpen"`
-	EvalJudgeURL           string   `json:"evalJudgeUrl"`
-	QualityGate            struct {
+	KnownKeys              struct {
+		Root  string                       `json:"root"`
+		Types map[string]map[string]string `json:"types"`
+	} `json:"knownKeys"`
+	EvalJudgeURL string `json:"evalJudgeUrl"`
+	QualityGate  struct {
 		OnFailActions  []string `json:"onFailActions"`
 		OnFailRejected []string `json:"onFailRejected"`
 		ThresholdMin   float64  `json:"thresholdMin"`
@@ -93,6 +98,7 @@ var (
 	errorStrategyActions set
 	retryOnCategories    set
 	nextMarkers          set
+	reachabilityMarkers  set
 	forEachResolutions   set
 	orchestratorTriggers set
 	orchestratorTools    set
@@ -157,6 +163,7 @@ func init() {
 	errorStrategyActions = newSet(spec.ErrorStrategyActions)
 	retryOnCategories = newSet(spec.RetryOnCategories)
 	nextMarkers = newSet(spec.NextMarkers)
+	reachabilityMarkers = newSet(spec.ReachabilityMarkers)
 	forEachResolutions = newSet(spec.ForEachResolutions)
 	orchestratorTriggers = newSet(spec.Orchestrator.Triggers)
 	orchestratorTools = newSet(spec.Orchestrator.Tools)

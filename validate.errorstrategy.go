@@ -131,7 +131,9 @@ func validateErrorStrategy(strategy, steps doc, field, stepID string, iss *issue
 	// max_delay is an ERROR when malformed; retry_delay only a WARNING. That
 	// asymmetry is the reference's, not an oversight: a bad max_delay disables the
 	// backoff ceiling, a bad retry_delay falls back to a default.
-	if d, ok := getString(strategy, keyMaxDelay); ok && d != "" && !isValidGoDuration(d) {
+	// A Go `string` field, filled from any scalar by its source text: `max_delay:
+	// 100` is "100" (no unit) and refused, as is `0.0`; `0` saves.
+	if d, ok := scalarTextAt(get(strategy, keyMaxDelay), field+"."+keyMaxDelay, iss.sources); ok && d != "" && !isValidGoDuration(d) {
 		iss.error(Issue{
 			Field: field + "." + keyMaxDelay, Code: codeInvalidDuration, StepID: stepID,
 			Message: fmt.Sprintf("Invalid max_delay duration '%s'", d),

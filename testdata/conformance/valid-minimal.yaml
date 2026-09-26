@@ -9,7 +9,7 @@ steps:
     query:
       message: 'Hello, {{ .query.name | default "world" }}!'
     next:
-      default: 'end'
+      default: 'null'
 query:
   name:
     type: string

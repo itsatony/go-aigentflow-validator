@@ -2,10 +2,10 @@ aigentflow_version: '2.0.0'
 name: branching-with-loop
 version: '1.2.0'
 start: classify
-constraints:
-  budget: 5.0
-  currency: USD
-  max_duration: 10m
+# The reference inlines its constraints type into the flow root, so these two
+# keys live at the top level; a nested `constraints:` block is refused as unknown.
+currency: USD
+max_duration: 10m
 steps:
   classify:
     executor: ai://openai/chat
@@ -26,13 +26,13 @@ steps:
     query:
       channel: ops
     next:
-      default: 'end'
+      default: 'null'
   archive:
     executor: db://postgres/insert
     query:
       table: tickets
     next:
-      default: 'end'
+      default: 'null'
 query:
   text:
     type: string

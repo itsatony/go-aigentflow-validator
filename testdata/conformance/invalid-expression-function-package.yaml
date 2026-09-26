@@ -13,4 +13,4 @@ steps:
     query:
       value: 'plain'
     next:
-      default: 'end'
+      default: 'null'

@@ -41,7 +41,7 @@ func validateConnectivity(flow doc, iss *issues) {
 		}
 
 		if target, ok := getString(next, keyDefault); ok && target != "" &&
-			!isNextMarker(target) && !has(steps, target) {
+			!isSaveDoorMarker(target) && !has(steps, target) {
 			iss.error(missingStepIssue(
 				stepField(stepID, keyNext, keyDefault), stepID, target, names))
 		}
@@ -65,7 +65,7 @@ func validateConnectivity(flow doc, iss *issues) {
 				})
 			}
 			target, ok := getString(cond, keyGoto)
-			if !ok || target == "" || isNextMarker(target) || has(steps, target) {
+			if !ok || target == "" || isSaveDoorMarker(target) || has(steps, target) {
 				continue
 			}
 			iss.error(missingStepIssue(
@@ -125,9 +125,23 @@ func validateConnectivity(flow doc, iss *issues) {
 	}
 }
 
-// isNextMarker reports whether a `next` target is a terminal marker
-// (null / end / orchestrator) rather than a step reference.
-func isNextMarker(target string) bool { return nextMarkers.has(target) }
+// TWO marker sets, because the reference gives two answers and both are
+// verdicts.
+//
+// Existence (an ERROR) follows the save door, validateNextLogic (parser.go):
+// only `null` and `orchestrator` stand without a step of that name, so
+// `default: end` is refused when no step is called `end`.
+//
+// Reachability and cycles (WARNINGS) follow findReachableSteps /
+// checkForCycles (validation.go), which still skip `end` as "control leaves the
+// graph" — so a real step named `end` that only `end` routes to is reported
+// unreachable, by the reference too.
+
+// isSaveDoorMarker reports whether a `next` target needs no step of that name.
+func isSaveDoorMarker(target string) bool { return nextMarkers.has(target) }
+
+// isNextMarker reports whether the reachability and cycle walks stop at target.
+func isNextMarker(target string) bool { return reachabilityMarkers.has(target) }
 
 // cycleTargets returns the edges the CYCLE detector follows — next.default and
 // next.conditions[].goto only (see the header).

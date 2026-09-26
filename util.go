@@ -199,6 +199,25 @@ func scalarText(v any) (string, bool) {
 	}
 }
 
+// scalarSources maps a field path (`mock_scenarios.s.fetch.delay`) to the
+// source text of the number or boolean scalar written there.
+type scalarSources map[string]string
+
+// scalarTextAt is scalarText, except that a number or boolean is rendered by its
+// SOURCE spelling when the document was parsed from text. That is exactly what
+// the reference's Go `string` field receives from yaml.v3: `delay: 0.0` is the
+// text "0.0" (no unit, not a duration), although it decodes here to the number
+// 0. Without sources it falls back to scalarText.
+func scalarTextAt(v any, path string, sources scalarSources) (string, bool) {
+	switch v.(type) {
+	case bool, int, int64, uint64, float64:
+		if src, ok := sources[path]; ok {
+			return src, true
+		}
+	}
+	return scalarText(v)
+}
+
 // trimmed returns a string value with surrounding whitespace removed, passing
 // through any non-string unchanged. Used where the reference treats a
 // whitespace-only value as absent (a rubric of "  " is not a rubric).

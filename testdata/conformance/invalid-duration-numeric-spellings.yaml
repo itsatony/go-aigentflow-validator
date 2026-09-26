@@ -1,0 +1,36 @@
+aigentflow_version: '2.0.0'
+name: duration-numeric-spellings
+version: '1.0.0'
+description: >-
+  A Go `string` field is filled from a YAML number by its SOURCE text, so
+  `delay: 0.0` reaches the reference as "0.0", which has no unit and is not a Go
+  duration, although it parses to the number 0. Each duration below is refused;
+  only a bare 0 (or +0, -0) needs no unit.
+start: fan
+steps:
+  fan:
+    executor: mock://api/fan
+    for_each:
+      items: '{{ .query.items }}'
+      throttle:
+        delay: 0.0
+        batch_size: 2
+        batch_delay: 100
+    error_strategy:
+      action: retry
+      max_retries: 2
+      max_delay: 1.5
+    next:
+      default: 'null'
+mock_scenarios:
+  zero_point_zero:
+    fan:
+      delay: 0.0
+  leading_zero:
+    fan:
+      delay: 00
+  hex:
+    fan:
+      delay: 0x0
+output:
+  - ok

@@ -70,7 +70,7 @@ func ParseFlow(yamlText string) (flow map[string]any, parseErrors, parseWarnings
 		return nil, parseErrors, parseWarnings
 	}
 
-	m, ok := value.(map[string]any)
+	m, ok := normaliseKeys(value).(map[string]any)
 	if !ok {
 		parseErrors = append(parseErrors, Issue{
 			Field: "", Code: codeInvalidRoot, Severity: SeverityError,
@@ -80,6 +80,118 @@ func ParseFlow(yamlText string) (flow map[string]any, parseErrors, parseWarnings
 	}
 	return m, parseErrors, parseWarnings
 }
+
+// normaliseKeys returns the document with every map[any]any turned into
+// map[string]any. yaml.v3 produces map[any]any for a mapping that has a
+// non-string key (`steps: {1: …}`), and every validator here narrows to
+// map[string]any, so such a mapping read as "not a mapping": a step id of `1`,
+// which the reference stores as the string "1", was refused as invalid_type. A
+// key is rendered with fmt.Sprint, which equals its source text for every
+// ordinary spelling (`1`, `true`).
+//
+// Copy-on-write: a mapping or list is copied only when something beneath it
+// changed, so a caller's document passed to ValidateFlowObject is never mutated.
+func normaliseKeys(v any) any {
+	out, _ := normaliseKeysChanged(v)
+	return out
+}
+
+func normaliseKeysChanged(v any) (any, bool) {
+	switch x := v.(type) {
+	case map[string]any:
+		var copied map[string]any
+		for k, item := range x {
+			n, changed := normaliseKeysChanged(item)
+			if !changed {
+				continue
+			}
+			if copied == nil {
+				copied = make(map[string]any, len(x))
+				for k2, v2 := range x {
+					copied[k2] = v2
+				}
+			}
+			copied[k] = n
+		}
+		if copied == nil {
+			return x, false
+		}
+		return copied, true
+	case map[any]any:
+		out := make(map[string]any, len(x))
+		for k, item := range x {
+			out[fmt.Sprint(k)] = normaliseKeys(item)
+		}
+		return out, true
+	case []any:
+		var copied []any
+		for i, item := range x {
+			n, changed := normaliseKeysChanged(item)
+			if !changed {
+				continue
+			}
+			if copied == nil {
+				copied = append([]any(nil), x...)
+			}
+			copied[i] = n
+		}
+		if copied == nil {
+			return x, false
+		}
+		return copied, true
+	default:
+		return v, false
+	}
+}
+
+// collectScalarSources records the source text of every plain number and
+// boolean scalar, keyed by the field path the validators emit. The reference
+// decodes such a scalar into a Go `string` field as that text, so `delay: 0.0`
+// is "0.0" there while the decoded value here is the number 0. Aliases are not
+// followed: a value reached through one keeps its decoded rendering. A parse
+// failure yields no sources (the document is already refused).
+func collectScalarSources(yamlText string) scalarSources {
+	out := scalarSources{}
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(yamlText), &root); err != nil || len(root.Content) == 0 {
+		return out
+	}
+	var walk func(path string, node *yaml.Node)
+	walk = func(path string, node *yaml.Node) {
+		switch node.Kind {
+		case yaml.MappingNode:
+			for i := 0; i+1 < len(node.Content); i += 2 {
+				key := node.Content[i]
+				if key.Kind != yaml.ScalarNode {
+					continue
+				}
+				child := key.Value
+				if path != "" {
+					child = path + "." + key.Value
+				}
+				walk(child, node.Content[i+1])
+			}
+		case yaml.SequenceNode:
+			for i, item := range node.Content {
+				walk(fmt.Sprintf("%s[%d]", path, i), item)
+			}
+		case yaml.ScalarNode:
+			switch node.ShortTag() {
+			case yamlTagInt, yamlTagFloat, yamlTagBool:
+				out[path] = node.Value
+			}
+		}
+	}
+	walk("", root.Content[0])
+	return out
+}
+
+// yaml.v3 short tags of the scalars whose decoded value loses its spelling.
+const (
+	yamlTagInt   = "!!int"
+	yamlTagFloat = "!!float"
+	yamlTagBool  = "!!bool"
+)
 
 // issuesFromYAMLError converts a yaml.v3 error into one Issue per underlying
 // problem, preserving the line number and distinguishing a duplicate key (which
