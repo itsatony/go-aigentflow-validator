@@ -40,11 +40,11 @@ func validateToolDiscovery(flow doc, iss *issues) {
 			Suggestion: "Use one of: " + joinNames(sortedSet(toolDiscoveryModes)),
 		})
 	}
-	if value, ok := scalarText(get(flow, keyToolDiscovery)); ok {
+	if value, ok := scalarTextAt(get(flow, keyToolDiscovery), keyToolDiscovery, iss.sources); ok {
 		check(value, keyToolDiscovery, "")
 	}
 	if orch, ok := getRecord(flow, keyOrchestrator); ok {
-		if value, ok := scalarText(get(orch, keyToolDiscovery)); ok {
+		if value, ok := scalarTextAt(get(orch, keyToolDiscovery), keyOrchestrator+"."+keyToolDiscovery, iss.sources); ok {
 			check(value, keyOrchestrator+"."+keyToolDiscovery, "")
 		}
 	}
@@ -83,7 +83,10 @@ func validateMockScenarioDelays(flow doc, iss *issues) {
 			if !ok {
 				continue
 			}
-			delay, ok := scalarText(get(mock, keyDelay))
+			field := fmt.Sprintf("%s.%s.%s.%s", keyMockScenarios, scenario, stepID, keyDelay)
+			// Judged by the SOURCE spelling: `delay: 0.0` is the text "0.0" to the
+			// reference (no unit, refused) although it decodes to the number 0.
+			delay, ok := scalarTextAt(get(mock, keyDelay), field, iss.sources)
 			if !ok || delay == "" {
 				continue
 			}
@@ -91,7 +94,7 @@ func validateMockScenarioDelays(flow doc, iss *issues) {
 				continue
 			}
 			iss.error(Issue{
-				Field: fmt.Sprintf("%s.%s.%s.%s", keyMockScenarios, scenario, stepID, keyDelay),
+				Field: field,
 				Code:  codeMockDelayInvalid,
 				Message: fmt.Sprintf("mock delay '%s' in scenario '%s' step '%s' is not a Go duration",
 					delay, scenario, stepID),

@@ -93,6 +93,10 @@ type Options struct {
 type issues struct {
 	errors   []Issue
 	warnings []Issue
+	// sources is the pass's one piece of read-only context: the SOURCE spelling
+	// of every number/boolean scalar, by field path. Only a YAML text has it, so
+	// it is nil under ValidateFlowObject. See scalarTextAt.
+	sources scalarSources
 }
 
 func newIssues() *issues {

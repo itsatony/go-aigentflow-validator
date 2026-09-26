@@ -1,0 +1,15 @@
+aigentflow_version: '2.0.0'
+name: value-kind
+version: '1.0.0'
+description: >-
+  A value of the wrong KIND does not decode into the reference's types, so the
+  flow is refused before any rule runs: `next: end` is a scalar where a mapping
+  is required (write `next: { default: 'null' }`), and `tags:` must be a list.
+start: fetch
+tags: research
+steps:
+  fetch:
+    executor: mock://api/fetch
+    next: end
+output:
+  - ok

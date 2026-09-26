@@ -1,0 +1,50 @@
+aigentflow_version: '2.0.0'
+name: duration-numeric-zero
+version: '1.0.0'
+description: >-
+  The numbers the reference accepts in a duration field: a bare 0, +0 and -0,
+  whose source text Go's time.ParseDuration takes without a unit. A timer
+  trigger interval of 0 saves too (it used to read as "no interval" here).
+start: fan
+steps:
+  fan:
+    executor: mock://api/fan
+    for_each:
+      items: '{{ .query.items }}'
+      throttle:
+        delay: 0
+        batch_size: 2
+        batch_delay: +0
+    error_strategy:
+      action: retry
+      max_retries: 2
+      max_delay: -0
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  triggers:
+    - type: timer
+      interval: 0
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+mock_scenarios:
+  zero:
+    fan:
+      delay: 0
+  plus_zero:
+    fan:
+      delay: +0
+  minus_zero:
+    fan:
+      delay: -0
+output:
+  - ok

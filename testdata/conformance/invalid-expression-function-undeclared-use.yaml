@@ -14,7 +14,7 @@ steps:
       slug: '{{ fn_slugify .query.company }}'
       typo: '{{ fn_slugfy .query.company }}'
     next:
-      default: 'end'
+      default: 'null'
 query:
   company:
     type: string

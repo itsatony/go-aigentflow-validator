@@ -27,6 +27,6 @@ steps:
             - loop.break:
                 if: '{{ ge (atoi .loop.vars.counter) 3 }}'
     next:
-      default: 'end'
+      default: 'null'
 output:
   - done

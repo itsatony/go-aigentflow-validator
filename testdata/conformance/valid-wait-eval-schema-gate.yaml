@@ -36,7 +36,7 @@ steps:
       rubric: 'Rate the summary quality from 0 to 1.'
       content: '{{ .data.draft.summary }}'
     next:
-      default: 'end'
+      default: 'null'
 query:
   topic:
     type: string

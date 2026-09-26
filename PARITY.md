@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.738.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.753.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)).
 
 > **v0.3.0 (2026-09-25) — parity refresh, v2.485.0 → v2.738.0.** The spec and all 48 conformance
@@ -62,6 +62,46 @@ This document defines how this Go implementation stays in step with two things:
 > (normalised for divergences #8 and #9) the verdict matches on 48 of 48, and on every fixture the
 > reference parses the error and warning `(code, field)` sets are identical, apart from the one
 > intended `unknown_executor_scheme` warning.
+
+> **v0.5.0 (2026-09-26) — the three gaps that were looser than the reference in both ports are
+> closed, together with the JS port's 0.14.0.** The spec (now `v2.753.0`: the reference's grammar
+> sources have a zero diff from `v2.738.0`) and all 65 conformance fixtures are byte-identical to
+> that branch. Every verdict was measured on the reference's strict save parser
+> (`NewStrictFlowParser().ParseFromYAMLBytes`, then `ValidateFlowWithDetails`) over a 133-shape
+> probe matrix; both ports match it on all 133 shapes and all 65 fixtures.
+>
+> | Gap | Reference verdict (measured) | Before | Now |
+> | --- | --- | --- | --- |
+> | `next: { default: end }`, a condition's `goto: end`, no step `end` | refused, "step_id (end) … not found" | valid | `step_not_found` |
+> | the same, with a step named `end` | saves; `end` step `unreachable_step` | valid | valid, same warning |
+> | `next: end` (scalar), `next: [a]`, `tags: x`, `output: {a: 1}` | refused, cannot decode | valid | `invalid_type` |
+> | an unknown key at any struct level (root, step, `next`, `error_strategy`, loop sub-step, mock step, query definition, trigger, …) | refused, "field X not found in type T" | valid | `unknown_yaml_key` |
+> | the same key with a null value | refused | valid | `unknown_yaml_key` |
+> | a mock `delay` of `0.0`, `00`, `0x0`, `.0`, `-0.0`, `0.`, `0o0`, `0_0` | refused (no unit) | valid | `mock_delay_invalid` |
+> | a mock `delay` of `0`, `+0`, `-0`, `"0"` | saves | valid | valid |
+> | `throttle.delay` / `batch_delay` / `error_strategy.max_delay` of `100`, `1.5`, `0.0` | refused | valid (numbers skipped) | `invalid_duration` |
+> | a timer trigger `interval: 0` | saves | `orchestrator_timer_no_interval` | valid |
+> | a step id written as a number (`1:`) | saves | `invalid_type` | valid |
+>
+> - **`end`:** the existence check now uses the save door's sentinels (spec `nextMarkers`: `null`,
+>   `orchestrator`); reachability and cycles keep `end` as terminal (spec
+>   `reachabilityTerminalMarkers`), as the reference's walks do. Divergence #8 is closed. It was
+>   hiding a real problem: 15 shared fixtures called valid routed to `end`, and the reference refused
+>   all 15. They now say `'null'`.
+> - **Unknown keys and value kinds:** `validate.unknownkeys.go`, driven by `knownKeys` in the spec,
+>   which is derived by reflection over the reference's types (see the JS port's `PARITY.md`,
+>   "Unknown keys and value kinds", for the derivation and its 771-check verification). Divergence #9
+>   is closed. It fires zero times on the 216 bundled flows.
+> - **Source spelling:** `ValidateFlow` records the source text of every number and boolean scalar
+>   (`collectScalarSources`) and judges a Go-`string` duration field by it. Divergence #15 is
+>   narrowed to `ValidateFlowObject`.
+> - **Fixed here: a mapping with a non-string key.** yaml.v3 decodes `steps: {1: …}` into
+>   `map[any]any`, which every validator read as "not a mapping", so a numeric step id was refused.
+>   `ParseFlow` and `ValidateFlowObject` now normalise such keys to strings, as the reference's typed
+>   decode does (without mutating a caller's document).
+>
+> Bundled corpus (216 files): with `StrictRegistries` the verdict matches the reference on all 216;
+> `unreachable_step` 25 = 25 and `potential_infinite_loop` 1 = 1.
 
 > **v0.4.0 (2026-09-25) — the JS port caught up, and one false positive here.** The five
 > reference save-door refusals this library carried first (below) are ported in the JS port's
@@ -197,24 +237,22 @@ executor schemes warn. At v0.3.0 the vendored list equals the reference's regist
 flows are refused by the reference for this alone and are valid here without `StrictRegistries`.
 v0.2.0 said nothing at all in that case; v0.3.0 at least warns.
 
-### 8. `end` as a next target (shared with JS, divergence #2 there)
+### 8. `end` as a next target — CLOSED in v0.5.0 (shared with JS, divergence #2 there)
 
-Both ports treat `null`, `end` and `orchestrator` as terminal markers. The reference's
-connectivity check exempts `end`, but its save-door parser (`validateNextLogic`) does **not**: it
-refuses `next: { default: end }` because no step is called `end`. Measured at v2.738.0: 23 of the
-48 shared fixtures route to `end`, and the reference's save door refuses 16 of them with "step_id
-(end) … not found" (14 are fixtures both ports call valid; the rest fail earlier on another rule).
+Both ports used to treat `null`, `end` and `orchestrator` as terminal markers everywhere. The
+reference's connectivity check exempts `end`, but its save-door parser (`validateNextLogic`) does
+**not**: it refuses `next: { default: end }` because no step is called `end`. Both ports now
+follow each half: the existence check uses the save door's set, and reachability and cycles keep
+`end` as terminal. The shared fixtures that routed to `end` now route to `'null'`.
 
-**Direction: looser than the reference.** Kept because the shared fixtures and the JS port depend
-on it, and changing it is a cross-repository decision. **Owed:** decide it in both ports together.
-
-### 9. Unknown keys are not rejected in general (shared with JS)
+### 9. Unknown keys — CLOSED in v0.5.0 (shared with JS)
 
 The reference's save door parses with `KnownFields(true)`, so any key its types do not declare is
-refused. This library reports unknown keys only where the reference names them: the retired keys
-above and a condition's `goto_step`. For example the shared fixture `valid-branching.yaml` carries a
-flow-root `constraints:` block, which both ports accept and the reference refuses. Porting the rule
-means a full field inventory of every flow, step, loop and orchestrator type. **Owed, as in JS.**
+refused, at every depth. `validate.unknownkeys.go` now refuses the same keys (`unknown_yaml_key`)
+and the same wrong value kinds (`invalid_type`), from the derived `knownKeys` inventory in the
+spec. What stays open is what the reference leaves open: Go maps (author-chosen keys), interfaces
+(`any`: a step's `query`, `data`, a mock's `content`), and a processing-operation entry, which has
+its own unmarshaller (divergence #12). Scalars are judged for kind only.
 
 ### 10. The loop body is walked for every step (shared with JS)
 
@@ -225,7 +263,8 @@ step. All loop-body findings are warnings, so no verdict changes.
 
 The reference re-serialises its typed `Flow` and scans that, so it sees only declared fields. This
 library walks every string leaf of the parsed document. The two agree on every flow the reference
-would accept, because anything else is refused by divergence #9's rule.
+would accept, because anything else is refused by the reference's unknown-key rule, which this
+library now reproduces too.
 
 ### 12. A malformed processing-operation entry gets no shape verdict (shared with JS, #11 there)
 
@@ -249,7 +288,13 @@ mission clock. That threshold is a deployment constant this package cannot obser
 - The reference's runtime template field-resolution warnings (`template_missing_field`,
   `condition_not_boolean`) and `compliance_catalog_missing` are not produced here (scope).
 
-### 15. A mock `delay` written as a number is judged by its parsed value (shared with JS, #13 there)
+### 15. A number in a duration field without source text is judged by its parsed value (shared with JS, #13 there) — NARROWED in v0.5.0
+
+**Since v0.5.0 this applies to `ValidateFlowObject` and to a value reached through a YAML alias
+only.** `ValidateFlow` records the source spelling of every number and boolean scalar and judges
+the mock `delay`, `throttle.delay`, `throttle.batch_delay`, `error_strategy.max_delay`, a timer
+`interval` and `tool_discovery` by it, exactly as the reference's `string` fields receive them.
+The rest of this section describes the remaining case.
 
 yaml.v3 fills the reference's `string` field with the scalar's **source text**; this library decodes
 into untyped values and only has the parsed number. They agree on every number except those that
@@ -259,19 +304,16 @@ the reference (no unit) and accepted here. Measured on the reference's strict sa
 because no number's text carries a unit.
 
 **Direction: looser than the reference.** The fix an author needs is the one the refusal already
-gives: write a unit. The same limit applies to `tool_discovery` and to a campaign `flow_id` /
-`flow_name`, where it cannot change a verdict (no number or boolean spelling is a valid mode, an
-empty value, or a template). Recovering the spelling would need the `yaml.Node` tree this library
-already builds for positions; **owed**, and best decided in both ports together.
+gives: write a unit. A campaign `flow_id` / `flow_name` also uses the parsed value, where it cannot
+change a verdict (no number spelling is empty or a template).
 
 ## Not ported (owed)
 
 - `ValidateExecutorConfigEnvScopes` (reference v2.597.0): `executor_config` may expand only the
   environment variables of the provider it is written under. Needs four vendored scope tables. Owed
   in both ports.
-- General unknown-key rejection (divergence #9).
-- The `end` decision (divergence #8).
-- The numeric-spelling gap for mock `delay` (divergence #15).
+- The numeric-spelling gap for `ValidateFlowObject` (divergence #15), which has no source text to
+  recover.
 
 ## Enum surfaces carried but not yet consumed
 
@@ -291,7 +333,8 @@ When AIgentFlow's flow schema changes:
 3. `cp <js-repo>/test/conformance/fixtures/*.yaml testdata/conformance/` and add the matching case to
    `conformanceCases`. `TestConformanceFixturesAreAllCovered` fails if you forget the case, so a copied
    fixture cannot sit unasserted.
-4. Port the new rule, with its `code` constant added to `keys.go`.
+4. Port the new rule, with its `code` constant added to `keys.go`. A new or renamed field in any
+   flow type arrives as a `knownKeys` change in the copied spec; nothing to port for it here.
 5. `make ci && make parity-check`.
 6. Note the version and the ported rule at the top of this file's tracked-version line.
 

@@ -1,0 +1,33 @@
+aigentflow_version: '2.0.0'
+name: unknown-keys
+version: '1.0.0'
+description: >-
+  The reference's save door decodes with yaml.v3 KnownFields(true), which
+  refuses a key the containing type does not declare at EVERY depth. Each key
+  marked below is refused; each would otherwise be silently dropped.
+start: fetch
+constraints: # unknown: currency and max_duration live at the flow root
+  currency: USD
+steps:
+  fetch:
+    excutor: mock://api/typo # unknown (typo of executor)
+    executor: mock://api/fetch
+    output: # unknown: outputs are written with post_processing output.set
+      - body
+    error_strategy:
+      action: retry
+      retries: 3 # unknown: the key is max_retries
+    next:
+      default: 'null'
+      otherwise: 'null' # unknown
+query:
+  topic:
+    type: string
+    label: Topic # unknown on a query parameter definition
+mock_scenarios:
+  slow:
+    fetch:
+      delay: 50ms
+      latency: 50ms # unknown on a mock step
+output:
+  - body

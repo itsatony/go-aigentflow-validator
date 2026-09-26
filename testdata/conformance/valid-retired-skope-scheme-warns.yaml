@@ -13,6 +13,6 @@ steps:
     query:
       prompt: 'anything'
     next:
-      default: 'end'
+      default: 'null'
 output:
   - result

@@ -64,7 +64,7 @@ right for an authoring-time lint and wrong for admission control.
 
 Know the cost of leaving it off: AIgentFlow itself refuses a template that calls a function it does
 not have. Without `StrictRegistries` this library only warns (`template_function_unknown`), so such
-a flow passes here and is refused at AIgentFlow's save door. At spec v2.738.0 the vendored function
+a flow passes here and is refused at AIgentFlow's save door. At spec v2.753.0 the vendored function
 list equals AIgentFlow's registry, so the warning is a real problem unless your AIgentFlow is newer.
 
 `Errors` and `Warnings` are always non-nil, so they encode as `[]` and never `null`.
@@ -81,9 +81,10 @@ version rejected them has no way to understand it.
 | Area | Examples |
 | --- | --- |
 | Basic structure | required top-level fields, step-map shape, per-step executor, reserved `.` in step IDs, reserved step ID `orchestrator` |
+| Unknown keys and value kinds | any key a flow type does not declare, at every level (`unknown_yaml_key`); a value of the wrong kind, e.g. `next: end` (`invalid_type`) |
 | Retired keys | flow-root `budget:` and `max_retries:`, step and loop sub-step `max_retries:`, `campaign.budget_max_per_child` (all refused as `unknown_yaml_key`) |
 | Executors | the reference's executor-URL shape, `scheme://authority/path` (error; templated URLs skipped), unknown scheme (warning) |
-| Connectivity | `next.default` / `next.conditions[].goto` existence (error), unreachable steps + cycles (warning) |
+| Connectivity | `next.default` / `next.conditions[].goto` existence (error; only `null` and `orchestrator` need no step, so `end` must name one), unreachable steps + cycles (warning) |
 | `next.parallel` | rendezvous + member existence, non-empty fan-out, `next: orchestrator` needs an orchestrator |
 | `error_strategy` | action enum, `goto_step` existence, Go durations, `backoff_multiplier > 0`, `retry_on` categories, a `goto_step` no action can take (warning) |
 | `query` schema | param types, nested `properties`, array `items` types, `min_items`/`max_items` |
@@ -101,10 +102,6 @@ version rejected them has no way to understand it.
 | Other save-door rules | `tool_discovery` vocabulary, mock-scenario `delay` durations, empty `output:` entries |
 
 ## What it does not check
-
-- **Unknown keys in general.** AIgentFlow refuses any key its types do not declare. This library
-  reports only the keys AIgentFlow names specifically (the retired keys, a condition's `goto_step`).
-  See PARITY.md, divergence #9.
 
 - **Credentials.** Only the reference *form* is validated. Nothing is read, resolved, or transported.
 - **The model-compliance catalogue.** Whether a named model is permitted is a server question.

@@ -28,7 +28,7 @@ steps:
       on_fail: retry
       max_retries: 1
     next:
-      default: 'end'
+      default: 'null'
 query:
   topic:
     type: string

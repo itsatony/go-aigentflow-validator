@@ -71,13 +71,16 @@ func validateForEach(step, forEach doc, stepID string, iss *issues) {
 }
 
 func validateThrottle(throttle doc, field, stepID string, iss *issues) {
-	if delay, ok := getString(throttle, keyDelay); ok && delay != "" {
+	// Both delays are Go `string` fields, which yaml.v3 fills from ANY scalar by
+	// its source text: `delay: 100` is "100" (no unit, refused), `0` is "0"
+	// (saves) and `0.0` is "0.0" (refused). A number used to be skipped here.
+	if delay, ok := scalarTextAt(get(throttle, keyDelay), field+"."+keyDelay, iss.sources); ok && delay != "" {
 		checkThrottleDuration(delay, field+"."+keyDelay, stepID,
 			maxThrottleDelay, maxThrottleDelayS, codeThrottleDelayMax, "throttle delay", iss)
 	}
 
 	batchSize, hasBatchSize := asInteger(get(throttle, keyBatchSize))
-	batchDelay, _ := getString(throttle, keyBatchDelay)
+	batchDelay, _ := scalarTextAt(get(throttle, keyBatchDelay), field+"."+keyBatchDelay, iss.sources)
 	hasBatchDelay := batchDelay != ""
 
 	switch {

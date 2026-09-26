@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.738.0",
+  "specVersion": "2.753.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -58,7 +58,8 @@
     "fatal",
     "unknown"
   ],
-  "nextMarkers": ["null", "end", "orchestrator"],
+  "nextMarkers": ["null", "orchestrator"],
+  "reachabilityTerminalMarkers": ["null", "end", "orchestrator"],
   "parallelResolutions": ["all-complete", "all-succeed", "first-succeed", "first-complete"],
   "forEachResolutions": ["all-complete", "all-succeed"],
   "loopMaxIterationsLimit": 1000,
@@ -299,5 +300,324 @@
     "fn_sum",
     "fn_uniq",
     "fn_urldecode"
-  ]
+  ],
+  "knownKeys": {
+    "$comment": "Derived by reflection over the reference's Flow type, following yaml.v3's field rules (yaml tag, lowercased field name, inline structs merged). KnownFields(true) refuses any key a struct type does not declare. A shape is scalar | any | map<S> | list<S> | a type name below. any is never inspected (a Go interface, or a type with its own unmarshaller). How it is derived and checked, and how to regenerate it: PARITY.md, 'Unknown keys and value kinds'.",
+    "root": "Flow",
+    "types": {
+      "BillingConfig": {
+        "max_credits": "scalar"
+      },
+      "CampaignChildFlowDef": {
+        "alias": "scalar",
+        "flow_id": "scalar",
+        "flow_name": "scalar"
+      },
+      "CampaignConfig": {
+        "child_flows": "list<CampaignChildFlowDef>",
+        "max_concurrent": "scalar",
+        "max_credits_per_child": "scalar",
+        "max_depth": "scalar",
+        "max_total_children": "scalar",
+        "on_children_complete": "scalar",
+        "shared_memory": "scalar"
+      },
+      "CheckpointConfig": {
+        "enabled": "scalar",
+        "interval_steps": "scalar",
+        "max_per_mission": "scalar",
+        "on_completion": "scalar",
+        "pre_dfm": "scalar"
+      },
+      "ConditionDefinition": {
+        "goto": "scalar",
+        "if": "scalar"
+      },
+      "ErrorStrategyDefinition": {
+        "action": "scalar",
+        "backoff_multiplier": "scalar",
+        "exponential_backoff": "scalar",
+        "goto_step": "scalar",
+        "jitter": "scalar",
+        "max_delay": "scalar",
+        "max_retries": "scalar",
+        "retry_delay": "scalar",
+        "retry_on": "list<scalar>"
+      },
+      "ExecutorDefaultsDefinition": {
+        "frequency_penalty": "scalar",
+        "max_tokens": "scalar",
+        "presence_penalty": "scalar",
+        "temperature": "scalar",
+        "top_p": "scalar"
+      },
+      "ExecutorInstanceDefinition": {
+        "api_key": "scalar",
+        "base_url": "scalar",
+        "defaults": "ExecutorDefaultsDefinition",
+        "enable_streaming": "scalar",
+        "extra": "map<any>",
+        "organization": "scalar",
+        "service_channel": "scalar",
+        "timeout_seconds": "scalar",
+        "tool_credentials": "map<scalar>"
+      },
+      "ExonsUploadsFlowConfig": {
+        "allowed_models": "list<scalar>",
+        "allowed_providers": "list<scalar>"
+      },
+      "FailoverBreakerConfig": {
+        "failure_threshold": "scalar",
+        "open_duration": "scalar",
+        "success_threshold": "scalar"
+      },
+      "FailoverConfig": {
+        "chain": "list<scalar>",
+        "circuit_breaker": "FailoverBreakerConfig",
+        "health_gate": "scalar"
+      },
+      "FieldExpectationDefinition": {
+        "description": "scalar",
+        "fallback": "any",
+        "items": "PropertyDefinition",
+        "required": "any",
+        "type": "scalar",
+        "validation": "scalar"
+      },
+      "Flow": {
+        "aigentflow_version": "scalar",
+        "billing": "BillingConfig",
+        "campaign": "CampaignConfig",
+        "checkpoint": "CheckpointConfig",
+        "classification": "FlowClassification",
+        "compliance": "FlowCompliance",
+        "currency": "scalar",
+        "data": "map<any>",
+        "description": "scalar",
+        "discoverable_tools": "list<scalar>",
+        "error_strategy": "ErrorStrategyDefinition",
+        "executor_config": "map<ExecutorInstanceDefinition>",
+        "exons_uploads": "ExonsUploadsFlowConfig",
+        "expression_functions": "list<map<scalar>>",
+        "handle": "scalar",
+        "input_schema": "InputSchema",
+        "is_template": "scalar",
+        "max_duration": "scalar",
+        "mock_scenarios": "map<map<MockStepDefinition>>",
+        "name": "scalar",
+        "orchestrator": "OrchestratorDefinition",
+        "output": "list<scalar>",
+        "query": "map<QueryDefinition>",
+        "rate_limit": "FlowRateLimitConfig",
+        "start": "scalar",
+        "steps": "map<StepDefinition>",
+        "tags": "list<scalar>",
+        "template": "FlowTemplateMetadata",
+        "tool_discovery": "scalar",
+        "version": "scalar",
+        "visibility": "scalar"
+      },
+      "FlowClassification": {
+        "ai_act_annex_iii": "scalar",
+        "ai_act_annex_iii_acknowledgment": "scalar",
+        "ai_act_annex_iii_area": "scalar",
+        "ai_act_annex_iii_basis": "scalar",
+        "art22_basis": "scalar",
+        "betriebsrat_agreement_ref": "scalar",
+        "processes_employee_data": "scalar",
+        "processes_personal_data": "scalar"
+      },
+      "FlowCompliance": {
+        "allowed_use_cases": "list<scalar>",
+        "certifications": "list<scalar>",
+        "disallow_training_on_inputs": "scalar",
+        "max_retention": "scalar",
+        "prohibited_use_cases": "list<scalar>",
+        "residency": "list<scalar>"
+      },
+      "FlowRateLimitConfig": {
+        "disabled": "scalar",
+        "public_per_org_per_minute": "scalar"
+      },
+      "FlowTemplateMetadata": {
+        "category": "scalar",
+        "language": "scalar",
+        "screenshot_url": "scalar",
+        "summary": "scalar"
+      },
+      "ForEachDefinition": {
+        "as": "scalar",
+        "items": "scalar",
+        "max_parallel": "scalar",
+        "resolution": "scalar",
+        "throttle": "ThrottleDefinition"
+      },
+      "InputSchema": {
+        "fields": "list<InputSchemaField>",
+        "version": "scalar"
+      },
+      "InputSchemaField": {
+        "accept": "list<scalar>",
+        "default": "any",
+        "description": "scalar",
+        "enum": "list<scalar>",
+        "label": "scalar",
+        "max": "scalar",
+        "max_items": "scalar",
+        "max_length": "scalar",
+        "max_size": "scalar",
+        "min": "scalar",
+        "min_items": "scalar",
+        "min_length": "scalar",
+        "name": "scalar",
+        "pattern": "scalar",
+        "required": "scalar",
+        "type": "scalar",
+        "visible_when": "VisibleWhenPredicate"
+      },
+      "LoopDefinition": {
+        "max_iterations": "scalar",
+        "steps": "list<LoopStepDefinition>",
+        "vars": "map<scalar>",
+        "while": "scalar"
+      },
+      "LoopStepDefinition": {
+        "condition": "scalar",
+        "credential": "scalar",
+        "credentials": "map<StepCredentialBinding>",
+        "description": "scalar",
+        "error_strategy": "ErrorStrategyDefinition",
+        "executor": "scalar",
+        "id": "scalar",
+        "next": "NextLogicDefinition",
+        "output_schema": "InputSchema",
+        "post_processing": "list<any>",
+        "pre_processing": "list<any>",
+        "query": "map<any>",
+        "response_evaluation": "scalar"
+      },
+      "MockBinaryAsset": {
+        "filename": "scalar",
+        "id": "scalar",
+        "metadata": "map<scalar>",
+        "mime_type": "scalar",
+        "size": "scalar",
+        "step_id": "scalar"
+      },
+      "MockStepDefinition": {
+        "api_action": "scalar",
+        "binary_assets": "map<MockBinaryAsset>",
+        "content": "any",
+        "cost": "scalar",
+        "delay": "scalar",
+        "error": "scalar"
+      },
+      "NextLogicDefinition": {
+        "conditions": "list<ConditionDefinition>",
+        "default": "scalar",
+        "parallel": "ParallelDefinition"
+      },
+      "OrchestratorDefinition": {
+        "agentic": "scalar",
+        "context_budget_tokens": "scalar",
+        "context_strategy": "scalar",
+        "conversation": "scalar",
+        "deny_tools": "list<scalar>",
+        "discoverable_tools": "list<scalar>",
+        "enable_signals": "scalar",
+        "engram_scope": "scalar",
+        "exons": "scalar",
+        "human_question_timeout": "scalar",
+        "human_question_timeout_response": "scalar",
+        "max_tool_calls": "scalar",
+        "max_tool_turns": "scalar",
+        "max_turns": "scalar",
+        "mode": "scalar",
+        "require_approval_for": "list<scalar>",
+        "timeout_seconds": "scalar",
+        "tool_discovery": "scalar",
+        "tools": "list<scalar>",
+        "triggers": "list<OrchestratorTriggerDef>"
+      },
+      "OrchestratorTriggerDef": {
+        "condition": "scalar",
+        "interval": "scalar",
+        "type": "scalar",
+        "watch": "scalar"
+      },
+      "ParallelDefinition": {
+        "rendezvous": "scalar",
+        "resolution": "scalar",
+        "steps": "list<scalar>"
+      },
+      "PropertyDefinition": {
+        "default": "any",
+        "description": "scalar",
+        "enum": "list<scalar>",
+        "format": "scalar",
+        "items": "PropertyDefinition",
+        "max_items": "scalar",
+        "min_items": "scalar",
+        "properties": "map<PropertyDefinition>",
+        "required": "scalar",
+        "type": "scalar",
+        "validation": "scalar"
+      },
+      "QualityGateDefinition": {
+        "goto_step": "scalar",
+        "max_retries": "scalar",
+        "model": "scalar",
+        "on_fail": "scalar",
+        "provider": "scalar",
+        "rubric": "scalar",
+        "threshold": "scalar"
+      },
+      "QueryDefinition": {
+        "default": "any",
+        "description": "scalar",
+        "enum": "list<scalar>",
+        "items": "PropertyDefinition",
+        "max_items": "scalar",
+        "min_items": "scalar",
+        "properties": "map<PropertyDefinition>",
+        "required": "scalar",
+        "type": "scalar",
+        "validation": "scalar"
+      },
+      "StepCredentialBinding": {
+        "inject_as": "scalar",
+        "source": "scalar"
+      },
+      "StepDefinition": {
+        "condition": "scalar",
+        "credential": "scalar",
+        "credentials": "map<StepCredentialBinding>",
+        "description": "scalar",
+        "error_strategy": "ErrorStrategyDefinition",
+        "executor": "scalar",
+        "failover": "FailoverConfig",
+        "for_each": "ForEachDefinition",
+        "loop": "LoopDefinition",
+        "max_duration": "scalar",
+        "next": "NextLogicDefinition",
+        "output_schema": "InputSchema",
+        "post_processing": "list<any>",
+        "pre_processing": "list<any>",
+        "quality_gate": "QualityGateDefinition",
+        "query": "map<any>",
+        "response_evaluation": "scalar",
+        "response_expectation": "map<FieldExpectationDefinition>"
+      },
+      "ThrottleDefinition": {
+        "batch_delay": "scalar",
+        "batch_size": "scalar",
+        "delay": "scalar"
+      },
+      "VisibleWhenPredicate": {
+        "equals": "any",
+        "field": "scalar",
+        "in": "list<any>"
+      }
+    }
+  }
 }

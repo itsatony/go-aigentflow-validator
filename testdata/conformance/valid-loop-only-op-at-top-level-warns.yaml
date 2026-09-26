@@ -16,6 +16,6 @@ steps:
       - loop.set:
           counter: '1'
     next:
-      default: 'end'
+      default: 'null'
 output:
   - done

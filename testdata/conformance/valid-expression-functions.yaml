@@ -17,7 +17,7 @@ steps:
           fn_round .query.amount 2
         }}
     next:
-      default: 'end'
+      default: 'null'
 query:
   company:
     type: string

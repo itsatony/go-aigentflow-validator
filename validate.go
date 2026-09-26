@@ -26,7 +26,7 @@ func ValidateFlow(yamlText string, opts Options) Result {
 		}
 	}
 
-	result := ValidateFlowObject(flow, opts)
+	result := validateFlowObject(flow, opts, collectScalarSources(yamlText))
 
 	// Non-fatal YAML warnings sit alongside the validation warnings.
 	if len(parseWarnings) > 0 {
@@ -47,8 +47,22 @@ func ValidateFlow(yamlText string, opts Options) Result {
 // ValidateFlowObject validates an already-decoded flow mapping. Use it when the
 // document came from a caller's own loader; use ValidateFlow to parse and
 // validate in one step and to get source positions on findings.
+//
+// Without the source text, a number in a duration field is judged by its decoded
+// value: `delay: 0.0` reads as 0 and passes, where the reference (and
+// ValidateFlow) refuse it. See PARITY.md, divergence #15.
 func ValidateFlowObject(flow map[string]any, opts Options) Result {
+	return validateFlowObject(flow, opts, nil)
+}
+
+func validateFlowObject(flow map[string]any, opts Options, sources scalarSources) Result {
 	iss := newIssues()
+	iss.sources = sources
+	// A caller's own yaml.v3 decode yields map[any]any beneath a non-string key;
+	// normalise it as ParseFlow does (without mutating the caller's document).
+	if flow != nil {
+		flow, _ = normaliseKeys(flow).(map[string]any)
+	}
 
 	if flow == nil {
 		iss.error(Issue{
@@ -58,9 +72,11 @@ func ValidateFlowObject(flow map[string]any, opts Options) Result {
 		return finish(iss, doc{}, templateStats{})
 	}
 
-	// Order matters only for readability of the output: basicStructure first so a
-	// document missing its identity reports that before anything else. No
-	// validator depends on another's findings.
+	// Order matters for readability of the output (basicStructure first so a
+	// document missing its identity reports that before anything else) and in
+	// ONE place for content: validateUnknownKeys runs last and skips a location
+	// an earlier rule already reported. No other validator depends on another's
+	// findings.
 	validateBasicStructure(flow, iss)
 	validateRetiredKeys(flow, iss)
 	validateExecutors(flow, iss)
@@ -79,6 +95,9 @@ func ValidateFlowObject(flow map[string]any, opts Options) Result {
 	validateProcessingOperations(flow, iss)
 	validateStepMaxDuration(flow, iss)
 	validateSaveDoorExtras(flow, iss)
+	// Last among the structural rules: it skips a location another rule has
+	// already reported with more specific advice.
+	validateUnknownKeys(flow, iss)
 	stats := validateTemplates(flow, iss, opts)
 
 	return finish(iss, flow, stats)

@@ -17,4 +17,4 @@ steps:
       quoted_dotted_key: '{{ index .data "step.fn_result" }}'
       own_step_output: '{{ .data.fn_build.value }}'
     next:
-      default: 'end'
+      default: 'null'

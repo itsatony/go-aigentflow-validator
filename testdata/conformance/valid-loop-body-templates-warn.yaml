@@ -33,6 +33,6 @@ steps:
               - if: '{{ gt .loop.vars.counter '
                 goto: body
     next:
-      default: 'end'
+      default: 'null'
 output:
   - done

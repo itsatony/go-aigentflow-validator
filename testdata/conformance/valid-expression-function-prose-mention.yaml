@@ -13,7 +13,7 @@ steps:
       note: 'fn_sha256 is mentioned but never invoked'
       rendered: '{{ .query.company }}'
     next:
-      default: 'end'
+      default: 'null'
 query:
   company:
     type: string

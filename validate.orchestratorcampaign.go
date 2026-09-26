@@ -133,7 +133,10 @@ func validateOrchestratorTrigger(trigger doc, base string, iss *issues) {
 	if ttype != triggerTimer {
 		return
 	}
-	interval, hasInterval := getString(trigger, keyInterval)
+	// A Go `string` field, filled from any scalar by its source text: `interval:
+	// 0` is "0" and saves, `interval: 100` is "100" (no unit). A number used to
+	// read as "no interval" here.
+	interval, hasInterval := scalarTextAt(get(trigger, keyInterval), base+"."+keyInterval, iss.sources)
 	switch {
 	case !hasInterval || interval == "":
 		iss.error(Issue{

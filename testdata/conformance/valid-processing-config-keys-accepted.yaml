@@ -48,7 +48,7 @@ steps:
           target: parsed
           on_error: continue
     next:
-      default: 'end'
+      default: 'null'
 query:
   name:
     type: string

@@ -29,7 +29,7 @@ steps:
         - id: record
           executor: db://postgres/insert
     next:
-      default: 'end'
+      default: 'null'
 query:
   seed:
     type: string

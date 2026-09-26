@@ -1,0 +1,23 @@
+aigentflow_version: '2.0.0'
+name: next-end-without-step
+version: '1.0.0'
+description: >-
+  The reference's save door looks `end` up as a STEP (validateNextLogic accepts
+  only `null` and `orchestrator` without one), so routing to `end` in a default
+  or in a condition's goto is refused when no step is called `end`. Write
+  'null' to finish the flow.
+start: route
+steps:
+  route:
+    executor: mock://api/route
+    next:
+      conditions:
+        - if: '{{ eq .query.mode "stop" }}'
+          goto: end
+      default: work
+  work:
+    executor: mock://api/work
+    next:
+      default: end
+output:
+  - ok
