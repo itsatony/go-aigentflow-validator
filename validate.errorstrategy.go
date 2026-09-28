@@ -59,11 +59,12 @@ func validateLoopBodyErrorGoto(step doc, stepID string, iss *issues) {
 		if !ok {
 			continue
 		}
-		target, ok := getString(strategy, keyGotoStep)
+		subPath := stepField(stepID, keyLoop, indexed(keySteps, i))
+		target, ok := iss.stringOf(strategy, keyGotoStep, subPath+"."+keyErrorStrategy)
 		if !ok || target == "" {
 			continue
 		}
-		subID, ok := getString(sub, keyID)
+		subID, ok := iss.stringOf(sub, keyID, subPath)
 		if !ok || subID == "" {
 			subID = fmt.Sprintf("[%d]", i)
 		}
@@ -81,7 +82,7 @@ func validateLoopBodyErrorGoto(step doc, stepID string, iss *issues) {
 }
 
 func validateErrorStrategy(strategy, steps doc, field, stepID string, iss *issues) {
-	action, hasAction := getString(strategy, keyAction)
+	action, hasAction := iss.stringOf(strategy, keyAction, field)
 	if hasAction && action != "" && !errorStrategyActions.has(action) {
 		iss.error(Issue{
 			Field: field + "." + keyAction, Code: codeInvalidErrStrategy, StepID: stepID,
@@ -91,7 +92,7 @@ func validateErrorStrategy(strategy, steps doc, field, stepID string, iss *issue
 	}
 
 	if action == actionGoto {
-		target, hasTarget := getString(strategy, keyGotoStep)
+		target, hasTarget := iss.stringOf(strategy, keyGotoStep, field)
 		switch {
 		case !hasTarget || target == "":
 			iss.error(Issue{
@@ -111,7 +112,7 @@ func validateErrorStrategy(strategy, steps doc, field, stepID string, iss *issue
 	// ONLY; retry, fail and an absent action all fall through to failing the
 	// mission. A WARNING, as in the reference: it is consulted at the run door
 	// over stored flows, and the declaration is inert rather than fatal.
-	if target, ok := getString(strategy, keyGotoStep); ok && target != "" && action != actionGoto {
+	if target, ok := iss.stringOf(strategy, keyGotoStep, field); ok && target != "" && action != actionGoto {
 		shown := action
 		if shown == "" {
 			shown = "(absent, defaults to fail)"
@@ -133,13 +134,13 @@ func validateErrorStrategy(strategy, steps doc, field, stepID string, iss *issue
 	// backoff ceiling, a bad retry_delay falls back to a default.
 	// A Go `string` field, filled from any scalar by its source text: `max_delay:
 	// 100` is "100" (no unit) and refused, as is `0.0`; `0` saves.
-	if d, ok := scalarTextAt(get(strategy, keyMaxDelay), field+"."+keyMaxDelay, iss.sources); ok && d != "" && !isValidGoDuration(d) {
+	if d, ok := iss.stringOf(strategy, keyMaxDelay, field); ok && d != "" && !isValidGoDuration(d) {
 		iss.error(Issue{
 			Field: field + "." + keyMaxDelay, Code: codeInvalidDuration, StepID: stepID,
 			Message: fmt.Sprintf("Invalid max_delay duration '%s'", d),
 		})
 	}
-	if d, ok := getString(strategy, keyRetryDelay); ok && d != "" && !isValidGoDuration(d) {
+	if d, ok := iss.stringOf(strategy, keyRetryDelay, field); ok && d != "" && !isValidGoDuration(d) {
 		iss.warn(Issue{
 			Field: field + "." + keyRetryDelay, Code: codeInvalidDuration, StepID: stepID,
 			Message: fmt.Sprintf("retry_delay '%s' is not a valid Go duration", d),
@@ -158,7 +159,7 @@ func validateErrorStrategy(strategy, steps doc, field, stepID string, iss *issue
 
 	if categories, ok := getSlice(strategy, keyRetryOn); ok {
 		for i, raw := range categories {
-			category, isStr := asString(raw)
+			category, isStr := iss.stringAt(raw, fmt.Sprintf("%s.%s", field, indexed(keyRetryOn, i)))
 			if isStr && retryOnCategories.has(category) {
 				continue
 			}

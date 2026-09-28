@@ -52,8 +52,16 @@ func TestBasicStructureStepShape(t *testing.T) {
 		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a: {}\n"
 		assertError(t, ValidateFlow(src, Options{}), codeMissingField, "steps.a.executor")
 	})
-	t.Run("non-string executor", func(t *testing.T) {
+	t.Run("a numeric executor is the URL \"42\", refused as a URL", func(t *testing.T) {
+		// The reference's executor is a Go string: `42` decodes to "42" and is
+		// refused by the URL parser, not as a type error (measured, v0.5.1).
 		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: 42\n"
+		result := ValidateFlow(src, Options{})
+		assertError(t, result, codeInvalidExecutorURL, "steps.a.executor")
+		assertCodesAbsent(t, "error", result.Errors, []string{codeInvalidType, codeMissingField})
+	})
+	t.Run("a list executor does not decode into a string", func(t *testing.T) {
+		src := "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: [x]\n"
 		assertError(t, ValidateFlow(src, Options{}), codeInvalidType, "steps.a.executor")
 	})
 	t.Run("a loop step needs no executor", func(t *testing.T) {

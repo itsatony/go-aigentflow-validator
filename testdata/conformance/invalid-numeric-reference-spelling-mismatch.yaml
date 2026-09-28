@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: numeric-reference-spelling-mismatch
+version: '1.0.0'
+description: >-
+  `1e3` and `1000` are the same number and DIFFERENT step ids: the reference
+  keys and resolves both by their text, so `default: 1e3` does not reach the
+  step `1000`, and the flow is refused.
+start: a
+steps:
+  a:
+    executor: mock://api/a
+    next:
+      default: 1e3
+  1000:
+    executor: mock://api/b
+    next:
+      default: 'null'
+output:
+  - ok

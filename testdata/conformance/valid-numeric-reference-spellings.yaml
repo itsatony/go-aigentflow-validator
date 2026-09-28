@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: numeric-reference-spellings
+version: '1.0.0'
+description: >-
+  yaml.v3 fills a Go string from a number or boolean by its SOURCE text, for a
+  step-table key and a reference alike. So `1e3` is the step "1e3" (not
+  "1000"), `0x1F` is "0x1F" (not "31") and `True` is "True". Each reference
+  below names its step by the same spelling, and the reference resolves every
+  one.
+start: a
+steps:
+  a:
+    executor: mock://api/a
+    next:
+      default: 1e3
+  1e3:
+    executor: mock://api/b
+    next:
+      default: 0x1F
+  0x1F:
+    executor: mock://api/c
+    next:
+      default: True
+  True:
+    executor: mock://api/d
+    next:
+      default: 'null'
+output:
+  - ok

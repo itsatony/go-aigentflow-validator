@@ -14,21 +14,21 @@ import (
 // also emits invalid_type where the Go struct decoder would have failed at
 // unmarshal time.
 func validateBasicStructure(flow doc, iss *issues) {
-	if !isNonEmptyString(get(flow, keyAigentflowVersion)) {
+	if !iss.nonEmptyStringOf(flow, keyAigentflowVersion, "") {
 		iss.error(Issue{
 			Field: keyAigentflowVersion, Code: codeMissingField,
 			Message:    "AIgentFlow version is required",
 			Suggestion: `Add 'aigentflow_version: "2.0.0"' to your flow`,
 		})
 	}
-	if !isNonEmptyString(get(flow, keyName)) {
+	if !iss.nonEmptyStringOf(flow, keyName, "") {
 		iss.error(Issue{
 			Field: keyName, Code: codeMissingField,
 			Message:    "Flow name is required",
 			Suggestion: "Add a descriptive name to your flow",
 		})
 	}
-	start, startOK := getString(flow, keyStart)
+	start, startOK := iss.stringOf(flow, keyStart, "")
 	if !startOK || start == "" {
 		iss.error(Issue{
 			Field: keyStart, Code: codeMissingField,
@@ -108,21 +108,23 @@ func validateBasicStructure(flow doc, iss *issues) {
 		if present(step, keyLoop) {
 			continue
 		}
+		// A number here is the reference's executor "5" — present, and refused
+		// by the URL check (validateExecutors) rather than as a type error. Only
+		// a mapping or a list fails to decode into the Go `string`.
 		executor := get(step, keyExecutor)
-		switch executor {
-		case nil, "":
+		text, isScalar := iss.stringOf(step, keyExecutor, stepField(stepID))
+		switch {
+		case executor == nil || (isScalar && text == ""):
 			iss.error(Issue{
 				Field: stepField(stepID, keyExecutor), Code: codeMissingField, StepID: stepID,
 				Message:    "Executor is required for each step",
 				Suggestion: "Specify an executor URL (e.g., 'function://demo/processor')",
 			})
-		default:
-			if _, isStr := asString(executor); !isStr {
-				iss.error(Issue{
-					Field: stepField(stepID, keyExecutor), Code: codeInvalidType, StepID: stepID,
-					Message: "Executor must be a string URL",
-				})
-			}
+		case !isScalar:
+			iss.error(Issue{
+				Field: stepField(stepID, keyExecutor), Code: codeInvalidType, StepID: stepID,
+				Message: "Executor must be a string URL",
+			})
 		}
 	}
 }

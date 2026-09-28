@@ -71,7 +71,7 @@ func validateExpressionFunctionDeclarations(flow doc, iss *issues) {
 		if hasPackage {
 			key = keyPackage
 		}
-		value, isStr := getString(entry, key)
+		value, isStr := iss.stringOf(entry, key, field)
 		if !isStr || value == "" {
 			iss.error(Issue{
 				Field: field + "." + key, Code: codeInvalidExprFunction,

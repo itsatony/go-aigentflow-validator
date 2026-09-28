@@ -1,0 +1,15 @@
+aigentflow_version: '2.0.0'
+name: numeric-next-default-unknown
+version: '1.0.0'
+description: >-
+  A step reference written as a number is the step id of that TEXT: the
+  reference decodes next.default into a Go string, so `2` is the step "2". No
+  step "2" exists, so the flow is refused, exactly as `default: '2'` would be.
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    next:
+      default: 2
+output:
+  - ok

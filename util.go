@@ -27,13 +27,6 @@ func asString(v any) (string, bool) {
 	return s, ok
 }
 
-// isNonEmptyString reports a present, string-typed, non-empty value — the guard
-// nearly every required-field check needs.
-func isNonEmptyString(v any) bool {
-	s, ok := v.(string)
-	return ok && s != ""
-}
-
 func asSlice(v any) ([]any, bool) {
 	s, ok := v.([]any)
 	return s, ok
@@ -208,9 +201,17 @@ type scalarSources map[string]string
 // the reference's Go `string` field receives from yaml.v3: `delay: 0.0` is the
 // text "0.0" (no unit, not a duration), although it decodes here to the number
 // 0. Without sources it falls back to scalarText.
+//
+// It is THE reader for every value the reference decodes into a Go `string`
+// field — a step reference (`next.default: 2` is the step "2"), an enum
+// (`action: 1` is the invalid action "1", not an absent one), a name, a
+// duration. Reading such a value with a string-only assertion made a number
+// either invisible (an existence check skipped: looser than the reference) or
+// a type error (a present step reported missing: stricter). Use it through
+// issues.stringAt / issues.stringOf, which carry the pass's sources.
 func scalarTextAt(v any, path string, sources scalarSources) (string, bool) {
 	switch v.(type) {
-	case bool, int, int64, uint64, float64:
+	case bool, int, int64, uint64, float64, time.Time:
 		if src, ok := sources[path]; ok {
 			return src, true
 		}
@@ -218,14 +219,23 @@ func scalarTextAt(v any, path string, sources scalarSources) (string, bool) {
 	return scalarText(v)
 }
 
-// trimmed returns a string value with surrounding whitespace removed, passing
-// through any non-string unchanged. Used where the reference treats a
-// whitespace-only value as absent (a rubric of "  " is not a rubric).
-func trimmed(v any) any {
-	if s, ok := v.(string); ok {
-		return strings.TrimSpace(s)
-	}
-	return v
+// stringAt reads the value at field path `path` as the reference's Go `string`
+// field receives it (scalarTextAt). ok is false for null, a mapping or a list.
+func (i *issues) stringAt(v any, path string) (string, bool) {
+	return scalarTextAt(v, path, i.sources)
+}
+
+// stringOf reads m[key], where parentPath is m's own field path (source paths
+// are dotted keys with `[i]` list indices, as collectScalarSources builds them).
+func (i *issues) stringOf(m doc, key, parentPath string) (string, bool) {
+	return i.stringAt(get(m, key), childPath(parentPath, key))
+}
+
+// nonEmptyStringOf reports a present, non-empty Go `string` field — the guard
+// every required-text check needs (`name: 123` is present).
+func (i *issues) nonEmptyStringOf(m doc, key, parentPath string) bool {
+	s, ok := i.stringOf(m, key, parentPath)
+	return ok && s != ""
 }
 
 // joinNames renders a name list for a Context/Suggestion string.

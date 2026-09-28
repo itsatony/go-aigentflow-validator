@@ -40,7 +40,8 @@ func validateConnectivity(flow doc, iss *issues) {
 			continue
 		}
 
-		if target, ok := getString(next, keyDefault); ok && target != "" &&
+		nextPath := stepField(stepID, keyNext)
+		if target, ok := iss.stringOf(next, keyDefault, nextPath); ok && target != "" &&
 			!isSaveDoorMarker(target) && !has(steps, target) {
 			iss.error(missingStepIssue(
 				stepField(stepID, keyNext, keyDefault), stepID, target, names))
@@ -55,7 +56,7 @@ func validateConnectivity(flow doc, iss *issues) {
 			if !isMap {
 				continue
 			}
-			if _, wrongKey := getString(cond, keyGotoStep); wrongKey {
+			if _, wrongKey := cond[keyGotoStep]; wrongKey {
 				iss.error(Issue{
 					Field:      stepField(stepID, keyNext, indexed(keyConditions, i), keyGotoStep),
 					Code:       codeUnknownYAMLKey,
@@ -64,7 +65,7 @@ func validateConnectivity(flow doc, iss *issues) {
 					Suggestion: "Rename 'goto_step' to 'goto' (only error_strategy and quality_gate use 'goto_step')",
 				})
 			}
-			target, ok := getString(cond, keyGoto)
+			target, ok := iss.stringOf(cond, keyGoto, childPath(nextPath, indexed(keyConditions, i)))
 			if !ok || target == "" || isSaveDoorMarker(target) || has(steps, target) {
 				continue
 			}
@@ -73,7 +74,7 @@ func validateConnectivity(flow doc, iss *issues) {
 		}
 	}
 
-	start, _ := getString(flow, keyStart)
+	start, _ := iss.stringOf(flow, keyStart, "")
 	if start == "" || !has(steps, start) {
 		// Without a valid start, reachability and cycle analysis are meaningless,
 		// and the missing/unknown start is already reported by basicStructure.
@@ -86,7 +87,7 @@ func validateConnectivity(flow doc, iss *issues) {
 	// The FLOW-level error strategy names a step nothing else points at; it
 	// belongs to the flow, so AIgentFlow seeds it into the walk.
 	if fes, ok := getRecord(flow, keyErrorStrategy); ok {
-		if target, ok := getString(fes, keyGotoStep); ok && target != "" && !isNextMarker(target) {
+		if target, ok := iss.stringOf(fes, keyGotoStep, keyErrorStrategy); ok && target != "" && !isNextMarker(target) {
 			queue = append(queue, target)
 		}
 	}
@@ -97,7 +98,7 @@ func validateConnectivity(flow doc, iss *issues) {
 			continue
 		}
 		reachable[current] = struct{}{}
-		for _, target := range reachTargets(steps, current) {
+		for _, target := range reachTargets(steps, current, iss) {
 			if _, seen := reachable[target]; !seen {
 				queue = append(queue, target)
 			}
@@ -116,7 +117,7 @@ func validateConnectivity(flow doc, iss *issues) {
 	// Cycle detection (DFS with a recursion stack).
 	visited := make(map[string]struct{}, len(steps))
 	recStack := make(map[string]struct{}, len(steps))
-	if hasCycle(steps, start, visited, recStack) {
+	if hasCycle(steps, start, visited, recStack, iss) {
 		iss.warn(Issue{
 			Field: keySteps, Code: codePotentialInfiniteLop,
 			Message:    "Potential infinite loop detected in step flow",
@@ -145,7 +146,7 @@ func isNextMarker(target string) bool { return reachabilityMarkers.has(target) }
 
 // cycleTargets returns the edges the CYCLE detector follows — next.default and
 // next.conditions[].goto only (see the header).
-func cycleTargets(steps doc, stepID string) []string {
+func cycleTargets(steps doc, stepID string, iss *issues) []string {
 	step, ok := asRecord(steps[stepID])
 	if !ok {
 		return nil
@@ -154,20 +155,22 @@ func cycleTargets(steps doc, stepID string) []string {
 	if !ok {
 		return nil
 	}
+	nextPath := stepField(stepID, keyNext)
 	var out []string
-	if target, ok := getString(next, keyDefault); ok && target != "" && !isNextMarker(target) {
+	if target, ok := iss.stringOf(next, keyDefault, nextPath); ok && target != "" && !isNextMarker(target) {
 		out = append(out, target)
 	}
 	conds, ok := getSlice(next, keyConditions)
 	if !ok {
 		return out
 	}
-	for _, raw := range conds {
+	for i, raw := range conds {
 		cond, isMap := asRecord(raw)
 		if !isMap {
 			continue
 		}
-		if target, ok := getString(cond, keyGoto); ok && target != "" && !isNextMarker(target) {
+		if target, ok := iss.stringOf(cond, keyGoto, childPath(nextPath, indexed(keyConditions, i))); ok &&
+			target != "" && !isNextMarker(target) {
 			out = append(out, target)
 		}
 	}
@@ -177,8 +180,8 @@ func cycleTargets(steps doc, stepID string) []string {
 // reachTargets returns the edges REACHABILITY follows — all five kinds.
 // Under-reporting here is wrong in the silent direction: it turns a missing
 // edge into a confident accusation.
-func reachTargets(steps doc, stepID string) []string {
-	out := cycleTargets(steps, stepID)
+func reachTargets(steps doc, stepID string, iss *issues) []string {
+	out := cycleTargets(steps, stepID, iss)
 	step, ok := asRecord(steps[stepID])
 	if !ok {
 		return out
@@ -190,22 +193,22 @@ func reachTargets(steps doc, stepID string) []string {
 	}
 	if next, ok := getRecord(step, keyNext); ok {
 		if parallel, ok := getRecord(next, keyParallel); ok {
+			parallelPath := stepField(stepID, keyNext, keyParallel)
 			if members, ok := getSlice(parallel, keySteps); ok {
-				for _, raw := range members {
-					id, isStr := raw.(string)
-					push(id, isStr)
+				for i, raw := range members {
+					push(iss.stringAt(raw, childPath(parallelPath, indexed(keySteps, i))))
 				}
 			}
-			push(getString(parallel, keyRendezvous))
+			push(iss.stringOf(parallel, keyRendezvous, parallelPath))
 		}
 	}
 	if es, ok := getRecord(step, keyErrorStrategy); ok {
-		push(getString(es, keyGotoStep))
+		push(iss.stringOf(es, keyGotoStep, stepField(stepID, keyErrorStrategy)))
 	}
 	return out
 }
 
-func hasCycle(steps doc, stepID string, visited, recStack map[string]struct{}) bool {
+func hasCycle(steps doc, stepID string, visited, recStack map[string]struct{}, iss *issues) bool {
 	if _, onStack := recStack[stepID]; onStack {
 		return true
 	}
@@ -214,8 +217,8 @@ func hasCycle(steps doc, stepID string, visited, recStack map[string]struct{}) b
 	}
 	visited[stepID] = struct{}{}
 	recStack[stepID] = struct{}{}
-	for _, target := range cycleTargets(steps, stepID) {
-		if hasCycle(steps, target, visited, recStack) {
+	for _, target := range cycleTargets(steps, stepID, iss) {
+		if hasCycle(steps, target, visited, recStack, iss) {
 			return true
 		}
 	}

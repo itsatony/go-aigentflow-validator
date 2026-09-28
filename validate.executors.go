@@ -30,7 +30,7 @@ func validateExecutors(flow doc, iss *issues) {
 		if !ok {
 			continue
 		}
-		if executor, isStr := getString(step, keyExecutor); isStr && executor != "" {
+		if executor, isStr := iss.stringOf(step, keyExecutor, stepField(stepID)); isStr && executor != "" {
 			checkExecutor(executor, stepField(stepID, keyExecutor), stepID, iss)
 		}
 
@@ -48,21 +48,21 @@ func validateExecutors(flow doc, iss *issues) {
 			if !isMap {
 				continue
 			}
-			executor, isStr := getString(sub, keyExecutor)
+			executor, isStr := iss.stringOf(sub, keyExecutor, stepField(stepID, keyLoop, indexed(keySteps, i)))
 			if !isStr || executor == "" {
 				continue
 			}
 			checkExecutor(executor,
 				stepField(stepID, keyLoop, indexed(keySteps, i), keyExecutor),
-				subStepID(stepID, sub, i), iss)
+				subStepID(stepID, sub, i, iss), iss)
 		}
 	}
 }
 
 // subStepID composes the engine's composite loop sub-step ID ("parent.child"),
 // falling back to the index when the sub-step declares no id.
-func subStepID(stepID string, sub doc, i int) string {
-	if id, ok := getString(sub, keyID); ok && id != "" {
+func subStepID(stepID string, sub doc, i int, iss *issues) string {
+	if id, ok := iss.stringOf(sub, keyID, stepField(stepID, keyLoop, indexed(keySteps, i))); ok && id != "" {
 		return stepID + reservedStepIDChar + id
 	}
 	return stepID + reservedStepIDChar + strconv.Itoa(i)

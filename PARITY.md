@@ -10,6 +10,50 @@ This document defines how this Go implementation stays in step with two things:
 **Tracks AIgentFlow flow schema: `v2.753.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)).
 
+> **v0.5.1 (2026-09-28) — a number where the reference expects text is that text, in every
+> Go-`string` field.** The scalar-VALUE counterpart of v0.5.0's numeric step KEYS. The reference
+> decodes a step reference, an enum, a name, a template and a duration into a Go `string`, and
+> yaml.v3 fills a `string` from any scalar by its **source text**: `next: { default: 2 }` names the
+> step `"2"`, `action: 1` is the invalid action `"1"`, `name: 123` is the name `"123"`. This library
+> read most of those fields with a string-only assertion, so a number was either **invisible** (an
+> existence or enum check skipped — looser) or **absent** (a present value reported missing —
+> stricter). The spec is unchanged (`v2.753.0`); measured against the reference at
+> aigentflow v2.786.0.
+>
+> | Shape | Reference (measured) | v0.5.0 | v0.5.1 |
+> | --- | --- | --- | --- |
+> | `next.default: 2`, a condition's `goto: 7`, `parallel.steps: [5]`, `rendezvous: 9`, `error_strategy.goto_step: 9` — no such step | refused, step not found | valid (default, goto); `goto_step_missing` / `missing_required_field` (goto_step, rendezvous) | `step_not_found` |
+> | the same with the step present | saves, step reachable | `unreachable_step`; `step_not_found` / `goto_step_missing` (parallel member, goto_step) | valid, reachable |
+> | `default: 1e3` with a step `1000` | refused (`1e3` ≠ `1000`) | valid | `step_not_found` |
+> | step keys `1e3:`, `0x1F:`, `True:`, `2024-01-01:` named by the same spelling | saves | `unreachable_step` (keys read `1000`, `31`, `true`, a `time.Time`) | valid |
+> | `action: 1`, `on_fail: 1`, `for_each.resolution: 1`, `orchestrator.mode: 1` | refused, invalid value | valid | the rule's own code |
+> | `name: 123`, `aigentflow_version: 2.0`, `start: 1`, `rubric: 5`, `for_each.items: 5`, `inject_as: 5`, a `query` param/property `type: 1` | saves | `missing_required_field` / rule-specific "missing" | valid (`unknown_data_type` warning for the type) |
+> | loop sub-steps `id: 3` / `id: 4`, `next: { default: 4 }` | saves | `loop_step_id_required`, `invalid_type` | valid |
+> | `executor: 42` | refused, unusable executor URL | `invalid_type` | `invalid_executor_url` |
+> | `expression_functions: [{ function: 5 }]` | refused, not in the catalog | `invalid_expression_function` | `expression_function_unknown` |
+>
+> - **One reader.** Every Go-`string` field is read through `scalarTextAt` (as `issues.stringOf` /
+>   `issues.stringAt`), which returns a string as itself and a number, boolean or timestamp by its
+>   source spelling. Only a mapping, a list or null is "not a string". Sites that compare a value
+>   only against a literal no scalar spelling can equal (`orchestrator`, an `fn_` name, a template
+>   `{{`, an empty `output:` entry) are left as they are; a step's `query:` is a Go `any` in the
+>   reference and is not a string field.
+> - **Keys too.** `ParseFlow` now retags every number, boolean and timestamp mapping KEY as a string
+>   before decoding, so `1e3:` is the step `"1e3"` (v0.5.0 rendered keys with `fmt.Sprint`, which
+>   gave `1000`, `31` for `0x1F`, and `2024-01-01 00:00:00 +0000 UTC` for a date). Keys and
+>   references now agree on every spelling, and so do the source paths `collectScalarSources` keys
+>   by. `TestYAMLStringFieldReceivesSourceText` pins the premise against yaml.v3 itself for 15
+>   spellings.
+> - **Measured.** Ten new conformance fixtures (`*-numeric-*`): the reference's verdict matches this
+>   library on all 75 fixtures (v0.5.0: 70). A 26-shape probe matrix, one per rule: v0.5.0 agreed on
+>   9, v0.5.1 on 24; the two left are unrelated and predate this change (an unknown orchestrator tool
+>   is a warning by default, divergence #7's family; a flow-level `input_schema` field name the
+>   reference saves is refused here whether written `5` or `'5'`). The 216 bundled flows: zero
+>   findings changed.
+> - **The JS port has the same defect** (its readers test `typeof === 'string'`), and the ten
+>   fixtures are **Go-first**: until they are ported there, `make parity-check` reports them as
+>   drift.
+
 > **v0.3.0 (2026-09-25) — parity refresh, v2.485.0 → v2.738.0.** The spec and all 48 conformance
 > fixtures are byte-identical to the JS port's `main` (package 0.12.0), and every rule that port
 > added in that window is ported here:
@@ -288,13 +332,17 @@ mission clock. That threshold is a deployment constant this package cannot obser
 - The reference's runtime template field-resolution warnings (`template_missing_field`,
   `condition_not_boolean`) and `compliance_catalog_missing` are not produced here (scope).
 
-### 15. A number in a duration field without source text is judged by its parsed value (shared with JS, #13 there) — NARROWED in v0.5.0
+### 15. A number in a duration field without source text is judged by its parsed value (shared with JS, #13 there) — NARROWED in v0.5.0 and v0.5.1
 
 **Since v0.5.0 this applies to `ValidateFlowObject` and to a value reached through a YAML alias
-only.** `ValidateFlow` records the source spelling of every number and boolean scalar and judges
-the mock `delay`, `throttle.delay`, `throttle.batch_delay`, `error_strategy.max_delay`, a timer
-`interval` and `tool_discovery` by it, exactly as the reference's `string` fields receive them.
-The rest of this section describes the remaining case.
+only.** `ValidateFlow` records the source spelling of every number, boolean and (since v0.5.1)
+timestamp scalar and judges the mock `delay`, `throttle.delay`, `throttle.batch_delay`,
+`error_strategy.max_delay`, a timer `interval` and `tool_discovery` by it, exactly as the
+reference's `string` fields receive them. **Since v0.5.1 the same holds for every Go-`string`
+field** — step references, enums, names — and for mapping keys. The rest of this section describes
+the remaining case; under `ValidateFlowObject` a step reference and a numeric key are both rendered
+from the decoded value, so they still agree for every ordinary spelling (`2`, `true`), and differ
+from the reference only for spellings whose text the decode lost (`1e3`, `0x1F`).
 
 yaml.v3 fills the reference's `string` field with the scalar's **source text**; this library decodes
 into untyped values and only has the parsed number. They agree on every number except those that

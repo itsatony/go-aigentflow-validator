@@ -47,7 +47,7 @@ func validateResponseExpectations(flow doc, iss *issues) {
 				continue
 			}
 
-			dtype, hasType := getString(field, keyType)
+			dtype, hasType := iss.stringOf(field, keyType, base)
 			switch {
 			case !hasType || !dataTypes.has(dtype):
 				shown := "(none)"
@@ -99,10 +99,10 @@ func warnIfExpectationUnread(stepID string, step, re doc, iss *issues) {
 	if len(re) == 0 {
 		return
 	}
-	if evaluation, _ := scalarText(get(step, keyResponseEvaluation)); evaluation != "" {
+	if evaluation, _ := iss.stringOf(step, keyResponseEvaluation, stepField(stepID)); evaluation != "" {
 		return
 	}
-	if executor, ok := getString(step, keyExecutor); ok && strings.HasPrefix(executor, asyncExecutorPrefix) {
+	if executor, ok := iss.stringOf(step, keyExecutor, stepField(stepID)); ok && strings.HasPrefix(executor, asyncExecutorPrefix) {
 		return
 	}
 	iss.warn(Issue{

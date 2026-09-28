@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: numeric-condition-goto
+version: '1.0.0'
+description: >-
+  A condition's goto written as a number reaches the step of that id.
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    next:
+      conditions:
+        - if: '{{ eq .data.fetch.status "ok" }}'
+          goto: 7
+      default: 'null'
+  7:
+    executor: mock://api/store
+    next:
+      default: 'null'
+output:
+  - ok

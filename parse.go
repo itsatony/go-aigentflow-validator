@@ -64,10 +64,20 @@ func ParseFlow(yamlText string) (flow map[string]any, parseErrors, parseWarnings
 		return nil, parseErrors, parseWarnings
 	}
 
-	var value any
-	if err := yaml.Unmarshal([]byte(yamlText), &value); err != nil {
+	// Parse to the node tree first, so every scalar mapping KEY can be given its
+	// source spelling before it is decoded (stringifyScalarKeys).
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(yamlText), &root); err != nil {
 		parseErrors = append(parseErrors, issuesFromYAMLError(err)...)
 		return nil, parseErrors, parseWarnings
+	}
+	var value any
+	if len(root.Content) > 0 {
+		stringifyScalarKeys(&root)
+		if err := root.Decode(&value); err != nil {
+			parseErrors = append(parseErrors, issuesFromYAMLError(err)...)
+			return nil, parseErrors, parseWarnings
+		}
 	}
 
 	m, ok := normaliseKeys(value).(map[string]any)
@@ -81,13 +91,42 @@ func ParseFlow(yamlText string) (flow map[string]any, parseErrors, parseWarnings
 	return m, parseErrors, parseWarnings
 }
 
+// stringifyScalarKeys retags every plain number, boolean or timestamp mapping
+// key as a string, so it decodes to its SOURCE text. That is what the reference
+// stores: its step table is a map[string]*StepDefinition, and yaml.v3 fills a Go
+// `string` from any scalar by the scalar's text — `1e3:` is the step "1e3",
+// `0x1F:` is "0x1F", `True:` is "True". Decoding into `any` instead yields the
+// number 1000, the number 31, the boolean true; fmt.Sprint then gave "1000",
+// "31" and "true", and a reference written `next: { default: 1e3 }` no longer
+// matched its own step. Merge keys (`<<`) and null keys are left alone.
+func stringifyScalarKeys(node *yaml.Node) {
+	switch node.Kind {
+	case yaml.DocumentNode, yaml.SequenceNode:
+		for _, child := range node.Content {
+			stringifyScalarKeys(child)
+		}
+	case yaml.MappingNode:
+		for i := 0; i+1 < len(node.Content); i += 2 {
+			key := node.Content[i]
+			if key.Kind == yaml.ScalarNode && spelledScalarTags[key.ShortTag()] {
+				key.Tag = yamlTagStr
+			}
+			stringifyScalarKeys(key)
+			stringifyScalarKeys(node.Content[i+1])
+		}
+	}
+}
+
 // normaliseKeys returns the document with every map[any]any turned into
 // map[string]any. yaml.v3 produces map[any]any for a mapping that has a
 // non-string key (`steps: {1: …}`), and every validator here narrows to
 // map[string]any, so such a mapping read as "not a mapping": a step id of `1`,
-// which the reference stores as the string "1", was refused as invalid_type. A
-// key is rendered with fmt.Sprint, which equals its source text for every
-// ordinary spelling (`1`, `true`).
+// which the reference stores as the string "1", was refused as invalid_type.
+// ParseFlow already gives every scalar key its source text
+// (stringifyScalarKeys), so what reaches this is a caller's own decode under
+// ValidateFlowObject, or a complex key; a key is then rendered with fmt.Sprint,
+// which equals the source text for the ordinary spellings (`1`, `true`) but not
+// for `1e3` or `0x1F` — that text no longer exists (PARITY.md, divergence #15).
 //
 // Copy-on-write: a mapping or list is copied only when something beneath it
 // changed, so a caller's document passed to ValidateFlowObject is never mutated.
@@ -144,8 +183,8 @@ func normaliseKeysChanged(v any) (any, bool) {
 	}
 }
 
-// collectScalarSources records the source text of every plain number and
-// boolean scalar, keyed by the field path the validators emit. The reference
+// collectScalarSources records the source text of every plain number, boolean
+// and timestamp scalar, keyed by the field path the validators emit. The reference
 // decodes such a scalar into a Go `string` field as that text, so `delay: 0.0`
 // is "0.0" there while the decoded value here is the number 0. Aliases are not
 // followed: a value reached through one keeps its decoded rendering. A parse
@@ -176,8 +215,7 @@ func collectScalarSources(yamlText string) scalarSources {
 				walk(fmt.Sprintf("%s[%d]", path, i), item)
 			}
 		case yaml.ScalarNode:
-			switch node.ShortTag() {
-			case yamlTagInt, yamlTagFloat, yamlTagBool:
+			if spelledScalarTags[node.ShortTag()] {
 				out[path] = node.Value
 			}
 		}
@@ -188,10 +226,20 @@ func collectScalarSources(yamlText string) scalarSources {
 
 // yaml.v3 short tags of the scalars whose decoded value loses its spelling.
 const (
-	yamlTagInt   = "!!int"
-	yamlTagFloat = "!!float"
-	yamlTagBool  = "!!bool"
+	yamlTagInt       = "!!int"
+	yamlTagFloat     = "!!float"
+	yamlTagBool      = "!!bool"
+	yamlTagTimestamp = "!!timestamp"
+	yamlTagStr       = "!!str"
 )
+
+// spelledScalarTags are the scalars that decode into `any` as something other
+// than their text — a number, a boolean, a time.Time — while a Go `string` field
+// receives the text itself. Verified against yaml.v3 v3.0.1 in
+// TestYAMLStringFieldReceivesSourceText.
+var spelledScalarTags = map[string]bool{
+	yamlTagInt: true, yamlTagFloat: true, yamlTagBool: true, yamlTagTimestamp: true,
+}
 
 // issuesFromYAMLError converts a yaml.v3 error into one Issue per underlying
 // problem, preserving the line number and distinguishing a duplicate key (which

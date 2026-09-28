@@ -77,7 +77,7 @@ func validateRetiredKeys(flow doc, iss *issues) {
 			if !isMap || !has(sub, keyMaxRetries) {
 				continue
 			}
-			subID, isStr := getString(sub, keyID)
+			subID, isStr := iss.stringOf(sub, keyID, stepField(stepID, keyLoop, indexed(keySteps, i)))
 			if !isStr {
 				subID = fmt.Sprintf("%d", i)
 			}

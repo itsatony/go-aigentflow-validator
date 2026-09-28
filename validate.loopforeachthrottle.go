@@ -31,7 +31,7 @@ func validateLoopForEachThrottle(flow doc, iss *issues) {
 func validateForEach(step, forEach doc, stepID string, iss *issues) {
 	base := stepField(stepID, keyForEach)
 
-	if !isNonEmptyString(get(forEach, keyItems)) {
+	if !iss.nonEmptyStringOf(forEach, keyItems, base) {
 		iss.error(Issue{
 			Field: base + "." + keyItems, Code: codeForEachItemsRequired, StepID: stepID,
 			Message: "for_each requires a non-empty items expression",
@@ -56,7 +56,7 @@ func validateForEach(step, forEach doc, stepID string, iss *issues) {
 		})
 	}
 
-	if resolution, ok := getString(forEach, keyResolution); ok && resolution != "" &&
+	if resolution, ok := iss.stringOf(forEach, keyResolution, base); ok && resolution != "" &&
 		!forEachResolutions.has(resolution) {
 		iss.error(Issue{
 			Field: base + "." + keyResolution, Code: codeForEachResolution, StepID: stepID,
@@ -74,13 +74,13 @@ func validateThrottle(throttle doc, field, stepID string, iss *issues) {
 	// Both delays are Go `string` fields, which yaml.v3 fills from ANY scalar by
 	// its source text: `delay: 100` is "100" (no unit, refused), `0` is "0"
 	// (saves) and `0.0` is "0.0" (refused). A number used to be skipped here.
-	if delay, ok := scalarTextAt(get(throttle, keyDelay), field+"."+keyDelay, iss.sources); ok && delay != "" {
+	if delay, ok := iss.stringOf(throttle, keyDelay, field); ok && delay != "" {
 		checkThrottleDuration(delay, field+"."+keyDelay, stepID,
 			maxThrottleDelay, maxThrottleDelayS, codeThrottleDelayMax, "throttle delay", iss)
 	}
 
 	batchSize, hasBatchSize := asInteger(get(throttle, keyBatchSize))
-	batchDelay, _ := scalarTextAt(get(throttle, keyBatchDelay), field+"."+keyBatchDelay, iss.sources)
+	batchDelay, _ := iss.stringOf(throttle, keyBatchDelay, field)
 	hasBatchDelay := batchDelay != ""
 
 	switch {
@@ -124,7 +124,7 @@ func checkThrottleDuration(value, field, stepID string, maxNS float64, maxLabel,
 func validateLoop(step, loop doc, stepID string, iss *issues) {
 	base := stepField(stepID, keyLoop)
 
-	if !isNonEmptyString(get(loop, keyWhile)) {
+	if !iss.nonEmptyStringOf(loop, keyWhile, base) {
 		iss.error(Issue{
 			Field: base + "." + keyWhile, Code: codeLoopWhileRequired, StepID: stepID,
 			Message: "loop requires a non-empty while condition",
@@ -164,7 +164,7 @@ func validateLoop(step, loop doc, stepID string, iss *issues) {
 				})
 				continue
 			}
-			id, hasID := getString(sub, keyID)
+			id, hasID := iss.stringOf(sub, keyID, subPath)
 			if !hasID || id == "" {
 				iss.error(Issue{
 					Field: subPath + "." + keyID, Code: codeLoopStepIDRequired, StepID: stepID,
@@ -199,7 +199,7 @@ func validateLoop(step, loop doc, stepID string, iss *issues) {
 					})
 				}
 			}
-			if !isNonEmptyString(get(sub, keyExecutor)) {
+			if !iss.nonEmptyStringOf(sub, keyExecutor, subPath) {
 				iss.error(Issue{
 					Field: subPath + "." + keyExecutor, Code: codeLoopStepExecRequired, StepID: stepID,
 					Message: fmt.Sprintf("loop sub-step at index %d requires an 'executor'", i),
@@ -222,7 +222,7 @@ func validateLoop(step, loop doc, stepID string, iss *issues) {
 			Message: "A step cannot use both loop and for_each",
 		})
 	}
-	if isNonEmptyString(get(step, keyExecutor)) {
+	if iss.nonEmptyStringOf(step, keyExecutor, stepField(stepID)) {
 		iss.error(Issue{
 			Field: stepField(stepID, keyExecutor), Code: codeLoopMutualExclExec, StepID: stepID,
 			Message: "A loop step must not define its own executor (it defines sub-steps)",
@@ -261,7 +261,7 @@ func validateLoopSubStepNext(sub doc, subStepIDs map[string]struct{}, base strin
 		return
 	}
 	path := fmt.Sprintf("%s.%s.%s", base, indexed(keySteps, index), keyNext)
-	subStepID, ok := getString(sub, keyID)
+	subStepID, ok := iss.stringOf(sub, keyID, fmt.Sprintf("%s.%s", base, indexed(keySteps, index)))
 	if !ok {
 		subStepID = fmt.Sprintf("[%d]", index)
 	}
@@ -315,7 +315,7 @@ func validateLoopSubStepNext(sub doc, subStepIDs map[string]struct{}, base strin
 		if t.value == nil {
 			continue
 		}
-		value, isStr := asString(t.value)
+		value, isStr := iss.stringAt(t.value, t.field)
 		if !isStr {
 			iss.error(Issue{
 				Field: t.field, Code: codeInvalidType, StepID: stepID,

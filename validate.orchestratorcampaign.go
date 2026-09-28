@@ -17,7 +17,7 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 	orch, hasOrchestrator := getRecord(flow, keyOrchestrator)
 
 	if hasOrchestrator {
-		if !isNonEmptyString(get(orch, keyExons)) {
+		if !iss.nonEmptyStringOf(orch, keyExons, keyOrchestrator) {
 			iss.error(Issue{
 				Field: keyOrchestrator + "." + keyExons, Code: codeOrchExonsRequired,
 				Message: "orchestrator requires an exons specification",
@@ -28,7 +28,7 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 
 		// DC-COND-1 termination authority. An absent/empty mode defaults to
 		// monitor, which is valid.
-		mode, hasMode := getString(orch, keyMode)
+		mode, hasMode := iss.stringOf(orch, keyMode, keyOrchestrator)
 		switch {
 		case hasMode && mode != "" && !orchestratorModes.has(mode):
 			iss.error(Issue{
@@ -59,7 +59,7 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 
 		if tools, ok := getSlice(orch, keyTools); ok {
 			for i, raw := range tools {
-				tool, isStr := asString(raw)
+				tool, isStr := iss.stringAt(raw, indexed(keyOrchestrator+"."+keyTools, i))
 				if !isStr || orchestratorTools.has(tool) {
 					continue
 				}
@@ -104,7 +104,7 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 
 	// DC-COND-2: on_children_complete, when set, must name a real step — the
 	// engine routes into it deterministically once every child is terminal.
-	target, ok := getString(campaign, keyOnChildrenComplete)
+	target, ok := iss.stringOf(campaign, keyOnChildrenComplete, keyCampaign)
 	if !ok || target == "" {
 		return
 	}
@@ -121,7 +121,7 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 }
 
 func validateOrchestratorTrigger(trigger doc, base string, iss *issues) {
-	ttype, isStr := getString(trigger, keyType)
+	ttype, isStr := iss.stringOf(trigger, keyType, base)
 	if !isStr || !orchestratorTriggers.has(ttype) {
 		iss.error(Issue{
 			Field: base + "." + keyType, Code: codeOrchTriggerUnknown,
@@ -136,7 +136,7 @@ func validateOrchestratorTrigger(trigger doc, base string, iss *issues) {
 	// A Go `string` field, filled from any scalar by its source text: `interval:
 	// 0` is "0" and saves, `interval: 100` is "100" (no unit). A number used to
 	// read as "no interval" here.
-	interval, hasInterval := scalarTextAt(get(trigger, keyInterval), base+"."+keyInterval, iss.sources)
+	interval, hasInterval := iss.stringOf(trigger, keyInterval, base)
 	switch {
 	case !hasInterval || interval == "":
 		iss.error(Issue{
@@ -190,7 +190,7 @@ func validateHumanQuestionTimeout(orch doc, iss *issues) {
 	if declared == nil {
 		return
 	}
-	if s, ok := asString(declared); ok {
+	if s, ok := iss.stringAt(declared, keyOrchestrator+"."+keyHumanQuestionTimeout); ok {
 		if s == "" {
 			return
 		}
@@ -305,10 +305,10 @@ func validateCampaignChildFlows(campaign doc, iss *issues) {
 			})
 			continue
 		}
-		if id, _ := scalarText(get(child, keyFlowID)); id != "" {
+		if id, _ := iss.stringOf(child, keyFlowID, indexed(field, i)); id != "" {
 			continue
 		}
-		if name, _ := scalarText(get(child, keyFlowName)); name != "" {
+		if name, _ := iss.stringOf(child, keyFlowName, indexed(field, i)); name != "" {
 			continue
 		}
 		iss.error(Issue{

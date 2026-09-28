@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: numeric-error-goto
+version: '1.0.0'
+description: >-
+  error_strategy.goto_step is a Go string in the reference, so `9` is the step
+  "9". It exists: the goto is present, resolves, and makes the step reachable.
+start: work
+steps:
+  work:
+    executor: mock://api/work
+    error_strategy:
+      action: goto
+      goto_step: 9
+    next:
+      default: 'null'
+  9:
+    executor: mock://api/recover
+    next:
+      default: 'null'
+output:
+  - ok

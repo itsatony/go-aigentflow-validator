@@ -1,6 +1,9 @@
 package aifvalidate
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // validateQualityGates checks each step's `quality_gate:` block (DC-CP-8).
 //
@@ -18,7 +21,7 @@ func validateQualityGates(flow doc, iss *issues) {
 	if steps == nil {
 		return
 	}
-	members := parallelMembers(steps)
+	members := parallelMembers(steps, iss)
 
 	for _, stepID := range sortedKeys(steps) {
 		step, ok := asRecord(steps[stepID])
@@ -35,7 +38,7 @@ func validateQualityGates(flow doc, iss *issues) {
 
 // parallelMembers maps a step ID to the step that fans out to it via
 // next.parallel.steps.
-func parallelMembers(steps doc) map[string]string {
+func parallelMembers(steps doc, iss *issues) map[string]string {
 	members := make(map[string]string)
 	for _, ownerID := range sortedKeys(steps) {
 		step, ok := asRecord(steps[ownerID])
@@ -54,8 +57,8 @@ func parallelMembers(steps doc) map[string]string {
 		if !ok {
 			continue
 		}
-		for _, raw := range list {
-			memberID, isStr := asString(raw)
+		for i, raw := range list {
+			memberID, isStr := iss.stringAt(raw, stepField(ownerID, keyNext, keyParallel, indexed(keySteps, i)))
 			if !isStr {
 				continue
 			}
@@ -70,7 +73,7 @@ func parallelMembers(steps doc) map[string]string {
 func validateQualityGate(gate, step, steps doc, members map[string]string, stepID string, iss *issues) {
 	field := stepField(stepID, keyQualityGate)
 
-	if !isNonEmptyString(trimmed(get(gate, keyRubric))) {
+	if rubric, _ := iss.stringOf(gate, keyRubric, field); strings.TrimSpace(rubric) == "" {
 		iss.error(Issue{
 			Field: field + "." + keyRubric, Code: codeQGMissingRubric, StepID: stepID,
 			Message: fmt.Sprintf("quality_gate on step '%s' requires a non-empty 'rubric'", stepID),
@@ -89,7 +92,7 @@ func validateQualityGate(gate, step, steps doc, members map[string]string, stepI
 		}
 	}
 
-	onFail, hasOnFail := getString(gate, keyOnFail)
+	onFail, hasOnFail := iss.stringOf(gate, keyOnFail, field)
 	if hasOnFail && onFail != "" {
 		switch {
 		case qualityGateRejected.has(onFail):
@@ -110,7 +113,7 @@ func validateQualityGate(gate, step, steps doc, members map[string]string, stepI
 	}
 
 	if onFail == actionGoto {
-		target, hasTarget := getString(gate, keyGotoStep)
+		target, hasTarget := iss.stringOf(gate, keyGotoStep, field)
 		switch {
 		case !hasTarget || target == "":
 			iss.error(Issue{
