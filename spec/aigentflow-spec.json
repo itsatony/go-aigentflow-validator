@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.753.0",
+  "specVersion": "2.788.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -59,7 +59,7 @@
     "unknown"
   ],
   "nextMarkers": ["null", "orchestrator"],
-  "reachabilityTerminalMarkers": ["null", "end", "orchestrator"],
+  "reachabilityTerminalMarkers": ["null", "orchestrator"],
   "parallelResolutions": ["all-complete", "all-succeed", "first-succeed", "first-complete"],
   "forEachResolutions": ["all-complete", "all-succeed"],
   "loopMaxIterationsLimit": 1000,
@@ -301,6 +301,217 @@
     "fn_uniq",
     "fn_urldecode"
   ],
+  "orchestratorToolAllow": {
+    "$comment": "An orchestrator tool is offered only if it passes BOTH orchestrator.tools (empty = every tool) AND the inline exons definition's tools.allow (absent = no narrowing). The lifecycle tools, and the signal tools when enable_signals is on (the default), are exempt from tools.allow. Reference: validateOrchestratorToolAllowWithholds (v2.760.0).",
+    "warningField": "orchestrator.exons",
+    "askHumanTool": "aif_ask_human",
+    "enableSignalsDefault": true,
+    "lifecycleTools": ["aif_mission_complete", "aif_mission_fail", "aif_request_turn"],
+    "signalTools": [
+      "aif_signal_complete",
+      "aif_signal_need_human",
+      "aif_signal_delegate",
+      "aif_signal_need_tool",
+      "aif_signal_modify_flow"
+    ],
+    "campaignTools": [
+      "aif_campaign_cancel",
+      "aif_campaign_results",
+      "aif_campaign_spawn",
+      "aif_campaign_status"
+    ]
+  },
+  "exons": {
+    "$comment": "Where an inline .exons document arrives at the save door. A step's document is judged only on an executor starting executorPrefix, from the string query parameter documentParam, and never when it contains templateActionOpen (the engine renders step params first). Reference: validateInlineExonsStep, validateOrchestrator (v2.767.0, v2.777.0).",
+    "executorPrefix": "exons://",
+    "documentParam": "exons",
+    "frontmatterDelimiter": "---"
+  },
+  "executorConfigEnvScopes": {
+    "$comment": "executor_config may expand only the environment variables of the key it is written under. A value is a reference when it starts with referencePrefix and ends with referenceSuffix around a non-empty name. Checked fields: fields, plus every string value of extra (prefixed extraFieldPrefix in the message). A key absent from scopes has an EMPTY scope and refuses every reference. scopes is the reference's executorConfigEnvScope evaluated for every key with a non-empty scope. Reference: ValidateExecutorConfigEnvScopes (v2.597.0).",
+    "referencePrefix": "${",
+    "referenceSuffix": "}",
+    "fields": ["api_key", "base_url", "organization"],
+    "extraKey": "extra",
+    "scopes": {
+      "aigentchat": [
+        "AIGENTFLOW_AIGENTCHAT_API_KEY",
+        "AIGENTFLOW_AIGENTCHAT_BASE_URL",
+        "AIGENTFLOW_NEXUS_API_KEY",
+        "AIGENTFLOW_NEXUS_BASE_URL"
+      ],
+      "anthropic": [
+        "AIGENTFLOW_ANTHROPIC_API_KEY",
+        "AIGENTFLOW_ANTHROPIC_BASE_URL"
+      ],
+      "api": [
+        "AIGENTFLOW_HOMEASSISTANT_BASE_URL",
+        "AIGENTFLOW_HOMEASSISTANT_TOKEN"
+      ],
+      "assemblyai": [
+        "AIGENTFLOW_ASSEMBLYAI_API_KEY",
+        "AIGENTFLOW_ASSEMBLYAI_BASE_URL"
+      ],
+      "azure": [
+        "AIGENTFLOW_AZURE_API_KEY",
+        "AIGENTFLOW_AZURE_BASE_URL"
+      ],
+      "bedrock": [
+        "AIGENTFLOW_BEDROCK_API_KEY",
+        "AIGENTFLOW_BEDROCK_BASE_URL"
+      ],
+      "blackforestlabs": [
+        "AIGENTFLOW_BFL_API_KEY",
+        "AIGENTFLOW_BLACKFORESTLABS_API_KEY",
+        "AIGENTFLOW_BLACKFORESTLABS_BASE_URL"
+      ],
+      "broker": [
+        "AIGENTFLOW_MQTT_BROKER_URL",
+        "AIGENTFLOW_MQTT_PASSWORD",
+        "AIGENTFLOW_MQTT_USERNAME"
+      ],
+      "cohere": [
+        "AIGENTFLOW_COHERE_API_KEY",
+        "AIGENTFLOW_COHERE_BASE_URL"
+      ],
+      "custom": [
+        "AIGENTFLOW_CUSTOM_API_KEY",
+        "AIGENTFLOW_CUSTOM_BASE_URL"
+      ],
+      "db": [
+        "AIGENTFLOW_DB_ELASTICSEARCH_BASE_URL",
+        "AIGENTFLOW_DB_MILVUS_CONNECTION_STRING",
+        "AIGENTFLOW_DB_MONGODB_CONNECTION_STRING",
+        "AIGENTFLOW_DB_MYSQL_CONNECTION_STRING",
+        "AIGENTFLOW_DB_NEO4J_CONNECTION_STRING",
+        "AIGENTFLOW_DB_PINECONE_API_KEY",
+        "AIGENTFLOW_DB_POSTGRES_CONNECTION_STRING",
+        "AIGENTFLOW_DB_QDRANT_BASE_URL",
+        "AIGENTFLOW_DB_REDIS_CONNECTION_STRING",
+        "AIGENTFLOW_DB_WEAVIATE_BASE_URL"
+      ],
+      "deepgram": [
+        "AIGENTFLOW_DEEPGRAM_API_KEY",
+        "AIGENTFLOW_DEEPGRAM_BASE_URL"
+      ],
+      "deepr": [
+        "AIGENTFLOW_DEEPR_API_KEY",
+        "AIGENTFLOW_DEEPR_BASE_URL"
+      ],
+      "deepseek": [
+        "AIGENTFLOW_DEEPSEEK_API_KEY",
+        "AIGENTFLOW_DEEPSEEK_BASE_URL"
+      ],
+      "device": [
+        "AIGENTFLOW_SHELLY_AUTH_KEY"
+      ],
+      "elevenlabs": [
+        "AIGENTFLOW_ELEVENLABS_API_KEY",
+        "AIGENTFLOW_ELEVENLABS_BASE_URL"
+      ],
+      "geoapify": [
+        "AIGENTFLOW_GEOAPIFY_API_KEY"
+      ],
+      "google": [
+        "AIGENTFLOW_GOOGLE_API_KEY",
+        "AIGENTFLOW_GOOGLE_BASE_URL",
+        "AIGENTFLOW_VERTEXAI_API_KEY",
+        "AIGENTFLOW_VERTEXAI_CREDENTIALS_FILE"
+      ],
+      "homeassistant": [
+        "AIGENTFLOW_HOMEASSISTANT_BASE_URL",
+        "AIGENTFLOW_HOMEASSISTANT_TOKEN"
+      ],
+      "inception": [
+        "AIGENTFLOW_INCEPTION_API_KEY",
+        "AIGENTFLOW_INCEPTION_BASE_URL"
+      ],
+      "leonardoai": [
+        "AIGENTFLOW_LEONARDOAI_API_KEY",
+        "AIGENTFLOW_LEONARDOAI_BASE_URL"
+      ],
+      "minimax": [
+        "AIGENTFLOW_MINIMAX_API_KEY",
+        "AIGENTFLOW_MINIMAX_BASE_URL"
+      ],
+      "mistral": [
+        "AIGENTFLOW_MISTRAL_API_KEY",
+        "AIGENTFLOW_MISTRAL_BASE_URL"
+      ],
+      "moonshot": [
+        "AIGENTFLOW_MOONSHOT_API_KEY",
+        "AIGENTFLOW_MOONSHOT_BASE_URL"
+      ],
+      "mqtt": [
+        "AIGENTFLOW_MQTT_BROKER_URL",
+        "AIGENTFLOW_MQTT_PASSWORD",
+        "AIGENTFLOW_MQTT_USERNAME"
+      ],
+      "nexus": [
+        "AIGENTFLOW_AIGENTCHAT_API_KEY",
+        "AIGENTFLOW_AIGENTCHAT_BASE_URL",
+        "AIGENTFLOW_NEXUS_API_KEY",
+        "AIGENTFLOW_NEXUS_BASE_URL"
+      ],
+      "ollama": [
+        "AIGENTFLOW_OLLAMA_API_KEY",
+        "AIGENTFLOW_OLLAMA_BASE_URL"
+      ],
+      "openai": [
+        "AIGENTFLOW_OPENAI_API_KEY",
+        "AIGENTFLOW_OPENAI_BASE_URL"
+      ],
+      "perplexity": [
+        "AIGENTFLOW_PERPLEXITY_API_KEY",
+        "AIGENTFLOW_PERPLEXITY_BASE_URL"
+      ],
+      "qwen": [
+        "AIGENTFLOW_QWEN_API_KEY",
+        "AIGENTFLOW_QWEN_BASE_URL"
+      ],
+      "s3": [
+        "AIGENTFLOW_STORAGE_S3_ACCESS_KEY",
+        "AIGENTFLOW_STORAGE_S3_BUCKET",
+        "AIGENTFLOW_STORAGE_S3_ENDPOINT",
+        "AIGENTFLOW_STORAGE_S3_PUBLIC_ENDPOINT",
+        "AIGENTFLOW_STORAGE_S3_REGION",
+        "AIGENTFLOW_STORAGE_S3_SECRET_KEY",
+        "AIGENTFLOW_TROVE_PUBLIC_S3_ENDPOINT"
+      ],
+      "speechmatics": [
+        "AIGENTFLOW_SPEECHMATICS_API_KEY",
+        "AIGENTFLOW_SPEECHMATICS_BASE_URL"
+      ],
+      "staticmap": [
+        "AIGENTFLOW_GEOAPIFY_API_KEY"
+      ],
+      "storage": [
+        "AIGENTFLOW_STORAGE_S3_ACCESS_KEY",
+        "AIGENTFLOW_STORAGE_S3_BUCKET",
+        "AIGENTFLOW_STORAGE_S3_ENDPOINT",
+        "AIGENTFLOW_STORAGE_S3_PUBLIC_ENDPOINT",
+        "AIGENTFLOW_STORAGE_S3_REGION",
+        "AIGENTFLOW_STORAGE_S3_SECRET_KEY",
+        "AIGENTFLOW_TROVE_PUBLIC_S3_ENDPOINT"
+      ],
+      "vaiembed": [
+        "AIGENTFLOW_VAIEMBED_API_KEY",
+        "AIGENTFLOW_VAIEMBED_BASE_URL"
+      ],
+      "verda": [
+        "AIGENTFLOW_VERDA_API_KEY",
+        "AIGENTFLOW_VERDA_BASE_URL"
+      ],
+      "vllm": [
+        "AIGENTFLOW_VLLM_API_KEY",
+        "AIGENTFLOW_VLLM_BASE_URL"
+      ],
+      "xai": [
+        "AIGENTFLOW_XAI_API_KEY",
+        "AIGENTFLOW_XAI_BASE_URL"
+      ]
+    }
+  },
   "knownKeys": {
     "$comment": "Derived by reflection over the reference's Flow type, following yaml.v3's field rules (yaml tag, lowercased field name, inline structs merged). KnownFields(true) refuses any key a struct type does not declare. A shape is scalar | any | map<S> | list<S> | a type name below. any is never inspected (a Go interface, or a type with its own unmarshaller). How it is derived and checked, and how to regenerate it: PARITY.md, 'Unknown keys and value kinds'.",
     "root": "Flow",

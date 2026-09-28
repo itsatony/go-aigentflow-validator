@@ -1,0 +1,34 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-tool-withheld-ask-human
+version: '1.0.0'
+description: >-
+  orchestrator.tools is empty, so tools.allow alone decides, and it does not name aif_ask_human:
+  this orchestrator can never ask a person a question. A warning (v2.760.0): an unattended
+  orchestrator is a legitimate design.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    tools:
+      allow: [aif_step_start]
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message

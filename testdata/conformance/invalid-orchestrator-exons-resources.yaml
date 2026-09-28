@@ -1,0 +1,38 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-exons-resources
+version: '1.0.0'
+description: >-
+  AIgentFlow can honour no declared requirements.resources entry today (v2.767.0), so an
+  orchestrator that declares one is refused rather than run without the narrowing it asks for.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    requirements:
+      resources:
+        - ref: product-docs
+          kind: toolset
+        - ref: notes
+          kind: corpus
+          scope: user
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message

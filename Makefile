@@ -10,20 +10,23 @@ help: ## Show this help.
 	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: test
-test: ## Run the test suite with the race detector.
+test: ## Run the test suite with the race detector (both modules).
 	go test -race -count=1 ./...
+	cd exonsinspect && go test -race -count=1 ./...
 
 .PHONY: lint
-lint: ## Run golangci-lint.
+lint: ## Run golangci-lint (both modules).
 	golangci-lint run ./...
+	cd exonsinspect && golangci-lint run --config ../.golangci.yml ./...
 
 .PHONY: fmt
 fmt: ## Format all Go files.
 	gofmt -w .
 
 .PHONY: vet
-vet: ## Run go vet.
+vet: ## Run go vet (both modules).
 	go vet ./...
+	cd exonsinspect && go vet ./...
 
 .PHONY: wasm-check
 wasm-check: ## Verify the library compiles for GOOS=js GOARCH=wasm.
@@ -43,6 +46,14 @@ parity-check: ## Diff this implementation against the sibling JS one (needs JS_V
 	@echo "parity-check: building the JS validator so the comparison is against current source"
 	cd "$(JS_VALIDATOR_REPO)" && npm run build
 	AIF_JS_VALIDATOR_REPO="$(JS_VALIDATOR_REPO)" go test -count=1 -v -run Parity ./...
+
+.PHONY: differential
+differential: ## Compare verdicts with the reference's (needs AIF_REFERENCE_VERDICTS; see PARITY.md).
+	@if [ -z "$(AIF_REFERENCE_VERDICTS)" ]; then \
+	  echo "differential: set AIF_REFERENCE_VERDICTS=/path/to/verdicts.json (PARITY.md, 'The differential')"; \
+	  exit 1; \
+	fi
+	cd exonsinspect && AIF_REFERENCE_VERDICTS="$(AIF_REFERENCE_VERDICTS)" go test -count=1 -v -run Differential ./...
 
 .PHONY: tools
 tools: ## Install the pinned golangci-lint.

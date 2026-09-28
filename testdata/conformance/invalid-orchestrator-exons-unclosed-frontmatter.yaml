@@ -1,0 +1,26 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-exons-unclosed-frontmatter
+version: '1.0.0'
+description: >-
+  A frontmatter that is never closed is a parse failure of the exons engine; the built-in reader
+  follows the engine's extraction rules and refuses it too.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    Observe the mission.
+  triggers:
+    - type: step_completed
+output:
+  - message

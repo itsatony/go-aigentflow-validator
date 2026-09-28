@@ -14,7 +14,8 @@ share one vendored enum surface and one conformance corpus, and agree on error `
 [PARITY.md](./PARITY.md).
 
 - **Zero-config, offline, deterministic.** No network, no filesystem, no credentials, no server.
-- **One dependency.** `gopkg.in/yaml.v3` and nothing else.
+- **One dependency.** `gopkg.in/yaml.v3` and nothing else. (The optional
+  [`exonsinspect`](#exons-documents) companion module adds the `.exons` engine.)
 - **WASM-safe.** Builds for `GOOS=js GOARCH=wasm`, so the same rules run in a server, a CLI, and a browser.
 - **Positioned findings.** Every finding resolves to a line and column in the source.
 - **Parity-tracked.** Mirrors a pinned AIgentFlow flow-schema version, with a test that diffs against the JS implementation.
@@ -64,10 +65,37 @@ right for an authoring-time lint and wrong for admission control.
 
 Know the cost of leaving it off: AIgentFlow itself refuses a template that calls a function it does
 not have. Without `StrictRegistries` this library only warns (`template_function_unknown`), so such
-a flow passes here and is refused at AIgentFlow's save door. At spec v2.753.0 the vendored function
+a flow passes here and is refused at AIgentFlow's save door. At spec v2.788.0 the vendored function
 list equals AIgentFlow's registry, so the warning is a real problem unless your AIgentFlow is newer.
 
 `Errors` and `Warnings` are always non-nil, so they encode as `[]` and never `null`.
+
+### Exons documents
+
+A flow can carry `.exons` agent definitions inline: a step's `query.exons` on an `exons://` executor,
+and `orchestrator.exons`. AIgentFlow's save door judges them with the go-exons engine: whether the
+document parses, and whether every tag can render. This module has no template engine for `.exons`,
+so by default it reads only a document's YAML frontmatter (`execution.provider`, `tools.allow`,
+`requirements.resources`) and cannot tell whether the document parses or renders. For the
+reference's exact verdict, pass the go-exons-backed inspector from the companion module:
+
+```go
+import (
+    aifvalidate "github.com/itsatony/go-aigentflow-validator"
+    "github.com/itsatony/go-aigentflow-validator/exonsinspect"
+)
+
+result := aifvalidate.ValidateFlow(yamlSource, aifvalidate.Options{Exons: exonsinspect.New()})
+```
+
+```bash
+go get github.com/itsatony/go-aigentflow-validator/exonsinspect
+```
+
+It is a separate module so this one keeps a single dependency and stays WASM-safe. Without it, a
+flow whose `.exons` document the engine refuses passes here (PARITY.md, divergence #16). **A consumer
+that gates what AIgentFlow will later save should use it.** `Options.Exons` accepts any
+`ExonsInspector`, so a consumer with its own engine can supply one.
 
 ### Reporting which schema version judged a flow
 
@@ -97,6 +125,8 @@ version rejected them has no way to understand it.
 | `input_schema` / `output_schema` | version, field names, types, constraint/type compatibility, `visible_when`, RE2 patterns |
 | `quality_gate` | rubric, threshold range, `on_fail` enum, self-goto, composite/parallel-member scope |
 | Orchestrator / campaign | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `child_flows`, `max_credits_per_child`, campaign handoff |
+| Inline `.exons` documents | orchestrator: a frontmatter spec, `execution.provider`, no `requirements.resources`; a tool one of `orchestrator.tools` / `tools.allow` withholds (warning); with [`exonsinspect`](#exons-documents): the document parses, and every tag of an orchestrator or `exons://` step document can render |
+| `executor_config` | a `${VAR}` reference may name only the variables of the key it is written under |
 | Templates | Go `text/template` syntax across `query`, `pre_processing`, `post_processing`, `conditions[].if` |
 | `expression_functions` | exactly one of `package` / `function`; `package:` refused; `function:` must be in the fixed catalog; a template calling an `fn_` name must declare it |
 | Other save-door rules | `tool_discovery` vocabulary, mock-scenario `delay` durations, empty `output:` entries |
@@ -107,13 +137,15 @@ version rejected them has no way to understand it.
 - **The model-compliance catalogue.** Whether a named model is permitted is a server question.
 - **Runtime template field resolution.** Whether `.data.fetch.title` will exist at run time needs the
   live state graph. The companion `unresolvable_data_path` rule is therefore out of scope.
-- **The `orchestrator.exons` body.** Its presence is required; its contents belong to the go-exons engine.
+- **Plugin pre-validation.** AIgentFlow's executor plugins can add save-time checks of their own
+  (the `script://` plugin compiles its script). Those depend on the plugin registry and are out of scope.
 
 ## Development
 
 ```bash
 make ci             # fmt + vet + lint + test + wasm-check
 make parity-check   # diff verdicts against the sibling JS implementation
+make differential   # diff verdicts against the reference's, from AIF_REFERENCE_VERDICTS (PARITY.md)
 ```
 
 `make parity-check` needs the JS checkout (`JS_VALIDATOR_REPO`, default

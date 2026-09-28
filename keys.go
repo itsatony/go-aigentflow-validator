@@ -96,6 +96,8 @@ const (
 	keyToolDiscovery        = "tool_discovery"
 	keyMockScenarios        = "mock_scenarios"
 	keyOutput               = "output"
+	keyExecutorConfig       = "executor_config"
+	keyEnableSignals        = "enable_signals"
 )
 
 // Enum member values the rules branch on. The full sets live in the embedded
@@ -269,7 +271,17 @@ const (
 	codeExprFnPackageUnsupported = "expression_function_package_unsupported"
 	codeExprFnUnknown            = "expression_function_unknown"
 	codeExprFnUnknownUse         = "expression_function_unknown_use"
-	codeExprFnUndeclaredUse      = "expression_function_undeclared_use"
+
+	// v0.6.0 — the AIgentFlow save-door rules added after v2.753.0. Where the
+	// reference names the rule (its retroactive-rule identifier or its own
+	// validation code), the code IS that name.
+	codeExecutorConfigEnvScope = "executor_config_env_scope"       // RETROACTIVE_RULE_EXECUTOR_CONFIG_ENV_SCOPE
+	codeExonsAttributes        = "exons_attributes"                // RETROACTIVE_RULE_EXONS_ATTRIBUTES
+	codeOrchExonsParseFailed   = "orchestrator_exons_parse_failed" // ERR_MSG_ORCH_EXONS_PARSE_FAIL
+	codeOrchExonsNoProvider    = "orchestrator_exons_no_provider"  // ERR_MSG_ORCH_EXONS_NO_PROVIDER
+	codeExonsResourcesRefused  = "exons_resources_unhonoured"      // ERR_MSG_EXONS_RESOURCES_REFUSED
+	codeOrchToolWithheld       = "orchestrator_tool_withheld"      // VALIDATION_CODE_ORCH_TOOL_WITHHELD
+	codeExprFnUndeclaredUse    = "expression_function_undeclared_use"
 
 	// processing-operation shape (v2.647.0).
 	codeUnknownProcessingOp        = "unknown_processing_operation"

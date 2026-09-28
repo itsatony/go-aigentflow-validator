@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: executor-config-env-scope
+version: '1.0.0'
+description: >-
+  executor_config may expand only the environment variables of the key it is written under
+  (AIgentFlow v2.597.0). Each entry here names a variable outside its key's scope: another
+  provider's key, a database connection string under a provider's organization, a variable under a
+  key with an empty scope (aiv reads its values raw), an extra string naming another provider's
+  key, and two references run together, which is the single name 'A}${B'.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+executor_config:
+  openai:
+    api_key: '${AIGENTFLOW_ANTHROPIC_API_KEY}'
+    organization: '${AIGENTFLOW_DB_POSTGRES_CONNECTION_STRING}'
+  aiv:
+    api_key: '${AIGENTFLOW_AIV_API_KEY}'
+  db:
+    extra:
+      conn: '${AIGENTFLOW_OPENAI_API_KEY}'
+  anthropic:
+    api_key: '${AIGENTFLOW_ANTHROPIC_API_KEY}${AIGENTFLOW_ANTHROPIC_BASE_URL}'
+output:
+  - message

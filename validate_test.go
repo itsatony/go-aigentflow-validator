@@ -540,11 +540,11 @@ func TestOrchestratorAndCampaign(t *testing.T) {
 		assertError(t, ValidateFlow(src, Options{}), codeOrchExonsRequired, "orchestrator.exons")
 	})
 	t.Run("invalid mode", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: o\\n---\\n\"\n  mode: dictator\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  mode: dictator\n"
 		assertError(t, ValidateFlow(src, Options{}), codeOrchModeInvalid, "orchestrator.mode")
 	})
 	t.Run("owner mode without a yield edge", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: o\\n---\\n\"\n  mode: owner\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  mode: owner\n"
 		assertError(t, ValidateFlow(src, Options{}), codeOrchOwnerNeedsYield, "orchestrator.mode")
 	})
 	t.Run("owner mode WITH a yield edge is valid", func(t *testing.T) {
@@ -557,7 +557,7 @@ steps:
     next:
       default: orchestrator
 orchestrator:
-  exons: "---\nname: o\n---\n"
+  exons: "---\nname: orch\ndescription: coordinates\ntype: agent\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\n---\nhi"
   mode: owner
 `
 		result := ValidateFlow(src, Options{})
@@ -566,17 +566,17 @@ orchestrator:
 		}
 	})
 	t.Run("timer trigger without an interval", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"x\"\n  triggers:\n    - type: timer\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: timer\n"
 		assertError(t, ValidateFlow(src, Options{}),
 			codeOrchTimerNoInterval, "orchestrator.triggers[0].interval")
 	})
 	t.Run("unknown trigger type", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"x\"\n  triggers:\n    - type: eclipse\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: eclipse\n"
 		assertError(t, ValidateFlow(src, Options{}),
 			codeOrchTriggerUnknown, "orchestrator.triggers[0].type")
 	})
 	t.Run("unknown tool warns by default, errors under StrictRegistries", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"x\"\n  tools: [not_a_real_tool]\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  tools: [not_a_real_tool]\n"
 		assertWarningNotError(t, ValidateFlow(src, Options{}), codeOrchToolUnknown)
 		assertError(t, ValidateFlow(src, Options{StrictRegistries: true}),
 			codeOrchToolUnknown, "orchestrator.tools[0]")
@@ -586,7 +586,7 @@ orchestrator:
 		assertError(t, ValidateFlow(src, Options{}), codeCampaignNeedsOrch, keyCampaign)
 	})
 	t.Run("campaign handoff to an unknown step", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"x\"\ncampaign:\n  on_children_complete: ghost\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\ncampaign:\n  on_children_complete: ghost\n"
 		assertError(t, ValidateFlow(src, Options{}),
 			codeCampaignHandoffStep, "campaign.on_children_complete")
 	})

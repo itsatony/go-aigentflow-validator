@@ -1,0 +1,64 @@
+aigentflow_version: '2.0.0'
+name: exons-step-attributes
+version: '1.0.0'
+description: >-
+  An inline exons document on an exons:// step must have no tag the exons engine's own resolver
+  refuses at execute (AIgentFlow v2.777.0): exons.message without role=, exons.include without
+  template=, on a top-level step, a verify step and a loop sub-step. Only an engine can judge
+  this: the built-in reader accepts the flow (PARITY.md, divergence #16) and exonsinspect refuses
+  it with exons_attributes.
+start: work
+steps:
+  work:
+    executor: exons://agent/execute
+    query:
+      exons: |
+        ---
+        name: helper
+        description: helps
+        type: agent
+        execution:
+          provider: anthropic
+          model: claude-sonnet-4-6
+        ---
+        {~exons.message~}help{~/exons.message~}
+    next:
+      default: check
+  check:
+    executor: exons://agent/verify
+    query:
+      exons: |
+        ---
+        name: helper
+        description: helps
+        type: agent
+        execution:
+          provider: anthropic
+          model: claude-sonnet-4-6
+        ---
+        {~exons.message role="system"~}help{~/exons.message~}
+        {~exons.include ref="shared"/~}
+    next:
+      default: repeat
+  repeat:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 3
+      steps:
+        - id: inner
+          executor: exons://agent/execute
+          query:
+            exons: |
+              ---
+              name: helper
+              description: helps
+              type: agent
+              execution:
+                provider: anthropic
+                model: claude-sonnet-4-6
+              ---
+              {~exons.message~}help{~/exons.message~}
+    next:
+      default: 'null'
+output:
+  - message

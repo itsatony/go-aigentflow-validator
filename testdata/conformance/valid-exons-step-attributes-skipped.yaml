@@ -1,0 +1,57 @@
+aigentflow_version: '2.0.0'
+name: exons-step-attributes-skipped
+version: '1.0.0'
+description: >-
+  Where the save door does not judge an inline exons document: a document containing a Go template
+  action (the engine renders step params before the exons plugin parses them), a document on a
+  non-exons executor, and a document that is not a string. A well-formed document with no
+  frontmatter is judged and passes.
+start: templated
+steps:
+  templated:
+    executor: exons://agent/execute
+    query:
+      exons: |
+        ---
+        name: helper
+        description: helps
+        type: agent
+        execution:
+          provider: anthropic
+          model: claude-sonnet-4-6
+        ---
+        {~exons.message~}help{~/exons.message~}
+        {{ .query.topic }}
+    next:
+      default: other
+  other:
+    executor: function://text/template
+    query:
+      exons: |
+        ---
+        name: helper
+        description: helps
+        type: agent
+        execution:
+          provider: anthropic
+          model: claude-sonnet-4-6
+        ---
+        {~exons.message~}help{~/exons.message~}
+      message: 'x'
+    next:
+      default: plain
+  plain:
+    executor: exons://agent/execute
+    query:
+      exons: |
+        Summarise the input in one sentence.
+    next:
+      default: numeric
+  numeric:
+    executor: exons://agent/execute
+    query:
+      exons: 42
+    next:
+      default: 'null'
+output:
+  - message

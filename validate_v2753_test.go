@@ -36,13 +36,22 @@ func TestNextEnd(t *testing.T) {
 			assertValid(t, ValidateFlow(withStep("    executor: function://text/noop\n    next:\n      default: "+v+"\n"), Options{}))
 		}
 	})
-	t.Run("a step named end saves and is unreachable, as in the reference", func(t *testing.T) {
+	t.Run("a step named end saves and is reachable, as in the reference since v2.760.0", func(t *testing.T) {
 		src := withStep("    executor: function://text/noop\n    next:\n      default: end\n") +
 			"  end:\n    executor: function://text/noop\n"
 		result := ValidateFlow(src, Options{})
 		assertValid(t, result)
-		if got := fieldsWithCode(result.Warnings, codeUnreachableStep); !slices.Equal(got, []string{"steps.end"}) {
-			t.Errorf("unreachable_step on %v, want [steps.end]", got)
+		if got := fieldsWithCode(result.Warnings, codeUnreachableStep); len(got) != 0 {
+			t.Errorf("unreachable_step on %v, want none: `end` is an ordinary step id", got)
+		}
+	})
+	t.Run("a cycle through a step named end is a cycle", func(t *testing.T) {
+		src := withStep("    executor: function://text/noop\n    next:\n      default: end\n") +
+			"  end:\n    executor: function://text/noop\n    next:\n      default: only\n"
+		result := ValidateFlow(src, Options{})
+		assertValid(t, result)
+		if !hasCode(result.Warnings, codePotentialInfiniteLop) {
+			t.Errorf("want potential_infinite_loop through `end`; got %s", formatIssues(result.Warnings))
 		}
 	})
 }
@@ -83,7 +92,7 @@ billing: {max_credits: 5, currency: EUR}
 executor_config:
   openai: {api_key: x, region: eu}
 orchestrator:
-  exons: x
+  exons: "---\nname: orch\ndescription: coordinates\ntype: agent\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\n---\nhi"
   zz: 1
   triggers:
     - {type: step_completed, zz: 1}
@@ -246,7 +255,7 @@ func TestDurationNumericSpellings(t *testing.T) {
 	})
 	t.Run("a timer interval of 0 saves and 100 does not", func(t *testing.T) {
 		timer := func(interval string) string {
-			return minimalFlow + "orchestrator:\n  exons: x\n  triggers:\n    - type: timer\n      interval: " + interval + "\n"
+			return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: timer\n      interval: " + interval + "\n"
 		}
 		zero := ValidateFlow(timer("0"), Options{})
 		assertCodesAbsent(t, "error", zero.Errors, []string{codeOrchTimerNoInterval, codeOrchTimerBadInterv})

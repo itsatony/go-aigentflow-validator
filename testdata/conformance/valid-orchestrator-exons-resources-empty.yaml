@@ -1,0 +1,32 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-exons-resources-empty
+version: '1.0.0'
+description: >-
+  An empty requirements.resources list declares nothing and saves.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    requirements:
+      resources: []
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message
