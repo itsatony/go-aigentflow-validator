@@ -441,6 +441,16 @@ code, which is upper case, at field `doc`. Both ports have always reported it as
 `input_schema_file_after_parametric` at the offending field (`input_schema.fields[N]`). A warning
 only; renaming a published code would break every consumer that branches on it, so it stays.
 
+### 18. `unresolvable_data_path`: not ported (reference-only error)
+
+The reference refuses a `.data.<step>.<field>` template reference to a field that `<step>`'s
+`output_schema` does not declare (`unresolvable_data_path`). Judging it means resolving template
+field references against the step graph, the same runtime field-resolution this validator
+deliberately does not model for templates, so a document carrying only this defect is **valid here
+and refused by the reference**. Looser only, never stricter: a consumer that admits on this
+package's verdict may accept a flow the reference will refuse at save. `validate.outputschema.go`
+names this entry.
+
 ## The differential
 
 The reference is closed source, so the differential runs in two halves. On the reference's side a
@@ -449,8 +459,8 @@ plugin pre-validation hook registered) over a corpus and writes one JSON file:
 `{absolute path: {valid, parse_refusal, message, errors: [{code, field}], warnings: [...]}}`. Here,
 `make differential AIF_REFERENCE_VERDICTS=/path/to/that.json` runs
 `exonsinspect/differential_test.go`, which validates each file twice (with `exonsinspect` and with
-the built-in reader, both under `StrictRegistries`) and fails on any divergence outside #14, #16 and
-#17. Where the reference refused at its parse (`parse_refusal`), only the verdict is compared,
+the built-in reader, both under `StrictRegistries`) and fails on any divergence outside #14, #16,
+#17 and #18. Where the reference refused at its parse (`parse_refusal`), only the verdict is compared,
 because such a refusal carries no rule code. The test skips when the variable is unset, and fails on
 a one-sided corpus.
 
