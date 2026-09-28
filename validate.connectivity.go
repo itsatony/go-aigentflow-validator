@@ -126,17 +126,18 @@ func validateConnectivity(flow doc, iss *issues) {
 	}
 }
 
-// TWO marker sets, because the reference gives two answers and both are
-// verdicts.
+// TWO marker sets, kept apart although they now hold the same values.
 //
 // Existence (an ERROR) follows the save door, validateNextLogic (parser.go):
 // only `null` and `orchestrator` stand without a step of that name, so
 // `default: end` is refused when no step is called `end`.
 //
 // Reachability and cycles (WARNINGS) follow findReachableSteps /
-// checkForCycles (validation.go), which still skip `end` as "control leaves the
-// graph" — so a real step named `end` that only `end` routes to is reported
-// unreachable, by the reference too.
+// checkForCycles (validation.go). Until v2.760.0 (DC-FORGE-189) those walks
+// also stopped at `end`, so a real step named `end` was reported unreachable.
+// The reference now treats `end` as an ordinary step id everywhere, and so does
+// this library: `end` left spec reachabilityTerminalMarkers. The two sets stay
+// separate keys in the spec so a future divergence is a one-value change.
 
 // isSaveDoorMarker reports whether a `next` target needs no step of that name.
 func isSaveDoorMarker(target string) bool { return nextMarkers.has(target) }

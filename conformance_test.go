@@ -319,11 +319,11 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeStepNotFound},
 	},
 	{
-		// A real step named `end` saves; the reference's reachability walk still
-		// stops at `end`, so it is unreachable on both sides.
+		// A real step named `end` saves and is REACHABLE: since v2.760.0
+		// (DC-FORGE-189) no reference walk treats `end` as a terminal.
 		file: "valid-next-end-names-a-step.yaml", valid: true,
-		wantWarningCodes: []string{codeUnreachableStep},
-		forbidErrorCodes: []string{codeStepNotFound},
+		forbidWarningCodes: []string{codeUnreachableStep},
+		forbidErrorCodes:   []string{codeStepNotFound},
 	},
 	{
 		// KnownFields(true) at every depth: seven keys, seven findings.

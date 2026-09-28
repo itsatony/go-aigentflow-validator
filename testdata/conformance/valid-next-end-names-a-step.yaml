@@ -3,8 +3,8 @@ name: next-end-names-a-step
 version: '1.0.0'
 description: >-
   `end` is an ordinary step id. When a step of that name exists, routing to it
-  saves. The reference's reachability walk still stops at `end`, so the step is
-  reported unreachable (a warning) by the reference and by this validator alike.
+  saves, and the step is reachable: since AIgentFlow v2.760.0 no walk treats
+  `end` as a terminal, so it is not reported unreachable.
   'null' (quoted or a YAML null) and an empty default also finish a flow.
 start: work
 steps:
