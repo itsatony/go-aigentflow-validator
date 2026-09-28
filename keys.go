@@ -283,6 +283,9 @@ const (
 	codeOrchToolWithheld       = "orchestrator_tool_withheld"      // VALIDATION_CODE_ORCH_TOOL_WITHHELD
 	codeExprFnUndeclaredUse    = "expression_function_undeclared_use"
 
+	// v0.6.1 — AIgentFlow CFX-05: a step query naming a server-owned parameter.
+	codeServerOwnedQueryKey = "server_owned_query_key" // VALIDATION_CODE_SERVER_OWNED_QUERY_KEY
+
 	// processing-operation shape (v2.647.0).
 	codeUnknownProcessingOp        = "unknown_processing_operation"
 	codeUnknownProcessingConfigKey = "unknown_processing_config_key"

@@ -96,6 +96,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateStepMaxDuration(flow, iss)
 	validateSaveDoorExtras(flow, iss)
 	validateExecutorConfigEnvScopes(flow, iss)
+	validateServerOwnedQueryKeys(flow, iss)
 	inspector := exonsInspectorOf(opts)
 	validateInlineExonsSteps(flow, iss, inspector)
 	validateOrchestratorExons(flow, iss, inspector)

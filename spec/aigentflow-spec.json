@@ -512,6 +512,16 @@
       ]
     }
   },
+  "serverOwnedQueryKeys": {
+    "$comment": "Executor parameters only the server's credential resolver may set. A key in keys, matched exactly and case-sensitively, is refused (error) in the query of a top-level step (field stepFieldFormat) and of a loop sub-step (field loopStepFieldFormat, whose second placeholder is the sub-step's id as written). No other surface is scanned. A new server-owned key is a change to keys. Reference: validateNoServerOwnedStepQueryKeys, IsServerOwnedParamKey (CFX-05, after v2.790.0).",
+    "keys": [
+      "aiv_api_key",
+      "aiv_base_url",
+      "aiv_delegation"
+    ],
+    "stepFieldFormat": "steps.%s.query.%s",
+    "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s"
+  },
   "knownKeys": {
     "$comment": "Derived by reflection over the reference's Flow type, following yaml.v3's field rules (yaml tag, lowercased field name, inline structs merged). KnownFields(true) refuses any key a struct type does not declare. A shape is scalar | any | map<S> | list<S> | a type name below. any is never inspected (a Go interface, or a type with its own unmarshaller). How it is derived and checked, and how to regenerate it: PARITY.md, 'Unknown keys and value kinds'.",
     "root": "Flow",

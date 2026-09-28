@@ -1,0 +1,25 @@
+aigentflow_version: '2.0.0'
+name: server-owned-query-key-delegation
+version: '1.0.0'
+description: >-
+  A step query may not declare aiv_delegation. Only the server's credential resolver
+  sets it: the aiv:// executor sends the running org's aigentverse credential,
+  or a token naming the running person, where these keys say. Refused whatever
+  the value (AIgentFlow CFX-05, server_owned_query_key).
+start: research
+steps:
+  research:
+    executor: aiv://acme/researcher
+    query:
+      topic: '{{ .query.topic }}'
+      aiv_delegation:
+        user_id: someone-else
+    next:
+      default: 'null'
+query:
+  topic:
+    type: string
+  token:
+    type: string
+output:
+  - research
