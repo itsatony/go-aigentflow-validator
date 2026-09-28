@@ -62,9 +62,9 @@ func validateSchemaDefinition(raw any, schemaPath string, iss *issues) {
 	// Resolution index for visible_when. Built first so forward references are
 	// allowed (a field may gate on one declared later).
 	allNames := make(map[string]struct{}, len(fields))
-	for _, raw := range fields {
+	for i, raw := range fields {
 		if f, ok := asRecord(raw); ok {
-			if name, ok := getString(f, keyName); ok && name != "" {
+			if name, ok := iss.stringOf(f, keyName, schemaFieldPath(schemaPath, i)); ok && name != "" {
 				allNames[name] = struct{}{}
 			}
 		}
@@ -93,7 +93,7 @@ func validateSchemaDefinition(raw any, schemaPath string, iss *issues) {
 		if !ok {
 			continue
 		}
-		ref, ok := getString(vw, keyField)
+		ref, ok := iss.stringOf(vw, keyField, schemaFieldPath(schemaPath, i)+"."+keyVisibleWhen)
 		if !ok || ref == "" {
 			continue
 		}
@@ -125,7 +125,7 @@ func schemaFieldName(f doc, i int) string {
 
 func validateSchemaField(f doc, schemaPath string, i int, seen map[string]int, iss *issues) {
 	base := schemaFieldPath(schemaPath, i)
-	name, nameIsStr := getString(f, keyName)
+	name, nameIsStr := iss.stringOf(f, keyName, base)
 
 	switch {
 	case !nameIsStr || !fieldNameRe.MatchString(name):
@@ -146,7 +146,7 @@ func validateSchemaField(f doc, schemaPath string, i int, seen map[string]int, i
 		}
 	}
 
-	ftype, typeIsStr := getString(f, keyType)
+	ftype, typeIsStr := iss.stringOf(f, keyType, base)
 	if !typeIsStr || !inputSchemaTypes.has(ftype) {
 		iss.error(Issue{
 			Field: base + "." + keyType, Code: codeISUnknownType,
@@ -187,7 +187,7 @@ func validateSchemaField(f doc, schemaPath string, i int, seen map[string]int, i
 		if has(f, keyMaxLength) {
 			mismatch(keyMaxLength)
 		}
-		if isNonEmptyString(get(f, keyPattern)) {
+		if iss.nonEmptyStringOf(f, keyPattern, base) {
 			mismatch(keyPattern)
 		}
 	}
@@ -238,7 +238,7 @@ func validateSchemaField(f doc, schemaPath string, i int, seen map[string]int, i
 		inValues, inOK := getSlice(vw, keyIn)
 		hasIn := inOK && len(inValues) > 0
 		switch {
-		case !isNonEmptyString(get(vw, keyField)):
+		case !iss.nonEmptyStringOf(vw, keyField, base+"."+keyVisibleWhen):
 			iss.error(Issue{
 				Field: base + "." + keyVisibleWhen, Code: codeISVisibleWhenNoPred,
 				Message: fmt.Sprintf("field '%s': visible_when requires a 'field'", label),
@@ -252,7 +252,7 @@ func validateSchemaField(f doc, schemaPath string, i int, seen map[string]int, i
 		}
 	}
 
-	if pattern, ok := getString(f, keyPattern); ok && pattern != "" {
+	if pattern, ok := iss.stringOf(f, keyPattern, base); ok && pattern != "" {
 		if len(pattern) > spec.InputSchema.MaxPatternLength {
 			iss.error(Issue{
 				Field: base + "." + keyPattern, Code: codeISPatternTooLong,
@@ -295,7 +295,7 @@ func lintSchemaFieldOrdering(fields []any, schemaPath string, iss *issues) {
 		if !ok {
 			continue
 		}
-		ftype, ok := getString(f, keyType)
+		ftype, ok := iss.stringOf(f, keyType, schemaFieldPath(schemaPath, i))
 		if !ok {
 			continue
 		}

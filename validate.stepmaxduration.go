@@ -32,7 +32,7 @@ func validateStepMaxDuration(flow doc, iss *issues) {
 		}
 		// The reference's field is a Go string; any YAML scalar decodes into it,
 		// so `max_duration: 90` arrives as "90" and fails to parse.
-		declared, ok := scalarText(get(step, keyMaxDuration))
+		declared, ok := iss.stringOf(step, keyMaxDuration, stepField(stepID))
 		if !ok || declared == "" {
 			continue
 		}

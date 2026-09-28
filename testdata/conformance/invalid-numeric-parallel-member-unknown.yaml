@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: numeric-parallel-member-unknown
+version: '1.0.0'
+description: >-
+  A parallel member written as a number names the step "5", which does not
+  exist, so the flow is refused.
+start: fan
+steps:
+  fan:
+    executor: mock://api/fan
+    next:
+      parallel:
+        steps: [5]
+        rendezvous: join
+  join:
+    executor: mock://api/join
+    next:
+      default: 'null'
+output:
+  - ok

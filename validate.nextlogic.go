@@ -43,7 +43,7 @@ func validateNextLogic(flow doc, iss *issues) {
 func validateParallel(par, steps doc, stepID string, iss *issues) {
 	base := stepField(stepID, keyNext, keyParallel)
 
-	rendezvous, hasRendezvous := getString(par, keyRendezvous)
+	rendezvous, hasRendezvous := iss.stringOf(par, keyRendezvous, base)
 	switch {
 	case !hasRendezvous || rendezvous == "":
 		iss.error(Issue{
@@ -66,12 +66,13 @@ func validateParallel(par, steps doc, stepID string, iss *issues) {
 		return
 	}
 	for i, raw := range members {
-		member, isStr := asString(raw)
+		memberPath := fmt.Sprintf("%s.%s", base, indexed(keySteps, i))
+		member, isStr := iss.stringAt(raw, memberPath)
 		if isStr && has(steps, member) {
 			continue
 		}
 		iss.error(Issue{
-			Field: fmt.Sprintf("%s.%s", base, indexed(keySteps, i)),
+			Field: memberPath,
 			Code:  codeStepNotFound, StepID: stepID,
 			Message: fmt.Sprintf("Referenced parallel step '%v' does not exist", raw),
 		})

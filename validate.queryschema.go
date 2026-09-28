@@ -33,7 +33,9 @@ func validateQuerySchema(flow doc, iss *issues) {
 			})
 			continue
 		}
-		dtype, hasType := getString(def, keyType)
+		// The reference's type is a Go `string`, so `type: 1` is the unknown
+		// type "1" (a warning), not a missing one (an error).
+		dtype, hasType := iss.stringOf(def, keyType, path)
 		if !hasType || dtype == "" {
 			iss.error(Issue{
 				Field: path + "." + keyType, Code: codeQueryParamTypeMissing,
@@ -49,15 +51,18 @@ func validateQuerySchema(flow doc, iss *issues) {
 		}
 		switch dtype {
 		case typeObject:
-			validateProperties(get(def, keyProperties), path, iss)
+			validateProperties(get(def, keyProperties), path, path, iss)
 		case typeArray:
-			validateArrayItems(get(def, keyItems), path, iss)
+			validateArrayItems(get(def, keyItems), path, path, iss)
 			validateArrayConstraints(def, path, iss)
 		}
 	}
 }
 
-func validateProperties(raw any, parentPath string, iss *issues) {
+// parentPath names findings; srcParent is the SOURCE path of the definition
+// that owns `properties:` (the two differ: findings omit the `properties`
+// segment, the document does not).
+func validateProperties(raw any, parentPath, srcParent string, iss *issues) {
 	if raw == nil {
 		return
 	}
@@ -79,7 +84,8 @@ func validateProperties(raw any, parentPath string, iss *issues) {
 			})
 			continue
 		}
-		dtype, hasType := getString(def, keyType)
+		srcDef := srcParent + "." + keyProperties + "." + propName
+		dtype, hasType := iss.stringOf(def, keyType, srcDef)
 		if !hasType || dtype == "" {
 			iss.error(Issue{
 				Field: path + "." + keyType, Code: codePropertyTypeMissing,
@@ -95,14 +101,15 @@ func validateProperties(raw any, parentPath string, iss *issues) {
 		}
 		switch dtype {
 		case typeObject:
-			validateProperties(get(def, keyProperties), path, iss)
+			validateProperties(get(def, keyProperties), path, srcDef, iss)
 		case typeArray:
-			validateArrayItems(get(def, keyItems), path, iss)
+			validateArrayItems(get(def, keyItems), path, srcDef, iss)
 		}
 	}
 }
 
-func validateArrayItems(raw any, path string, iss *issues) {
+// srcOwner is the SOURCE path of the definition that owns `items:`.
+func validateArrayItems(raw any, path, srcOwner string, iss *issues) {
 	items, ok := asRecord(raw)
 	if !ok {
 		iss.error(Issue{
@@ -111,7 +118,8 @@ func validateArrayItems(raw any, path string, iss *issues) {
 		})
 		return
 	}
-	dtype, hasType := getString(items, keyType)
+	srcItems := srcOwner + "." + keyItems
+	dtype, hasType := iss.stringOf(items, keyType, srcItems)
 	if !hasType || dtype == "" {
 		iss.error(Issue{
 			Field: path + "." + keyItems + "." + keyType, Code: codeArrayItemsTypeInvalid,
@@ -130,9 +138,9 @@ func validateArrayItems(raw any, path string, iss *issues) {
 	itemPath := path + "[item]"
 	switch dtype {
 	case typeObject:
-		validateProperties(get(items, keyProperties), itemPath, iss)
+		validateProperties(get(items, keyProperties), itemPath, srcItems, iss)
 	case typeArray:
-		validateArrayItems(get(items, keyItems), itemPath, iss)
+		validateArrayItems(get(items, keyItems), itemPath, srcItems, iss)
 	}
 }
 

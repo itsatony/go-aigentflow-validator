@@ -41,14 +41,16 @@ func validateCredentialBindings(flow doc, iss *issues) {
 			}
 			checkCredentialBindings(sub,
 				stepField(stepID, keyLoop, indexed(keySteps, i), keyCredential),
-				subStepID(stepID, sub, i), iss)
+				subStepID(stepID, sub, i, iss), iss)
 		}
 	}
 }
 
 func checkCredentialBindings(owner doc, fieldBase, stepID string, iss *issues) {
 	credentialsMap, hasMap := getRecord(owner, keyCredentials)
-	shorthand, hasShorthandKey := getString(owner, keyCredential)
+	// fieldBase is the owner's path plus ".credential" — the source path of the
+	// shorthand itself.
+	shorthand, hasShorthandKey := iss.stringAt(get(owner, keyCredential), fieldBase)
 	hasCredentialsMap := hasMap && len(credentialsMap) > 0
 	hasShorthand := hasShorthandKey && shorthand != ""
 
@@ -77,7 +79,8 @@ func checkCredentialBindings(owner doc, fieldBase, stepID string, iss *issues) {
 				})
 				continue
 			}
-			source, _ := getString(binding, keySource)
+			bindingPath := mapBase + "." + bindingName
+			source, _ := iss.stringOf(binding, keySource, bindingPath)
 			switch {
 			case !hasCredentialPrefix(source):
 				iss.error(Issue{
@@ -94,7 +97,7 @@ func checkCredentialBindings(owner doc, fieldBase, stepID string, iss *issues) {
 						bindingName, spec.CredentialRefPrefix),
 				})
 			}
-			if !isNonEmptyString(get(binding, keyInjectAs)) {
+			if !iss.nonEmptyStringOf(binding, keyInjectAs, bindingPath) {
 				iss.error(Issue{
 					Field: mapBase + "." + bindingName + "." + keyInjectAs,
 					Code:  codeCredInjectAsEmpty, StepID: stepID,

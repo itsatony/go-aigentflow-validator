@@ -40,11 +40,11 @@ func validateToolDiscovery(flow doc, iss *issues) {
 			Suggestion: "Use one of: " + joinNames(sortedSet(toolDiscoveryModes)),
 		})
 	}
-	if value, ok := scalarTextAt(get(flow, keyToolDiscovery), keyToolDiscovery, iss.sources); ok {
+	if value, ok := iss.stringOf(flow, keyToolDiscovery, ""); ok {
 		check(value, keyToolDiscovery, "")
 	}
 	if orch, ok := getRecord(flow, keyOrchestrator); ok {
-		if value, ok := scalarTextAt(get(orch, keyToolDiscovery), keyOrchestrator+"."+keyToolDiscovery, iss.sources); ok {
+		if value, ok := iss.stringOf(orch, keyToolDiscovery, keyOrchestrator); ok {
 			check(value, keyOrchestrator+"."+keyToolDiscovery, "")
 		}
 	}
@@ -86,7 +86,7 @@ func validateMockScenarioDelays(flow doc, iss *issues) {
 			field := fmt.Sprintf("%s.%s.%s.%s", keyMockScenarios, scenario, stepID, keyDelay)
 			// Judged by the SOURCE spelling: `delay: 0.0` is the text "0.0" to the
 			// reference (no unit, refused) although it decodes to the number 0.
-			delay, ok := scalarTextAt(get(mock, keyDelay), field, iss.sources)
+			delay, ok := iss.stringAt(get(mock, keyDelay), field)
 			if !ok || delay == "" {
 				continue
 			}

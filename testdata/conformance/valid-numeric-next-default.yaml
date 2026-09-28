@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: numeric-next-default
+version: '1.0.0'
+description: >-
+  A step whose id is a number, reached through a next.default written as the
+  same number. Both are the text "2" to the reference: the reference resolves,
+  and the step is reachable.
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    next:
+      default: 2
+  2:
+    executor: mock://api/store
+    next:
+      default: 'null'
+output:
+  - ok

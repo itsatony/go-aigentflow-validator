@@ -339,6 +339,9 @@ var conformanceCases = []conformanceCase{
 		// The false-positive guard for the unknown-key rule.
 		file: "valid-open-key-sets.yaml", valid: true,
 		forbidErrorCodes: []string{codeUnknownYAMLKey, codeInvalidType},
+		// `default: 1` reaches the step `1`: a number in a step reference is
+		// the step id of its text (v0.5.1).
+		forbidWarningCodes: []string{codeUnreachableStep},
 	},
 	{
 		// A number in a Go `string` duration field is its SOURCE text.
@@ -350,6 +353,58 @@ var conformanceCases = []conformanceCase{
 		file: "valid-duration-numeric-zero.yaml", valid: true,
 		forbidErrorCodes: []string{codeMockDelayInvalid, codeInvalidDuration,
 			codeOrchTimerNoInterval, codeOrchTimerBadInterv},
+	},
+	// v0.5.1: a step REFERENCE written as a number is the step id of its source
+	// text, because the reference decodes every reference into a Go `string`.
+	// Each pair below is one reference kind, refused and accepted; every verdict
+	// was measured on the reference's strict save parser. These ten fixtures are
+	// GO-FIRST: the JS port has the same defect and does not carry them yet.
+	{
+		file: "invalid-numeric-next-default-unknown.yaml", valid: false,
+		wantErrorCodes: []string{codeStepNotFound},
+	},
+	{
+		file: "valid-numeric-next-default.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnreachableStep},
+	},
+	{
+		file: "invalid-numeric-condition-goto-unknown.yaml", valid: false,
+		wantErrorCodes: []string{codeStepNotFound},
+	},
+	{
+		file: "valid-numeric-condition-goto.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnreachableStep},
+	},
+	{
+		file: "invalid-numeric-parallel-member-unknown.yaml", valid: false,
+		wantErrorCodes: []string{codeStepNotFound},
+	},
+	{
+		// A false step_not_found on the member and a false missing rendezvous.
+		file: "valid-numeric-parallel-member.yaml", valid: true,
+		forbidErrorCodes:   []string{codeStepNotFound, codeMissingField},
+		forbidWarningCodes: []string{codeUnreachableStep},
+	},
+	{
+		// Refused as a MISSING STEP — the goto_step is present.
+		file: "invalid-numeric-error-goto-unknown.yaml", valid: false,
+		wantErrorCodes:   []string{codeStepNotFound},
+		forbidErrorCodes: []string{codeGotoStepMissing},
+	},
+	{
+		file: "valid-numeric-error-goto.yaml", valid: true,
+		forbidErrorCodes:   []string{codeGotoStepMissing},
+		forbidWarningCodes: []string{codeUnreachableStep},
+	},
+	{
+		// `1e3`, `0x1F` and `True`, as keys and as references, are their text.
+		file: "valid-numeric-reference-spellings.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnreachableStep},
+	},
+	{
+		// `1e3` is not the step `1000`, although both are the number 1000.
+		file: "invalid-numeric-reference-spelling-mismatch.yaml", valid: false,
+		wantErrorCodes: []string{codeStepNotFound},
 	},
 }
 

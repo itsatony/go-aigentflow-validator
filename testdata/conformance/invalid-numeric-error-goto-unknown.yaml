@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: numeric-error-goto-unknown
+version: '1.0.0'
+description: >-
+  An error_strategy goto_step written as a number names the step "9", which
+  does not exist, so the flow is refused as a missing step (not a missing
+  goto_step).
+start: work
+steps:
+  work:
+    executor: mock://api/work
+    error_strategy:
+      action: goto
+      goto_step: 9
+    next:
+      default: 'null'
+output:
+  - ok
