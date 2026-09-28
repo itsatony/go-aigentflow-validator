@@ -92,7 +92,7 @@ billing: {max_credits: 5, currency: EUR}
 executor_config:
   openai: {api_key: x, region: eu}
 orchestrator:
-  exons: x
+  exons: "---\nname: orch\ndescription: coordinates\ntype: agent\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\n---\nhi"
   zz: 1
   triggers:
     - {type: step_completed, zz: 1}
@@ -255,7 +255,7 @@ func TestDurationNumericSpellings(t *testing.T) {
 	})
 	t.Run("a timer interval of 0 saves and 100 does not", func(t *testing.T) {
 		timer := func(interval string) string {
-			return minimalFlow + "orchestrator:\n  exons: x\n  triggers:\n    - type: timer\n      interval: " + interval + "\n"
+			return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: timer\n      interval: " + interval + "\n"
 		}
 		zero := ValidateFlow(timer("0"), Options{})
 		assertCodesAbsent(t, "error", zero.Errors, []string{codeOrchTimerNoInterval, codeOrchTimerBadInterv})

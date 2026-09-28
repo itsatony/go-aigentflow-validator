@@ -40,6 +40,12 @@ type conformanceCase struct {
 	// forbidErrorCodes must NOT be present. `valid: true` already fails on any
 	// error; this NAMES the rule under test so a regression reads clearly.
 	forbidErrorCodes []string
+	// exonsEngineOnly marks a fixture whose verdict needs an .exons ENGINE
+	// (PARITY.md, divergence #16). The case states the reference's verdict;
+	// this suite, which runs the built-in reader, asserts the documented
+	// looser one instead — valid, with none of wantErrorCodes — and the
+	// exonsinspect module asserts the reference's.
+	exonsEngineOnly bool
 }
 
 // conformanceCases mirrors CASES in the JS repo's conformance.test.ts, case for
@@ -406,6 +412,96 @@ var conformanceCases = []conformanceCase{
 		file: "invalid-numeric-reference-spelling-mismatch.yaml", valid: false,
 		wantErrorCodes: []string{codeStepNotFound},
 	},
+
+	// v0.6.0 — the save-door rules AIgentFlow added after v2.753.0.
+	{
+		// v2.597.0 (DC-FORGE-29): five out-of-scope references, one per shape.
+		file: "invalid-executor-config-env-scope.yaml", valid: false,
+		wantErrorCodes: []string{codeExecutorConfigEnvScope},
+	},
+	{
+		file: "valid-executor-config-env-scope.yaml", valid: true,
+		forbidErrorCodes: []string{codeExecutorConfigEnvScope},
+	},
+	{
+		// v2.777.0 (DC-FORGE-214): tags the engine's resolver refuses.
+		file: "invalid-exons-step-attributes.yaml", valid: false,
+		wantErrorCodes:  []string{codeExonsAttributes},
+		exonsEngineOnly: true,
+	},
+	{
+		// Templated, non-exons executor, non-string: none is judged.
+		file: "valid-exons-step-attributes-skipped.yaml", valid: true,
+		forbidErrorCodes: []string{codeExonsAttributes},
+	},
+	{
+		file: "invalid-orchestrator-exons-no-spec.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchExonsParseFailed},
+	},
+	{
+		file: "invalid-orchestrator-exons-unclosed-frontmatter.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchExonsParseFailed},
+	},
+	{
+		file: "invalid-orchestrator-exons-no-provider.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchExonsNoProvider},
+	},
+	{
+		// v2.767.0 (DC-FORGE-205): every declared resource is refused.
+		file: "invalid-orchestrator-exons-resources.yaml", valid: false,
+		wantErrorCodes: []string{codeExonsResourcesRefused},
+	},
+	{
+		file: "valid-orchestrator-exons-resources-empty.yaml", valid: true,
+		forbidErrorCodes: []string{codeExonsResourcesRefused},
+	},
+	{
+		file: "invalid-orchestrator-exons-attributes.yaml", valid: false,
+		wantErrorCodes:  []string{codeExonsAttributes},
+		exonsEngineOnly: true,
+	},
+	{
+		// The engine's parse validates the decoded spec.
+		file: "invalid-orchestrator-exons-spec-invalid.yaml", valid: false,
+		wantErrorCodes:  []string{codeOrchExonsParseFailed},
+		exonsEngineOnly: true,
+	},
+	{
+		// v2.760.0 (DC-FORGE-190): the four withholds, each its own fixture.
+		file: "warn-orchestrator-tool-withheld-ask-human.yaml", valid: true,
+		wantWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		file: "warn-orchestrator-tool-withheld-named.yaml", valid: true,
+		wantWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		file: "warn-orchestrator-tool-withheld-signals-off.yaml", valid: true,
+		wantWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		file: "warn-orchestrator-tool-withheld-campaign.yaml", valid: true,
+		wantWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		// The counter-fixtures: a false positive here goes red.
+		file: "valid-orchestrator-tool-allow-consistent.yaml", valid: true,
+		forbidWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		file: "valid-orchestrator-tool-allow-campaign.yaml", valid: true,
+		forbidWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		file: "valid-orchestrator-tool-allow-absent.yaml", valid: true,
+		forbidWarningCodes: []string{codeOrchToolWithheld},
+	},
+	{
+		// v2.760.0 (DC-FORGE-189): `end` is a step, so this is a cycle.
+		file: "warn-next-end-cycle.yaml", valid: true,
+		wantWarningCodes:   []string{codePotentialInfiniteLop},
+		forbidWarningCodes: []string{codeUnreachableStep},
+	},
 }
 
 func TestConformance(t *testing.T) {
@@ -414,6 +510,17 @@ func TestConformance(t *testing.T) {
 			source := readFixture(t, tc.file)
 			result := ValidateFlow(source, Options{})
 
+			if tc.exonsEngineOnly {
+				// The built-in reader cannot judge this document (divergence
+				// #16): it must accept the flow and report none of the codes
+				// only an engine can produce.
+				if !result.Valid {
+					t.Errorf("built-in reader: valid = false, want true (engine-only refusal)\nerrors: %s",
+						formatIssues(result.Errors))
+				}
+				assertCodesAbsent(t, "error", result.Errors, tc.wantErrorCodes)
+				return
+			}
 			if result.Valid != tc.valid {
 				t.Errorf("valid = %v, want %v\nerrors: %s\nwarnings: %s",
 					result.Valid, tc.valid, formatIssues(result.Errors), formatIssues(result.Warnings))

@@ -140,7 +140,7 @@ func TestResponseExpectationUnreadEmptyEvaluation(t *testing.T) {
 
 func TestHumanQuestionTimeout(t *testing.T) {
 	orch := func(v string) string {
-		return minimalFlow + "orchestrator:\n  exons: \"spec\"\n  agentic: true\n  human_question_timeout: " + v + "\n"
+		return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  human_question_timeout: " + v + "\n"
 	}
 	for _, v := range []string{"-5m", "0s", "30", "soon", "[1]"} {
 		assertError(t, ValidateFlow(orch(v), Options{}), codeOrchHumanQTimeoutInvalid, "orchestrator.human_question_timeout")
@@ -155,13 +155,13 @@ func TestOrchestratorYieldViaConditionGoto(t *testing.T) {
 	// condition's `goto_step`, so this valid flow was refused.
 	src := withStep("    executor: function://text/noop\n    next:\n      conditions:\n"+
 		"        - if: \"{{ true }}\"\n          goto: orchestrator\n") +
-		"orchestrator:\n  exons: \"spec\"\n  agentic: true\n  mode: owner\n"
+		"orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  mode: owner\n"
 	assertValid(t, ValidateFlow(src, Options{}))
 }
 
 func TestCampaignRules(t *testing.T) {
 	camp := func(body string) string {
-		return minimalFlow + "orchestrator:\n  exons: \"spec\"\n  agentic: true\ncampaign:\n" + body
+		return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\ncampaign:\n" + body
 	}
 	t.Run("max_credits_per_child", func(t *testing.T) {
 		for _, v := range []string{"-1", "-1.5"} {
@@ -220,7 +220,7 @@ func TestSaveDoorExtras(t *testing.T) {
 	})
 	t.Run("tool_discovery vocabulary", func(t *testing.T) {
 		assertError(t, ValidateFlow(minimalFlow+"tool_discovery: of\n", Options{}), codeToolDiscoveryInvalid, keyToolDiscovery)
-		src := minimalFlow + "orchestrator:\n  exons: \"spec\"\n  agentic: true\n  tool_discovery: nope\n"
+		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  tool_discovery: nope\n"
 		assertError(t, ValidateFlow(src, Options{}), codeToolDiscoveryInvalid, "orchestrator.tool_discovery")
 		src = withStep("    executor: function://text/noop\n    query:\n      tool_discovery: eagr\n")
 		assertError(t, ValidateFlow(src, Options{}), codeToolDiscoveryInvalid, "steps.only.query.tool_discovery")

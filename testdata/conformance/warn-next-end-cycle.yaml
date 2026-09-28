@@ -1,0 +1,22 @@
+aigentflow_version: '2.0.0'
+name: next-end-cycle
+version: '1.0.0'
+description: >-
+  Since AIgentFlow v2.760.0 no walk treats `end` as a terminal: a step named end that routes back
+  is a cycle (potential_infinite_loop), and the step is reachable.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'w'
+    next:
+      default: end
+  end:
+    executor: function://text/template
+    query:
+      message: 'e'
+    next:
+      default: work
+output:
+  - message

@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-exons-spec-invalid
+version: '1.0.0'
+description: >-
+  The exons engine's parse validates the spec it decodes: a spec with an execution block needs a
+  description. Engine-only: the built-in reader accepts it (PARITY.md, divergence #16).
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message

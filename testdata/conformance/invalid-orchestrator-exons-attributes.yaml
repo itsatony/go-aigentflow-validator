@@ -1,0 +1,32 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-exons-attributes
+version: '1.0.0'
+description: >-
+  An orchestrator document whose tag its resolver refuses at execute (exons.message without role=)
+  is refused at save (v2.777.0). Engine-only: the built-in reader accepts it (PARITY.md,
+  divergence #16).
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message

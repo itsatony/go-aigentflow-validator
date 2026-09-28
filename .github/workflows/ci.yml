@@ -28,15 +28,26 @@ jobs:
           fi
 
       - name: go vet
-        run: go vet ./...
+        run: |
+          go vet ./...
+          (cd exonsinspect && go vet ./...)
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.12.2
 
+      - name: golangci-lint (exonsinspect)
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.12.2
+          working-directory: exonsinspect
+          args: --config ../.golangci.yml
+
       - name: test (race)
-        run: go test -race -count=1 ./...
+        run: |
+          go test -race -count=1 ./...
+          (cd exonsinspect && go test -race -count=1 ./...)
 
       - name: wasm build
         # A consumer embeds this in a browser WASM bundle, so a stray os/net
@@ -46,4 +57,5 @@ jobs:
       - name: tidy check
         run: |
           go mod tidy
-          git diff --exit-code -- go.mod go.sum
+          (cd exonsinspect && go mod tidy)
+          git diff --exit-code -- go.mod go.sum exonsinspect/go.mod exonsinspect/go.sum

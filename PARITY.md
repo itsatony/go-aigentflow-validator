@@ -7,8 +7,57 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.753.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.788.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)).
+
+> **v0.6.0 (2026-09-28) — every save-door rule AIgentFlow added after v2.753.0, measured against
+> the reference's own save-door verdict.** Since AIgentFlow v2.788.0 its save door and
+> `/flows/validate` are one verdict (strict parse, then `ValidateFlowWithDetails`), so "refuses what
+> AIgentFlow's save refuses" is now one target. **This release is Go-first:** the spec, the new
+> fixtures and one changed fixture are not yet in the JS port, so `make parity-check` reports them
+> as drift until it follows.
+>
+> | Rule (reference) | Code | Severity | File |
+> | --- | --- | --- | --- |
+> | `end` is an ordinary step id to the reachability and cycle walks too (v2.760.0, DC-FORGE-189) | `unreachable_step` / `potential_infinite_loop` stop treating `end` as terminal | warning | `validate.connectivity.go`, spec `reachabilityTerminalMarkers` |
+> | `ValidateExecutorConfigEnvScopes` (v2.597.0, DC-FORGE-29) | `executor_config_env_scope` | error | `validate.executorconfigenv.go`, spec `executorConfigEnvScopes` |
+> | inline `.exons` step intake (v2.777.0, DC-FORGE-214) | `exons_attributes` | error, engine only | `validate.exons.go` |
+> | orchestrator `.exons` parse, spec presence, provider (the reference's `validateOrchestrator`) | `orchestrator_exons_parse_failed`, `orchestrator_exons_no_provider` | error | `validate.exons.go` |
+> | orchestrator `.exons` intake (v2.777.0) | `exons_attributes` | error, engine only | `validate.exons.go` |
+> | orchestrator `requirements.resources` (v2.767.0, DC-FORGE-205) | `exons_resources_unhonoured` | error | `validate.exons.go` |
+> | a tool one of `orchestrator.tools` / `tools.allow` withholds (v2.760.0, DC-FORGE-190) | `orchestrator_tool_withheld` | warning | `validate.exons.go`, spec `orchestratorToolAllow` |
+>
+> - **Codes.** The reference refuses all of these at its strict parse, where a refusal carries one
+>   generic code (`flow_structure_invalid`, or `yaml_parse_error` for the env-scope refusal). Each
+>   code here is the reference's own name for the rule where it has one (its retroactive-rule id
+>   `executor_config_env_scope` / `exons_attributes`, its warning code `orchestrator_tool_withheld`)
+>   and names the message otherwise. The reference stops at the first refusal; this library reports
+>   each. The verdict is the same.
+> - **The `.exons` engine is optional (divergence #16).** Judging whether a document parses and
+>   whether its tags render needs go-exons. `Options.Exons` takes an `ExonsInspector`; the companion
+>   module `github.com/itsatony/go-aigentflow-validator/exonsinspect` implements it with go-exons,
+>   built exactly as the reference builds it (`exons.New(exons.WithEnvDisabled())`, `Parse`, and
+>   `Validate(...).Errors()`), at the go-exons version the reference pins (v0.37.0). Without it the
+>   built-in reader reads the frontmatter only, following the engine's extraction rules (a
+>   15-shape matrix in `exonsinspect` pins that the two agree on every frontmatter shape).
+> - **The env-scope table is the reference's, evaluated.** `executorConfigEnvScopes.scopes` is the
+>   reference's `executorConfigEnvScope` evaluated for every key with a non-empty scope (38 keys);
+>   any other key refuses every reference. It is not a prefix rule and it is not hand-written.
+>
+> **Measured** with the differential (below) on a 371-file corpus: the 216 bundled flows (including
+> the 10 starter templates), 12 authoring-guide examples, all 94 conformance fixtures and a 49-shape
+> probe matrix (one or more shapes per rule, each side of each rule). The reference refuses 62.
+>
+> | | verdict agrees | error codes agree | warning codes agree |
+> | --- | --- | --- | --- |
+> | v0.5.1 | 342 / 371 | 342 | — (misses every `orchestrator_tool_withheld`; `unreachable_step` on a real `end`) |
+> | v0.6.0 with `exonsinspect` | **371 / 371** | **371** | **371** (outside divergences #14 and #17) |
+> | v0.6.0, built-in reader | 359 / 371 | 359 | 359; the 12 are all divergence #16, all looser |
+>
+> On the 216 bundled flows alone the verdicts were already identical at v0.5.1: none of them trips
+> a new rule. 16 mutants of the new rules (each rule removed, each guard inverted, the scope table
+> emptied, the `end` marker restored, the signal exemption dropped, the templated-document skip
+> removed): all killed by the conformance fixtures and unit tests.
 
 > **v0.5.1 (2026-09-28) — a number where the reference expects text is that text, in every
 > Go-`string` field.** The scalar-VALUE counterpart of v0.5.0's numeric step KEYS. The reference
@@ -289,6 +338,11 @@ reference's connectivity check exempts `end`, but its save-door parser (`validat
 follow each half: the existence check uses the save door's set, and reachability and cycles keep
 `end` as terminal. The shared fixtures that routed to `end` now route to `'null'`.
 
+**Since v0.6.0 (reference v2.760.0) the second half is gone too:** no reference walk treats `end`
+as terminal, so a real step named `end` is reachable and a cycle through it is a cycle. Spec
+`reachabilityTerminalMarkers` is now `["null", "orchestrator"]`, the same values as `nextMarkers`;
+the two keys stay separate so a future split is a one-value change.
+
 ### 9. Unknown keys — CLOSED in v0.5.0 (shared with JS)
 
 The reference's save door parses with `KnownFields(true)`, so any key its types do not declare is
@@ -331,6 +385,9 @@ mission clock. That threshold is a deployment constant this package cannot obser
   decodes the boolean as the text "true"); the JS port ignores booleans.
 - The reference's runtime template field-resolution warnings (`template_missing_field`,
   `condition_not_boolean`) and `compliance_catalog_missing` are not produced here (scope).
+- Plugin pre-validation: the reference's save door also runs a check each executor plugin may
+  register (today only `script://`, which compiles its script). It depends on the plugin registry
+  and is out of scope; no bundled flow trips it.
 
 ### 15. A number in a duration field without source text is judged by its parsed value (shared with JS, #13 there) — NARROWED in v0.5.0 and v0.5.1
 
@@ -355,11 +412,50 @@ because no number's text carries a unit.
 gives: write a unit. A campaign `flow_id` / `flow_name` also uses the parsed value, where it cannot
 change a verdict (no number spelling is empty or a template).
 
+### 16. `.exons` documents: the engine's judgement needs the engine (v0.6.0)
+
+The reference judges an inline `.exons` document with go-exons: whether it parses (grammar,
+frontmatter decode and the spec's own validation), and whether every tag can render. This module
+has no `.exons` template engine and must not grow one, because a second implementation of that
+grammar is a second opinion about it.
+
+- **With `Options.Exons: exonsinspect.New()`** the verdict is the reference's: 371 of 371 on the
+  differential corpus.
+- **With the built-in reader** (`Options.Exons` nil) the frontmatter is read the way the engine
+  extracts and decodes it, so `orchestrator_exons_parse_failed` (no spec, an unclosed frontmatter,
+  the retired config block), `orchestrator_exons_no_provider`, `exons_resources_unhonoured` and
+  `orchestrator_tool_withheld` are the reference's. What it cannot see: a document that does not
+  parse for any other reason (including a spec the engine's own validation refuses, such as a
+  missing `description`), a tag that cannot render (`exons_attributes`, on steps and on the
+  orchestrator), and a frontmatter containing a tag (the engine executes it before decoding, so it
+  is not read at all).
+
+**Direction: looser than the reference without the engine; identical with it.** Never stricter:
+the built-in reader refuses only where the engine refuses as well (pinned by the 15-shape matrix in
+`exonsinspect`). The JS port shares the gap (its divergence "exons body not parsed").
+
+### 17. `input_schema_file_after_parametric` is spelt `INPUT_SCHEMA_FILE_AFTER_PARAMETRIC` by the reference
+
+The reference's save door merges its `input_schema` ordering lint into the verdict with its own
+code, which is upper case, at field `doc`. Both ports have always reported it as
+`input_schema_file_after_parametric` at the offending field (`input_schema.fields[N]`). A warning
+only; renaming a published code would break every consumer that branches on it, so it stays.
+
+## The differential
+
+The reference is closed source, so the differential runs in two halves. On the reference's side a
+program runs its save-door verdict (the strict parse, then `ValidateFlowWithDetails`, with the
+plugin pre-validation hook registered) over a corpus and writes one JSON file:
+`{absolute path: {valid, parse_refusal, message, errors: [{code, field}], warnings: [...]}}`. Here,
+`make differential AIF_REFERENCE_VERDICTS=/path/to/that.json` runs
+`exonsinspect/differential_test.go`, which validates each file twice (with `exonsinspect` and with
+the built-in reader, both under `StrictRegistries`) and fails on any divergence outside #14, #16 and
+#17. Where the reference refused at its parse (`parse_refusal`), only the verdict is compared,
+because such a refusal carries no rule code. The test skips when the variable is unset, and fails on
+a one-sided corpus.
+
 ## Not ported (owed)
 
-- `ValidateExecutorConfigEnvScopes` (reference v2.597.0): `executor_config` may expand only the
-  environment variables of the provider it is written under. Needs four vendored scope tables. Owed
-  in both ports.
 - The numeric-spelling gap for `ValidateFlowObject` (divergence #15), which has no source text to
   recover.
 
@@ -383,7 +479,7 @@ When AIgentFlow's flow schema changes:
    fixture cannot sit unasserted.
 4. Port the new rule, with its `code` constant added to `keys.go`. A new or renamed field in any
    flow type arrives as a `knownKeys` change in the copied spec; nothing to port for it here.
-5. `make ci && make parity-check`.
+5. `make ci && make parity-check`, and `make differential` against a fresh reference verdict file.
 6. Note the version and the ported rule at the top of this file's tracked-version line.
 
 ## Consumers that BLOCK on a verdict
@@ -394,3 +490,6 @@ pinned-schema model:
 - **Surface `Result.SpecVersion`** on every rejection. See README.
 - **Keep `StrictRegistries` off.** The registry-lag warnings exist precisely so a real-but-newer
   executor scheme, template function, or orchestrator tool cannot block a publish.
+- **Pass `Options.Exons: exonsinspect.New()`** when the gate predicts what AIgentFlow will save.
+  Without it a flow whose `.exons` document AIgentFlow's engine refuses passes the gate
+  (divergence #16).

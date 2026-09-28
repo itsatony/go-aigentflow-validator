@@ -1,0 +1,44 @@
+aigentflow_version: '2.0.0'
+name: executor-config-env-scope-own
+version: '1.0.0'
+description: >-
+  Every reference here is in scope: a provider's own pair, the Vertex AI name google reads, the
+  aigentchat spelling nexus admits, a driver key (broker) governed by its protocol (mqtt), a db
+  extra string. Not references at all: a literal, a reference inside a longer string, an empty
+  ${}, an unclosed brace, and non-string extra values (a number, a nested mapping, a list), which
+  the reference never reads as text. A null instance is skipped.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+executor_config:
+  openai:
+    api_key: '${AIGENTFLOW_OPENAI_API_KEY}'
+    base_url: '${AIGENTFLOW_OPENAI_BASE_URL}'
+  google:
+    api_key: '${AIGENTFLOW_VERTEXAI_API_KEY}'
+  nexus:
+    api_key: '${AIGENTFLOW_AIGENTCHAT_API_KEY}'
+  broker:
+    extra:
+      url: '${AIGENTFLOW_MQTT_BROKER_URL}'
+  db:
+    extra:
+      conn: '${AIGENTFLOW_DB_POSTGRES_CONNECTION_STRING}'
+      port: 5432
+      nested:
+        key: '${AIGENTFLOW_OPENAI_API_KEY}'
+      list: ['${AIGENTFLOW_OPENAI_API_KEY}']
+  anthropic:
+    api_key: 'sk-literal'
+    base_url: 'https://example.invalid/${AIGENTFLOW_OPENAI_API_KEY}'
+    organization: '${}'
+  mistral:
+    api_key: '${AIGENTFLOW_OPENAI_API_KEY'
+  deepseek:
+output:
+  - message

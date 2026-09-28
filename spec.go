@@ -86,6 +86,29 @@ type rawSpec struct {
 		ClosedConfigKeys map[string][]string `json:"closedConfigKeys"`
 	} `json:"processingOperations"`
 	TemplateFunctions []string `json:"templateFunctions"`
+	// OrchestratorToolAllow feeds orchestrator_tool_withheld (v2.760.0).
+	OrchestratorToolAllow struct {
+		WarningField         string   `json:"warningField"`
+		AskHumanTool         string   `json:"askHumanTool"`
+		EnableSignalsDefault bool     `json:"enableSignalsDefault"`
+		LifecycleTools       []string `json:"lifecycleTools"`
+		SignalTools          []string `json:"signalTools"`
+		CampaignTools        []string `json:"campaignTools"`
+	} `json:"orchestratorToolAllow"`
+	// Exons names where an inline .exons document arrives (v2.767.0, v2.777.0).
+	Exons struct {
+		ExecutorPrefix       string `json:"executorPrefix"`
+		DocumentParam        string `json:"documentParam"`
+		FrontmatterDelimiter string `json:"frontmatterDelimiter"`
+	} `json:"exons"`
+	// ExecutorConfigEnvScopes feeds executor_config_env_scope (v2.597.0).
+	ExecutorConfigEnvScopes struct {
+		ReferencePrefix string              `json:"referencePrefix"`
+		ReferenceSuffix string              `json:"referenceSuffix"`
+		Fields          []string            `json:"fields"`
+		ExtraKey        string              `json:"extraKey"`
+		Scopes          map[string][]string `json:"scopes"`
+	} `json:"executorConfigEnvScopes"`
 }
 
 // The decoded enum surface, built once at init. These are package-level because

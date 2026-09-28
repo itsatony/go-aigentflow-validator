@@ -95,6 +95,10 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateProcessingOperations(flow, iss)
 	validateStepMaxDuration(flow, iss)
 	validateSaveDoorExtras(flow, iss)
+	validateExecutorConfigEnvScopes(flow, iss)
+	inspector := exonsInspectorOf(opts)
+	validateInlineExonsSteps(flow, iss, inspector)
+	validateOrchestratorExons(flow, iss, inspector)
 	// Last among the structural rules: it skips a location another rule has
 	// already reported with more specific advice.
 	validateUnknownKeys(flow, iss)
