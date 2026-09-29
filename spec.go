@@ -109,6 +109,12 @@ type rawSpec struct {
 		ExtraKey        string              `json:"extraKey"`
 		Scopes          map[string][]string `json:"scopes"`
 	} `json:"executorConfigEnvScopes"`
+	// ServerOwnedQueryKeys feeds server_owned_query_key (AIgentFlow CFX-05).
+	ServerOwnedQueryKeys struct {
+		Keys                []string `json:"keys"`
+		StepFieldFormat     string   `json:"stepFieldFormat"`
+		LoopStepFieldFormat string   `json:"loopStepFieldFormat"`
+	} `json:"serverOwnedQueryKeys"`
 }
 
 // The decoded enum surface, built once at init. These are package-level because
@@ -142,6 +148,10 @@ var (
 	processingStandardTypes    set
 	processingLoopSubStepTypes set
 	processingOpenKeyTypes     set
+
+	// serverOwnedQueryKeys are the executor parameters only the server's
+	// credential resolver may set; a step query naming one is refused.
+	serverOwnedQueryKeys set
 
 	fieldNameRe *regexp.Regexp
 	// executorURLRe is the ONE executor-URL shape, mirrored verbatim from the
@@ -202,6 +212,7 @@ func init() {
 	processingStandardTypes = newSet(spec.ProcessingOperations.StandardTypes)
 	processingLoopSubStepTypes = newSet(spec.ProcessingOperations.LoopSubStepTypes)
 	processingOpenKeyTypes = newSet(spec.ProcessingOperations.OpenKeyTypes)
+	serverOwnedQueryKeys = newSet(spec.ServerOwnedQueryKeys.Keys)
 }
 
 // ExpressionFunctionCatalog returns the fixed expression-function catalog

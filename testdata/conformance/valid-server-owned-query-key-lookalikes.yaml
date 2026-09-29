@@ -1,0 +1,43 @@
+aigentflow_version: '2.0.0'
+name: server-owned-query-key-lookalikes
+version: '1.0.0'
+description: >-
+  The counter-fixture for server_owned_query_key. Only the exact, lower-case
+  keys aiv_api_key, aiv_base_url and aiv_delegation, declared directly in a
+  step's or a loop sub-step's query, are refused. A similar name, another case,
+  a key nested inside a query value, the name as a VALUE, and a flow input
+  parameter of that name all save.
+start: research
+steps:
+  research:
+    executor: aiv://acme/researcher
+    query:
+      aiv_ref: acme/researcher
+      aiv_api_keys: none
+      AIV_API_KEY: not-the-reserved-key
+      Aiv_Base_Url: not-the-reserved-key
+      aiv_delegation_note: set by the server
+      api_key_name: aiv_api_key
+      options:
+        aiv_base_url: nested, not a query key
+    next:
+      default: rounds
+  rounds:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: review
+          executor: aiv://acme/reviewer
+          query:
+            aiv_ref: acme/reviewer
+            aiv_base: https://example.org
+            text: '{{ .query.aiv_base_url }}'
+    next:
+      default: 'null'
+query:
+  aiv_base_url:
+    type: string
+    description: An input parameter may carry this name; the rule scans step queries only.
+output:
+  - research

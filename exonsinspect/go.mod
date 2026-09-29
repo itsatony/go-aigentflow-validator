@@ -3,7 +3,7 @@ module github.com/itsatony/go-aigentflow-validator/exonsinspect
 go 1.25
 
 require (
-	github.com/itsatony/go-aigentflow-validator v0.6.0
+	github.com/itsatony/go-aigentflow-validator v0.6.1
 	github.com/itsatony/go-exons v0.37.0
 )
 

@@ -502,6 +502,21 @@ var conformanceCases = []conformanceCase{
 		wantWarningCodes:   []string{codePotentialInfiniteLop},
 		forbidWarningCodes: []string{codeUnreachableStep},
 	},
+	// v0.6.1 (AIgentFlow CFX-05): a step or loop sub-step query may not declare
+	// a server-owned parameter. One fixture per key per surface, so dropping a
+	// key from the spec set, or either surface from the scan, goes red here.
+	{file: "invalid-server-owned-query-key-api-key.yaml", valid: false, wantErrorCodes: []string{codeServerOwnedQueryKey}},
+	{file: "invalid-server-owned-query-key-base-url.yaml", valid: false, wantErrorCodes: []string{codeServerOwnedQueryKey}},
+	{file: "invalid-server-owned-query-key-delegation.yaml", valid: false, wantErrorCodes: []string{codeServerOwnedQueryKey}},
+	{file: "invalid-server-owned-query-key-loop-api-key.yaml", valid: false, wantErrorCodes: []string{codeServerOwnedQueryKey}},
+	{file: "invalid-server-owned-query-key-loop-base-url.yaml", valid: false, wantErrorCodes: []string{codeServerOwnedQueryKey}},
+	{file: "invalid-server-owned-query-key-loop-delegation.yaml", valid: false, wantErrorCodes: []string{codeServerOwnedQueryKey}},
+	{
+		// The counter-fixture: similar names, another case, a nested key, the
+		// name as a value, and a flow input parameter of that name all save.
+		file: "valid-server-owned-query-key-lookalikes.yaml", valid: true,
+		forbidErrorCodes: []string{codeServerOwnedQueryKey},
+	},
 }
 
 func TestConformance(t *testing.T) {

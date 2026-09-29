@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: server-owned-query-key-loop-delegation
+version: '1.0.0'
+description: >-
+  A loop sub-step's query may not declare aiv_delegation either: the loop body is the
+  second surface the reference scans (AIgentFlow CFX-05, server_owned_query_key).
+start: rounds
+steps:
+  rounds:
+    loop:
+      while: '{{ lt .loop.index 3 }}'
+      max_iterations: 3
+      steps:
+        - id: draft
+          executor: function://text/template
+          query:
+            message: 'round {{ .loop.index }}'
+        - id: review
+          executor: aiv://acme/reviewer
+          query:
+            text: '{{ .data.draft.message }}'
+            aiv_delegation:
+              user_id: someone-else
+    next:
+      default: 'null'
+query:
+  token:
+    type: string
+output:
+  - rounds

@@ -8,7 +8,37 @@ This document defines how this Go implementation stays in step with two things:
    rule back to the reference.
 
 **Tracks AIgentFlow flow schema: `v2.788.0`** (`specVersion` in
-[`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)).
+[`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
+(v0.6.1, below) from the AIgentFlow release after v2.790.0.
+
+> **v0.6.1 (2026-09-29) — a step query may not declare a server-owned parameter.** One new
+> reference rule, ported to both ports together (JS port 0.15.1), with the same spec and fixtures.
+>
+> | Rule (reference) | Code | Severity | File |
+> | --- | --- | --- | --- |
+> | `validateNoServerOwnedStepQueryKeys` / `IsServerOwnedParamKey` (AIgentFlow CFX-05) | `server_owned_query_key` | error | `validate.serverownedquerykeys.go`, spec `serverOwnedQueryKeys` |
+>
+> - **Why.** The `aiv://` executor sends the running org's aigentverse credential, or a signed
+>   token naming the running person, to the base URL in its parameters, and the reference used to
+>   lay a step's `query:` over the credential resolver's output. A shared flow declaring
+>   `aiv_base_url: https://attacker.example` therefore chose where that credential went. The
+>   reference now discards such a value at run time and refuses it by name at save.
+> - **Exactly as the reference.** The key set is data (`serverOwnedQueryKeys.keys`: `aiv_api_key`,
+>   `aiv_base_url`, `aiv_delegation`), so a new server-owned key is a spec change. Matching is exact
+>   and case-sensitive. The scanned surfaces are exactly the reference's two: a top-level step's
+>   `query:` (field `steps.<step>.query.<key>`) and a loop sub-step's `query:` (field
+>   `steps.<step>.loop.steps.<sub-step id>.query.<key>`, `StepID` the loop step). A parallel branch
+>   or a `for_each` body is a top-level step. Any value is refused, `null` and templates included;
+>   a key nested inside a query value, the name as a value, and a flow input parameter of that name
+>   are not.
+> - **Measured** with the reference at the rule's commit (strict parse, then
+>   `ValidateFlowWithDetails`) over 345 files (the 216 bundled flows and every conformance
+>   fixture): the `(code, field)` pairs for this rule are identical, and no bundled flow trips it.
+>   Four more shapes (a null value, a numeric sub-step id `07`, an upper-case key, a nested key)
+>   agree too. A loop sub-step without an id is refused at the reference's parse, so it never
+>   reaches this rule there; here it is reported with the empty id beside `loop_step_id_required`.
+>   Six mutants (a key dropped from the spec, either surface unscanned, the rule unwired, a folded
+>   case, the sub-step addressed by index): all killed.
 
 > **v0.6.0 (2026-09-28) — every save-door rule AIgentFlow added after v2.753.0, measured against
 > the reference's own save-door verdict.** Since AIgentFlow v2.788.0 its save door and
