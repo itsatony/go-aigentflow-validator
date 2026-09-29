@@ -286,6 +286,10 @@ const (
 	// v0.6.1 — AIgentFlow CFX-05: a step query naming a server-owned parameter.
 	codeServerOwnedQueryKey = "server_owned_query_key" // VALIDATION_CODE_SERVER_OWNED_QUERY_KEY
 
+	// v0.6.2 — AIgentFlow DC-FORGE-231 / DC-FORGE-233: an endpoint a
+	// server-supplied credential will never be sent to (warning).
+	codeCredentialEndpointUnpaired = "credential_endpoint_unpaired" // VALIDATION_CODE_CREDENTIAL_ENDPOINT_UNPAIRED
+
 	// processing-operation shape (v2.647.0).
 	codeUnknownProcessingOp        = "unknown_processing_operation"
 	codeUnknownProcessingConfigKey = "unknown_processing_config_key"

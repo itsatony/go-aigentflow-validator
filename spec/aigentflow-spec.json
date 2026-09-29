@@ -522,6 +522,373 @@
     "stepFieldFormat": "steps.%s.query.%s",
     "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s"
   },
+  "credentialEndpointPairing": {
+    "$comment": "credential_endpoint_unpaired (WARNING, never an error): the one statically certain shape of AIgentFlow's run-time credential/endpoint pairing refusal. ai: an ai://<provider>/... step (top-level or loop sub-step) whose query holds a non-empty string <provider>+providerBaseUrlParamSuffix while neither its query (genericKeyParam or <provider>+providerKeyParamSuffix, non-empty strings) nor executor_config.<provider>.api_key (a literal, not an env reference) supplies a key; and executor_config.<provider>.base_url for a provider in executorConfigProviders when it is a literal, the block has no literal api_key, and it is not the case that at least one step uses the provider and every such step brings its own query key. keylessProviders are exempt from both. families: a step whose executor resolves (protocolAliases first, then the key protocol+familyKeySeparator+driver, else protocol) to a row. implicitServerCredential rows are never judged. A row with storedKeyShape warns on the first non-empty string endpointParam in the query unless the query holds an own key (a non-empty string in ownKeyParams, or a mapping under ownCredentialsMapParam). Any other row warns when its secret (the first non-empty string secretParam in the query, else per configKey in order: executor_config api_key when configApiKeyParam is a secretParam, else the first non-empty string secretParam under extra) is exactly an env reference to a serverEnv name on a row with expandsServerEnvReferences, and its endpoint (the first non-empty string endpointParam in the query, else per configKey: base_url when configBaseUrlParam is an endpointParam, else the first non-empty string endpointParam under extra) is a literal: no templateActionOpen, not an env reference, and not of the same origin as a defaultEndpoint (lower-cased scheme://host:port, defaultPorts filled). serverEnv is the reference's per-family server-variable set, evaluated. Field formats are the reference's. Reference: validateCredentialEndpointPairing (DC-FORGE-231) and validateFamilyCredentialEndpointPairing (DC-FORGE-233).",
+    "stepFieldFormat": "steps.%s.query.%s",
+    "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s",
+    "executorConfigBaseUrlFieldFormat": "executor_config.%s.base_url",
+    "executorConfigKeyFieldFormat": "executor_config.%s.%s",
+    "executorConfigExtraFieldFormat": "executor_config.%s.extra.%s",
+    "executorConfigApiKeyField": "api_key",
+    "executorConfigBaseUrlField": "base_url",
+    "protocolSeparator": "://",
+    "defaultPorts": {
+      "http": "80",
+      "https": "443"
+    },
+    "ai": {
+      "protocol": "ai",
+      "genericKeyParam": "api_key",
+      "providerKeyParamSuffix": "_api_key",
+      "providerBaseUrlParamSuffix": "_base_url",
+      "keylessProviders": [
+        "ollama",
+        "vllm"
+      ],
+      "executorConfigProviders": [
+        "anthropic",
+        "assemblyai",
+        "azure",
+        "bedrock",
+        "blackforestlabs",
+        "cohere",
+        "custom",
+        "deepgram",
+        "deepseek",
+        "elevenlabs",
+        "google",
+        "inception",
+        "leonardoai",
+        "minimax",
+        "mistral",
+        "moonshot",
+        "ollama",
+        "openai",
+        "perplexity",
+        "qwen",
+        "speechmatics",
+        "vaiembed",
+        "verda",
+        "vllm",
+        "xai"
+      ]
+    },
+    "familyKeySeparator": "/",
+    "protocolAliases": {
+      "aigentchat": "nexus"
+    },
+    "families": {
+      "db": {
+        "protocol": "db",
+        "configKeys": [],
+        "secretParams": [
+          "api_key"
+        ],
+        "endpointParams": [
+          "base_url"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "",
+        "configBaseUrlParam": "",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_DB_POSTGRES_CONNECTION_STRING",
+          "AIGENTFLOW_DB_MYSQL_CONNECTION_STRING",
+          "AIGENTFLOW_DB_MONGODB_CONNECTION_STRING",
+          "AIGENTFLOW_DB_REDIS_CONNECTION_STRING",
+          "AIGENTFLOW_DB_NEO4J_CONNECTION_STRING",
+          "AIGENTFLOW_DB_MILVUS_CONNECTION_STRING",
+          "AIGENTFLOW_DB_QDRANT_BASE_URL",
+          "AIGENTFLOW_DB_WEAVIATE_BASE_URL",
+          "AIGENTFLOW_DB_ELASTICSEARCH_BASE_URL",
+          "AIGENTFLOW_DB_PINECONE_API_KEY"
+        ]
+      },
+      "deepr": {
+        "protocol": "deepr",
+        "configKeys": [
+          "deepr"
+        ],
+        "secretParams": [
+          "api_key"
+        ],
+        "endpointParams": [
+          "base_url"
+        ],
+        "defaultEndpoints": [
+          "http://localhost:28081"
+        ],
+        "configApiKeyParam": "api_key",
+        "configBaseUrlParam": "base_url",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_DEEPR_API_KEY",
+          "AIGENTFLOW_DEEPR_BASE_URL"
+        ]
+      },
+      "getmd": {
+        "protocol": "getmd",
+        "configKeys": [
+          "getmd"
+        ],
+        "secretParams": [],
+        "endpointParams": [
+          "base_url"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "",
+        "configBaseUrlParam": "base_url",
+        "implicitServerCredential": true,
+        "expandsServerEnvReferences": false,
+        "serverEnv": [
+          "AIGENTFLOW_GETMD_BASE_URL"
+        ]
+      },
+      "homeassistant": {
+        "protocol": "homeassistant",
+        "configKeys": [
+          "api"
+        ],
+        "secretParams": [
+          "token"
+        ],
+        "endpointParams": [
+          "base_url"
+        ],
+        "defaultEndpoints": [
+          "http://homeassistant.local:8123"
+        ],
+        "configApiKeyParam": "token",
+        "configBaseUrlParam": "base_url",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_HOMEASSISTANT_BASE_URL",
+          "AIGENTFLOW_HOMEASSISTANT_TOKEN"
+        ]
+      },
+      "hosting": {
+        "protocol": "hosting",
+        "configKeys": [
+          "hosting_trove"
+        ],
+        "secretParams": [
+          "trove_auth_token"
+        ],
+        "endpointParams": [
+          "trove_base_url"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "",
+        "configBaseUrlParam": "",
+        "implicitServerCredential": true,
+        "expandsServerEnvReferences": false,
+        "serverEnv": [
+          "AIF_TROVE_BASE_URL",
+          "AIF_TROVE_AUTH_TOKEN"
+        ]
+      },
+      "mcp/http": {
+        "protocol": "mcp",
+        "configKeys": [
+          "mcp"
+        ],
+        "secretParams": [
+          "auth_token"
+        ],
+        "endpointParams": [
+          "server_url"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "auth_token",
+        "configBaseUrlParam": "server_url",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": false,
+        "serverEnv": [
+          "AIGENTFLOW_MCP_DEFAULT_SERVER_URL",
+          "AIGENTFLOW_MCP_AUTH_TOKEN"
+        ]
+      },
+      "mqtt": {
+        "protocol": "mqtt",
+        "configKeys": [
+          "broker"
+        ],
+        "secretParams": [
+          "password"
+        ],
+        "endpointParams": [
+          "broker_url"
+        ],
+        "defaultEndpoints": [
+          "tcp://localhost:1883"
+        ],
+        "configApiKeyParam": "password",
+        "configBaseUrlParam": "broker_url",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_MQTT_BROKER_URL",
+          "AIGENTFLOW_MQTT_USERNAME",
+          "AIGENTFLOW_MQTT_PASSWORD"
+        ]
+      },
+      "nexus": {
+        "protocol": "nexus",
+        "configKeys": [
+          "nexus",
+          "aigentchat"
+        ],
+        "secretParams": [
+          "aigentchat_api_key",
+          "api_key"
+        ],
+        "endpointParams": [
+          "aigentchat_base_url",
+          "base_url"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "",
+        "configBaseUrlParam": "",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": false,
+        "serverEnv": [
+          "AIGENTFLOW_NEXUS_BASE_URL",
+          "AIGENTFLOW_NEXUS_API_KEY",
+          "AIGENTFLOW_AIGENTCHAT_API_KEY",
+          "AIGENTFLOW_AIGENTCHAT_BASE_URL"
+        ],
+        "storedKeyShape": {
+          "ownKeyParams": [
+            "aigentchat_api_key",
+            "api_key"
+          ],
+          "ownCredentialsMapParam": "credentials",
+          "provider": "aigentchat"
+        }
+      },
+      "opencorporates": {
+        "protocol": "opencorporates",
+        "configKeys": [
+          "company"
+        ],
+        "secretParams": [
+          "api_token"
+        ],
+        "endpointParams": [
+          "base_url"
+        ],
+        "defaultEndpoints": [
+          "https://api.opencorporates.com/v0.4"
+        ],
+        "configApiKeyParam": "api_token",
+        "configBaseUrlParam": "base_url",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": false,
+        "serverEnv": [
+          "AIGENTFLOW_OPENCORPORATES_API_KEY"
+        ]
+      },
+      "shelly": {
+        "protocol": "shelly",
+        "configKeys": [
+          "device"
+        ],
+        "secretParams": [
+          "auth_key"
+        ],
+        "endpointParams": [
+          "device_ip"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "auth_key",
+        "configBaseUrlParam": "",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": false,
+        "serverEnv": [
+          "AIGENTFLOW_SHELLY_AUTH_KEY"
+        ]
+      },
+      "staticmap": {
+        "protocol": "staticmap",
+        "configKeys": [
+          "geoapify"
+        ],
+        "secretParams": [
+          "api_key"
+        ],
+        "endpointParams": [
+          "base_url"
+        ],
+        "defaultEndpoints": [
+          "https://maps.geoapify.com/v1"
+        ],
+        "configApiKeyParam": "api_key",
+        "configBaseUrlParam": "base_url",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_GEOAPIFY_API_KEY"
+        ]
+      },
+      "storage/s3": {
+        "protocol": "storage",
+        "configKeys": [
+          "s3"
+        ],
+        "secretParams": [
+          "secret_access_key"
+        ],
+        "endpointParams": [
+          "endpoint",
+          "public_endpoint"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "access_key_id",
+        "configBaseUrlParam": "endpoint",
+        "implicitServerCredential": false,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_STORAGE_S3_ENDPOINT",
+          "AIGENTFLOW_STORAGE_S3_PUBLIC_ENDPOINT",
+          "AIGENTFLOW_STORAGE_S3_ACCESS_KEY",
+          "AIGENTFLOW_STORAGE_S3_SECRET_KEY",
+          "AIGENTFLOW_STORAGE_S3_BUCKET",
+          "AIGENTFLOW_STORAGE_S3_REGION",
+          "AIGENTFLOW_TROVE_PUBLIC_S3_ENDPOINT"
+        ]
+      },
+      "storage/trove": {
+        "protocol": "storage",
+        "configKeys": [],
+        "secretParams": [
+          "trove_auth_token"
+        ],
+        "endpointParams": [
+          "trove_base_url"
+        ],
+        "defaultEndpoints": [],
+        "configApiKeyParam": "",
+        "configBaseUrlParam": "",
+        "implicitServerCredential": true,
+        "expandsServerEnvReferences": true,
+        "serverEnv": [
+          "AIGENTFLOW_STORAGE_S3_ENDPOINT",
+          "AIGENTFLOW_STORAGE_S3_PUBLIC_ENDPOINT",
+          "AIGENTFLOW_STORAGE_S3_ACCESS_KEY",
+          "AIGENTFLOW_STORAGE_S3_SECRET_KEY",
+          "AIGENTFLOW_STORAGE_S3_BUCKET",
+          "AIGENTFLOW_STORAGE_S3_REGION",
+          "AIGENTFLOW_TROVE_PUBLIC_S3_ENDPOINT",
+          "AIGENTFLOW_TROVE_BASE_URL",
+          "AIGENTFLOW_TROVE_AUTH_TOKEN",
+          "AIGENTFLOW_TROVE_COFFER_ID"
+        ]
+      }
+    }
+  },
   "knownKeys": {
     "$comment": "Derived by reflection over the reference's Flow type, following yaml.v3's field rules (yaml tag, lowercased field name, inline structs merged). KnownFields(true) refuses any key a struct type does not declare. A shape is scalar | any | map<S> | list<S> | a type name below. any is never inspected (a Go interface, or a type with its own unmarshaller). How it is derived and checked, and how to regenerate it: PARITY.md, 'Unknown keys and value kinds'.",
     "root": "Flow",
