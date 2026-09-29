@@ -517,6 +517,40 @@ var conformanceCases = []conformanceCase{
 		file: "valid-server-owned-query-key-lookalikes.yaml", valid: true,
 		forbidErrorCodes: []string{codeServerOwnedQueryKey},
 	},
+	// v0.6.2 (AIgentFlow DC-FORGE-231 / DC-FORGE-233): an endpoint a
+	// server-supplied credential will never be sent to. A WARNING, so each
+	// warn-* fixture is valid, and the counter-fixtures FORBID the code: the
+	// whole risk of a warning is a false positive, which `valid: true` cannot
+	// see. The exact fields per fixture are pinned in validate_v0602_test.go.
+	{file: "warn-credential-endpoint-ai-step-query.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{file: "warn-credential-endpoint-ai-loop-sub-step.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{file: "warn-credential-endpoint-ai-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{file: "warn-credential-endpoint-family-step-query.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{file: "warn-credential-endpoint-family-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{file: "warn-credential-endpoint-nexus.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{
+		// The author's own key beside the author's own URL, on every arm.
+		file: "valid-credential-endpoint-own-key-own-url.yaml", valid: true,
+		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
+	},
+	{
+		// A server key beside the default endpoint (by origin), a deployment
+		// variable, a template, or no endpoint.
+		file: "valid-credential-endpoint-server-endpoints.yaml", valid: true,
+		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
+	},
+	{
+		// ollama and vllm are exempt.
+		file: "valid-credential-endpoint-keyless-providers.yaml", valid: true,
+		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
+	},
+	{
+		// Implicit-credential and non-expanding families, no credential, another
+		// family's variable, a non-string endpoint, a non-ai step, a non-provider
+		// executor_config key.
+		file: "valid-credential-endpoint-not-judged.yaml", valid: true,
+		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
+	},
 }
 
 func TestConformance(t *testing.T) {

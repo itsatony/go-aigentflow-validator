@@ -9,7 +9,57 @@ This document defines how this Go implementation stays in step with two things:
 
 **Tracks AIgentFlow flow schema: `v2.788.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
-(v0.6.1, below) from the AIgentFlow release after v2.790.0.
+(v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
+(v0.6.2, below) from AIgentFlow v2.793.0 and the release after it.
+
+> **v0.6.2 (2026-09-29) — an endpoint a server-supplied credential will never be sent to.** One
+> reference WARNING, ported to both ports together (JS port 0.15.2), with the same spec and
+> fixtures.
+>
+> | Rule (reference) | Code | Severity | File |
+> | --- | --- | --- | --- |
+> | `validateCredentialEndpointPairing` (AIgentFlow DC-FORGE-231, v2.793.0) and `validateFamilyCredentialEndpointPairing` (DC-FORGE-233) | `credential_endpoint_unpaired` | warning | `validate.credentialendpoint.go`, spec `credentialEndpointPairing` |
+>
+> - **Why.** AIgentFlow sends a credential the SERVER supplied (an org's or the platform's stored
+>   key, or a value of one of the deployment's environment variables) only to the endpoint that
+>   came with it: the default, the stored credential's own base URL, or a deployment-configured
+>   one. An endpoint the flow names is honoured only with a credential the flow supplies. That
+>   run-time refusal is the control; this warning names, at save, the shapes that are statically
+>   certain to meet it. A warning, never an error: a run may still bring its own key, and a stored
+>   flow must stay saveable.
+> - **ai:// (DC-FORGE-231).** A step's (or loop sub-step's) `<provider>_base_url`, a non-empty
+>   YAML string, with no key of the flow's own: neither the step query's `api_key` /
+>   `<provider>_api_key` (non-empty strings, literal or templated) nor a literal
+>   `executor_config.<provider>.api_key` (an `${ENV}` reference is the server's key). And a literal
+>   `executor_config.<provider>.base_url` for an AI provider with no literal key beside it, unless
+>   at least one step uses the provider and every such step brings its own query key. `ollama` and
+>   `vllm` are exempt. Fields: `steps.<step>.query.<key>`,
+>   `steps.<step>.loop.steps.<sub-step id>.query.<key>`, `executor_config.<provider>.base_url`.
+> - **The executor families (DC-FORGE-233).** The reference's per-protocol table is spec data
+>   (`credentialEndpointPairing.families`, keyed `protocol` or `protocol/driver`), each row's
+>   server-variable set evaluated, so a new family is a spec change. A step warns when its secret
+>   (the step query first, then the family's `executor_config` block: `api_key` where the family
+>   copies it into a secret, else the secret under `extra`) is exactly `${NAME}` for one of the
+>   row's server variables on a row whose plugin expands references, and its endpoint (same order)
+>   is certainly the author's: not templated, not a `${…}` reference, and not of the same origin as
+>   the row's default (scheme, host and port, lower-cased, the scheme's default port filled). A
+>   family whose client carries an implicit service credential (`getmd://`, the trove drivers) is
+>   not judged; `nexus://` and its alias `aigentchat://` get the ai:// shape (an endpoint with no
+>   key of its own and no `credentials:` mapping).
+> - **Measured** against the reference at its DC-FORGE-233 commit (strict parse, then its full
+>   save-door verdict). On the 403-file differential corpus (the 216 bundled flows including the 10
+>   starter templates, the flow-create examples, all 111 conformance fixtures and the 49-shape
+>   CFX-02 probe matrix) the reference emits **15** warnings of this code and this library emits
+>   the same 15, `(code, field)` for `(code, field)`, all on the new fixtures: **no bundled flow
+>   trips it**. On 56 further probe shapes (one per boundary: numeric, empty, null, binary and
+>   timestamp values, a null `executor_config` block, userinfo, path, case and space around a
+>   default, an unparseable URL, a bracketed host, a missing scheme, an empty port, another
+>   family's variable, the `extra` block, a numeric loop sub-step id, an unused provider block, the
+>   nexus own-key shapes) the pairs are identical except on two files: `credentials:` with a
+>   non-string key (divergence #19, looser), and `ai://openai` with no operation, which the
+>   reference refuses at its parse (only the verdict is compared there). The CFX-02 differential
+>   stays at 0 divergences. 18 mutants (each exemption, each arm, each read order, the origin
+>   reduction, the wiring): all killed.
 
 > **v0.6.1 (2026-09-29) — a step query may not declare a server-owned parameter.** One new
 > reference rule, ported to both ports together (JS port 0.15.1), with the same spec and fixtures.
@@ -480,6 +530,32 @@ deliberately does not model for templates, so a document carrying only this defe
 and refused by the reference**. Looser only, never stricter: a consumer that admits on this
 package's verdict may accept a flow the reference will refuse at save. `validate.outputschema.go`
 names this entry.
+
+### 19. `credential_endpoint_unpaired`: what the static rule cannot see (v0.6.2, shared with JS)
+
+The reference's save-time rule is itself static, and it is ported exactly. What it predicts is a
+**run-time** refusal that reads things no document carries: the VALUES of the server's environment
+variables (whether `${AIGENTFLOW_…}` is set, and whether a literal endpoint happens to equal the
+deployment's configured one), the credential resolver's output (which stored credential a step is
+given, and that credential's own base URL), the service configuration an executor fills, and
+whether a client attaches the deployment's service-to-service credential. Neither the reference's
+save-time rule nor this library reads any of them; the run time is the control.
+
+- **Direction: identical to the reference's warning.** The warning is a subset of the run-time
+  refusals (a flow that saves without it can still be refused at run time, e.g. an org holding no
+  key for a literal endpoint the run supplies no key for).
+- **The default endpoints of the two rows the rule never reads are not carried.** `getmd://`
+  (implicit credential, never judged) and `nexus://` (the ai:// shape, which consults no default)
+  have deployment-internal defaults in the reference; their rows carry `defaultEndpoints: []`.
+  Verdict-neutral: no static path reads them.
+- **A `credentials:` mapping with a non-string key (looser).** The reference decodes a step query
+  into Go `any`, where yaml.v3 gives a mapping with any non-string key the type `map[any]any`, and
+  its nexus own-key check asserts `map[string]any`, so `credentials: {1: x}` is no key there and
+  the endpoint warns. This library stringifies every mapping key at parse (v0.5.0), so the same
+  mapping is a key of the step's own and nothing warns. Looser only, on a shape no credentials map
+  AIgentFlow resolves can take.
+- **A document the reference refuses at its parse** reports this warning here beside the
+  refusing error (as every rule does, PARITY.md "The differential"); the reference stops first.
 
 ## The differential
 

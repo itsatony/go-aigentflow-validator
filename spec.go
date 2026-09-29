@@ -115,6 +115,58 @@ type rawSpec struct {
 		StepFieldFormat     string   `json:"stepFieldFormat"`
 		LoopStepFieldFormat string   `json:"loopStepFieldFormat"`
 	} `json:"serverOwnedQueryKeys"`
+	// CredentialEndpointPairing feeds credential_endpoint_unpaired (AIgentFlow
+	// DC-FORGE-231 and DC-FORGE-233).
+	CredentialEndpointPairing credentialEndpointSpec `json:"credentialEndpointPairing"`
+}
+
+// credentialEndpointSpec is the data of credential_endpoint_unpaired: the ai://
+// provider rule's names and the per-protocol family table. A new family, a new
+// server variable or a new default endpoint is a change to this data only.
+type credentialEndpointSpec struct {
+	StepFieldFormat                  string            `json:"stepFieldFormat"`
+	LoopStepFieldFormat              string            `json:"loopStepFieldFormat"`
+	ExecutorConfigBaseURLFieldFormat string            `json:"executorConfigBaseUrlFieldFormat"`
+	ExecutorConfigKeyFieldFormat     string            `json:"executorConfigKeyFieldFormat"`
+	ExecutorConfigExtraFieldFormat   string            `json:"executorConfigExtraFieldFormat"`
+	ExecutorConfigAPIKeyField        string            `json:"executorConfigApiKeyField"`
+	ExecutorConfigBaseURLField       string            `json:"executorConfigBaseUrlField"`
+	ProtocolSeparator                string            `json:"protocolSeparator"`
+	DefaultPorts                     map[string]string `json:"defaultPorts"`
+	AI                               struct {
+		Protocol                   string   `json:"protocol"`
+		GenericKeyParam            string   `json:"genericKeyParam"`
+		ProviderKeyParamSuffix     string   `json:"providerKeyParamSuffix"`
+		ProviderBaseURLParamSuffix string   `json:"providerBaseUrlParamSuffix"`
+		KeylessProviders           []string `json:"keylessProviders"`
+		ExecutorConfigProviders    []string `json:"executorConfigProviders"`
+	} `json:"ai"`
+	FamilyKeySeparator string                              `json:"familyKeySeparator"`
+	ProtocolAliases    map[string]string                   `json:"protocolAliases"`
+	Families           map[string]credentialEndpointFamily `json:"families"`
+}
+
+// credentialEndpointFamily is one row of the reference's per-protocol table
+// (credentialEndpointFamilies), with its server-variable set evaluated.
+type credentialEndpointFamily struct {
+	Protocol                   string   `json:"protocol"`
+	ConfigKeys                 []string `json:"configKeys"`
+	SecretParams               []string `json:"secretParams"`
+	EndpointParams             []string `json:"endpointParams"`
+	DefaultEndpoints           []string `json:"defaultEndpoints"`
+	ConfigAPIKeyParam          string   `json:"configApiKeyParam"`
+	ConfigBaseURLParam         string   `json:"configBaseUrlParam"`
+	ImplicitServerCredential   bool     `json:"implicitServerCredential"`
+	ExpandsServerEnvReferences bool     `json:"expandsServerEnvReferences"`
+	ServerEnv                  []string `json:"serverEnv"`
+	// StoredKeyShape marks a family judged like ai:// (nexus): the resolver
+	// plans a stored key for every step, so an endpoint without a key of the
+	// flow's own can only be paired with a stored key.
+	StoredKeyShape *struct {
+		OwnKeyParams           []string `json:"ownKeyParams"`
+		OwnCredentialsMapParam string   `json:"ownCredentialsMapParam"`
+		Provider               string   `json:"provider"`
+	} `json:"storedKeyShape"`
 }
 
 // The decoded enum surface, built once at init. These are package-level because
