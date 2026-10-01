@@ -1,0 +1,9 @@
+aigentflow_version: '2.0.0'
+name: valid-display-name
+version: '1.0.0'
+display_name: 'Weekly Report Builder'
+description: A flow with an optional human-friendly display_name.
+start: only
+steps:
+  only:
+    executor: function://text/noop

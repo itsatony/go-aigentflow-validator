@@ -3,7 +3,11 @@ package aifvalidate
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
+
+// flowDisplayNameMaxLen mirrors FLOW_DISPLAY_NAME_MAX_LEN (go-exons' bound).
+const flowDisplayNameMaxLen = 80
 
 // validateBasicStructure checks the required top-level fields, the step-map
 // shape, the per-step executor requirement, and the reserved-character rule on
@@ -27,6 +31,17 @@ func validateBasicStructure(flow doc, iss *issues) {
 			Message:    "Flow name is required",
 			Suggestion: "Add a descriptive name to your flow",
 		})
+	}
+	// display_name is optional; its bound is counted in runes (characters), not
+	// bytes, so a multibyte label is not penalised (FLOW_DISPLAY_NAME_MAX_LEN).
+	if dn, ok := iss.stringOf(flow, keyDisplayName, ""); ok {
+		if n := utf8.RuneCountInString(dn); n > flowDisplayNameMaxLen {
+			iss.error(Issue{
+				Field: keyDisplayName, Code: codeDisplayNameTooLong,
+				Message:    fmt.Sprintf("display_name is %d characters; the limit is %d", n, flowDisplayNameMaxLen),
+				Suggestion: "Shorten display_name; it is a label, put prose in 'description'",
+			})
+		}
 	}
 	start, startOK := iss.stringOf(flow, keyStart, "")
 	if !startOK || start == "" {

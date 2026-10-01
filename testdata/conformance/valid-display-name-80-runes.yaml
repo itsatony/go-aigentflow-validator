@@ -1,0 +1,9 @@
+aigentflow_version: '2.0.0'
+name: valid-display-name-80-runes
+version: '1.0.0'
+display_name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+description: display_name at exactly the 80-character limit.
+start: only
+steps:
+  only:
+    executor: function://text/noop

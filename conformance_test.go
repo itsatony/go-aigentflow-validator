@@ -551,6 +551,14 @@ var conformanceCases = []conformanceCase{
 		file: "valid-credential-endpoint-not-judged.yaml", valid: true,
 		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
 	},
+	// v0.6.3 (AIgentFlow #187): the optional top-level display_name, at most 80
+	// characters counted in runes. The multibyte pair straddles the boundary
+	// where a byte count would disagree with a rune count.
+	{file: "valid-display-name.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "valid-display-name-80-runes.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "valid-display-name-80-runes-multibyte.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "invalid-display-name-81-runes.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "invalid-display-name-81-runes-multibyte.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
 }
 
 func TestConformance(t *testing.T) {
