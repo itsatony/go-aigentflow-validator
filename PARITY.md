@@ -7,10 +7,26 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.788.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.802.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
-(v0.6.2, below) from AIgentFlow v2.793.0 and the release after it.
+(v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
+(v0.6.3, below) from AIgentFlow v2.802.0.
+
+> **v0.6.3 — the optional top-level `display_name` (aigentflow#187).** A free-form human label, at
+> most 80 characters **counted in runes** (the bound is go-exons', kept equal so one rule holds for
+> every definition type).
+>
+> | Rule (reference) | Code | Severity | File |
+> | --- | --- | --- | --- |
+> | `validateBasicStructure` (`FLOW_DISPLAY_NAME_MAX_LEN`) | `display_name_too_long` | error | `validate.basicstructure.go`, spec `Flow.display_name` |
+>
+> - Field `display_name`; message `display_name is <n> characters; the limit is 80`; suggestion
+>   `Shorten display_name; it is a label, put prose in 'description'`.
+> - Not a string (a list, a map): `invalid_type` on `display_name`, as for any Go `string` field.
+> - Absent or empty is fine. A multibyte label is measured in characters, so 80 runes pass and 81
+>   fail whatever their byte length (fixtures `*-80-runes-multibyte` / `*-81-runes-multibyte`).
+> - Spec: `Flow.display_name: scalar`; `specVersion` 2.802.0. The JS port owes the same change.
 
 > **v0.6.2 (2026-09-29) — an endpoint a server-supplied credential will never be sent to.** One
 > reference WARNING, ported to both ports together (JS port 0.15.2), with the same spec and

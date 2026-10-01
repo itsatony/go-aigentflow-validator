@@ -1,0 +1,9 @@
+aigentflow_version: '2.0.0'
+name: invalid-display-name-81-runes
+version: '1.0.0'
+display_name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+description: display_name one character over the limit.
+start: only
+steps:
+  only:
+    executor: function://text/noop

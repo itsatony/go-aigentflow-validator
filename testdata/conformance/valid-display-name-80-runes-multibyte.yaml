@@ -1,0 +1,9 @@
+aigentflow_version: '2.0.0'
+name: valid-display-name-80-runes-multibyte
+version: '1.0.0'
+display_name: "üüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüüü日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日日"
+description: 80 runes but 160+ bytes, so the bound counts characters, not bytes.
+start: only
+steps:
+  only:
+    executor: function://text/noop

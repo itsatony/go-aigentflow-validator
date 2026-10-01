@@ -83,6 +83,7 @@ const (
 	keyPreProcessing        = "pre_processing"
 	keyPostProcessing       = "post_processing"
 	keyDescription          = "description"
+	keyDisplayName          = "display_name"
 	keyBudget               = "budget"
 	keyBudgetMaxPerChild    = "budget_max_per_child"
 	keyMaxCreditsPerChild   = "max_credits_per_child"
@@ -289,6 +290,9 @@ const (
 	// v0.6.2 — AIgentFlow DC-FORGE-231 / DC-FORGE-233: an endpoint a
 	// server-supplied credential will never be sent to (warning).
 	codeCredentialEndpointUnpaired = "credential_endpoint_unpaired" // VALIDATION_CODE_CREDENTIAL_ENDPOINT_UNPAIRED
+
+	// v0.6.3 — AIgentFlow #187: the optional top-level display_name label.
+	codeDisplayNameTooLong = "display_name_too_long" // VALIDATION_CODE_DISPLAY_NAME_TOO_LONG
 
 	// processing-operation shape (v2.647.0).
 	codeUnknownProcessingOp        = "unknown_processing_operation"
