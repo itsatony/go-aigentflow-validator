@@ -1,0 +1,64 @@
+aigentflow_version: "2.0.0"
+name: vat_calculator
+description: "Computes the VAT of a net amount."
+version: "1.0.0"
+start: compute
+input_schema:
+  version: 1
+  fields:
+    - { name: net, type: number, label: "Net amount", required: true }
+    - { name: rate, type: number, label: "VAT rate in percent", required: true }
+    - { name: on_date, type: date, label: "Invoice date" }
+    - { name: labels, type: array_of_strings, label: "Labels" }
+    - { name: reverse_charge, type: bool, label: "Reverse charge" }
+output: [vat, gross]
+steps:
+  compute:
+    executor: "script://run/starlark"
+    query:
+      lang: "starlark"
+      return_kind: "map"
+      timeout_ms: 2000
+      expression: |
+        def main(input):
+            net = input["query"]["net"]
+            rate = input["query"]["rate"]
+            return {"vat": net * rate / 100, "gross": net + net * rate / 100}
+    post_processing:
+      - output.set:
+          vat: "{{ .step.response.vat }}"
+          gross: "{{ .step.response.gross }}"
+    next:
+      default: "null"
+examples:
+  - id: standard_rate
+    title: "The standard rate"
+    guidance: "Nineteen percent on a round amount."
+    input:
+      net: 1000
+      rate: 19
+      on_date: 2026-01-01
+      labels: [retail, domestic]
+      reverse_charge: false
+    expected:
+      exact:
+        vat: 190
+        gross: 1190
+  - id: zero_rate
+    title: "A zero-rated sale"
+    guidance: "A zero value must be matched exactly, not treated as missing."
+    input:
+      net: 1000
+      rate: 0
+    expected:
+      exact:
+        vat: 0
+        gross: 1000
+  - id: negative_amount
+    title: "A negative net amount"
+    guidance: "A negative amount must be refused, not computed."
+    input:
+      net: -5
+      rate: 19
+    expected:
+      status: failed

@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.802.0",
+  "specVersion": "2.811.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -889,6 +889,160 @@
       }
     }
   },
+  "examples": {
+    "$comment": "The examples: block. Derived from the reference's constants, never hand-typed: limits, vocabularies, the credential-shaped-literal pattern set and each code's severity. example_ref_blocked_host is listed for completeness but is raised by the reference implementation only; the ports never raise it. See PARITY.md, 'The examples block'.",
+    "limits": {
+      "maxPerFlow": 50,
+      "maxBlockBytes": 262144,
+      "maxInlineInputBytes": 32768,
+      "maxReferenceTextBytes": 32768,
+      "maxVariants": 10,
+      "maxTags": 8,
+      "maxMustNot": 12,
+      "maxMustNotContain": 20,
+      "maxRubricRunes": 4000,
+      "maxGuidanceRunes": 2000,
+      "maxNotesRunes": 2000,
+      "titleMaxRunes": 80,
+      "maxMustNotRunes": 300,
+      "maxMustNotContainLength": 200,
+      "maxProvenanceRunes": 200,
+      "maxNoteRunes": 300,
+      "maxUrlBytes": 2048,
+      "maxPatternLength": 512,
+      "weightMax": 10,
+      "minScoreMin": 0,
+      "minScoreMax": 1
+    },
+    "idPattern": "^[a-z][a-z0-9_]{1,47}$",
+    "tagPattern": "^[a-z][a-z0-9_-]{0,31}$",
+    "sha256Pattern": "^[0-9a-f]{64}$",
+    "mediaTypePattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$",
+    "signedUrlQueryKeyPattern": "^(x-amz-signature|signature|sig|token|access_token|key|x-goog-signature|se|sp)$",
+    "origins": [
+      "author",
+      "synthetic"
+    ],
+    "sideEffects": [
+      "refuse",
+      "allow"
+    ],
+    "statuses": [
+      "completed",
+      "failed",
+      "paused_for_human"
+    ],
+    "reservedRefSchemes": [
+      "artifact",
+      "trove",
+      "aiv",
+      "s3",
+      "gs"
+    ],
+    "secretPatterns": [
+      {
+        "name": "an API key",
+        "expr": "\\bsk-[A-Za-z0-9_-]{20,}",
+        "flags": ""
+      },
+      {
+        "name": "a platform API key",
+        "expr": "\\bcrn_[A-Za-z0-9]{16,}",
+        "flags": ""
+      },
+      {
+        "name": "an AWS access key",
+        "expr": "\\bAKIA[0-9A-Z]{16}\\b",
+        "flags": ""
+      },
+      {
+        "name": "a private key",
+        "expr": "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+        "flags": ""
+      },
+      {
+        "name": "a bearer token",
+        "expr": "\\bbearer\\s+[A-Za-z0-9._~+/-]{20,}",
+        "flags": "i"
+      },
+      {
+        "name": "a Slack token",
+        "expr": "\\bxox[abprs]-[A-Za-z0-9-]{10,}",
+        "flags": ""
+      },
+      {
+        "name": "a GitHub token",
+        "expr": "\\bgh[pousr]_[A-Za-z0-9]{30,}",
+        "flags": ""
+      },
+      {
+        "name": "a retired registry key",
+        "expr": "\\baivk_[A-Za-z0-9]{20,}",
+        "flags": ""
+      }
+    ],
+    "codes": {
+      "example_checkpoint_status": "error",
+      "example_checkpoint_step_composite": "error",
+      "example_checkpoint_step_unknown": "error",
+      "example_expectation_contradiction": "warning",
+      "example_expected_conflict": "error",
+      "example_expected_empty": "error",
+      "example_expected_field_unchecked": "warning",
+      "example_expected_field_unknown": "error",
+      "example_expected_missing": "error",
+      "example_field_matcher_invalid": "error",
+      "example_file_input_needs_ref": "error",
+      "example_guidance_missing": "warning",
+      "example_guidance_too_long": "error",
+      "example_holdout_in_public_flow": "error",
+      "example_id_duplicate": "error",
+      "example_id_invalid": "error",
+      "example_id_missing": "error",
+      "example_input_conflict": "error",
+      "example_input_invalid": "error",
+      "example_input_missing": "error",
+      "example_input_too_large": "error",
+      "example_input_unvalidated": "warning",
+      "example_min_score_range": "error",
+      "example_must_not_contain_invalid": "error",
+      "example_must_not_invalid": "error",
+      "example_notes_too_long": "error",
+      "example_ref_blocked_host": "error",
+      "example_ref_invalid": "error",
+      "example_ref_media_type_invalid": "error",
+      "example_ref_scheme": "error",
+      "example_ref_scheme_reserved": "error",
+      "example_ref_sha256_invalid": "error",
+      "example_ref_signed_url": "warning",
+      "example_ref_unpinned": "warning",
+      "example_reference_binary": "warning",
+      "example_reference_invalid": "error",
+      "example_rubric_empty": "error",
+      "example_rubric_too_long": "error",
+      "example_secret_like_value": "error",
+      "example_secret_value": "error",
+      "example_side_effects_invalid": "error",
+      "example_status_invalid": "error",
+      "example_tag_invalid": "error",
+      "example_title_missing": "error",
+      "example_title_too_long": "error",
+      "example_variant_empty": "error",
+      "example_variant_id_duplicate": "error",
+      "example_variant_id_invalid": "error",
+      "example_variant_input_conflict": "error",
+      "example_variant_input_invalid": "error",
+      "example_variant_origin_invalid": "error",
+      "example_variant_unchecked": "warning",
+      "example_variants_too_many": "error",
+      "example_weight_range": "error",
+      "examples_all_held_out": "warning",
+      "examples_block_too_large": "error",
+      "examples_published_with_public_flow": "warning",
+      "examples_too_many": "error",
+      "examples_unreadable_by_judge": "warning"
+    }
+  },
   "knownKeys": {
     "$comment": "Derived by reflection over the reference's Flow type, following yaml.v3's field rules (yaml tag, lowercased field name, inline structs merged). KnownFields(true) refuses any key a struct type does not declare. A shape is scalar | any | map<S> | list<S> | a type name below. any is never inspected (a Go interface, or a type with its own unmarshaller). How it is derived and checked, and how to regenerate it: PARITY.md, 'Unknown keys and value kinds'.",
     "root": "Flow",
@@ -909,6 +1063,17 @@
         "max_total_children": "scalar",
         "on_children_complete": "scalar",
         "shared_memory": "scalar"
+      },
+      "Checkpoint": {
+        "exact": "map<any>",
+        "fields": "map<FieldMatcher>",
+        "min_score": "scalar",
+        "must_not": "list<scalar>",
+        "must_not_contain": "list<scalar>",
+        "optional": "scalar",
+        "reference": "ExampleReference",
+        "rubric": "scalar",
+        "status": "scalar"
       },
       "CheckpointConfig": {
         "enabled": "scalar",
@@ -932,6 +1097,37 @@
         "retry_delay": "scalar",
         "retry_on": "list<scalar>"
       },
+      "ExampleDefinition": {
+        "checkpoints": "map<Checkpoint>",
+        "expected": "Expectation",
+        "guidance": "scalar",
+        "hold_out": "scalar",
+        "id": "scalar",
+        "input": "map<any>",
+        "input_ref": "FileRef",
+        "min_score": "scalar",
+        "notes": "scalar",
+        "side_effects": "scalar",
+        "tags": "list<scalar>",
+        "title": "scalar",
+        "variants": "list<ExampleVariant>",
+        "weight": "scalar"
+      },
+      "ExampleReference": {
+        "ref": "FileRef",
+        "text": "scalar"
+      },
+      "ExampleVariant": {
+        "expected": "Expectation",
+        "guidance": "scalar",
+        "id": "scalar",
+        "input_patch": "map<any>",
+        "input_ref": "FileRef",
+        "origin": "scalar",
+        "provenance": "scalar",
+        "title": "scalar",
+        "weight": "scalar"
+      },
       "ExecutorDefaultsDefinition": {
         "frequency_penalty": "scalar",
         "max_tokens": "scalar",
@@ -954,6 +1150,16 @@
         "allowed_models": "list<scalar>",
         "allowed_providers": "list<scalar>"
       },
+      "Expectation": {
+        "exact": "map<any>",
+        "fields": "map<FieldMatcher>",
+        "min_score": "scalar",
+        "must_not": "list<scalar>",
+        "must_not_contain": "list<scalar>",
+        "reference": "ExampleReference",
+        "rubric": "scalar",
+        "status": "scalar"
+      },
       "FailoverBreakerConfig": {
         "failure_threshold": "scalar",
         "open_duration": "scalar",
@@ -972,6 +1178,22 @@
         "type": "scalar",
         "validation": "scalar"
       },
+      "FieldMatcher": {
+        "approx": "scalar",
+        "contains": "scalar",
+        "equals": "any",
+        "matches": "scalar",
+        "not_contains": "scalar",
+        "one_of": "list<any>",
+        "present": "scalar",
+        "tolerance": "scalar"
+      },
+      "FileRef": {
+        "media_type": "scalar",
+        "note": "scalar",
+        "sha256": "scalar",
+        "url": "scalar"
+      },
       "Flow": {
         "aigentflow_version": "scalar",
         "billing": "BillingConfig",
@@ -985,6 +1207,7 @@
         "discoverable_tools": "list<scalar>",
         "display_name": "scalar",
         "error_strategy": "ErrorStrategyDefinition",
+        "examples": "list<ExampleDefinition>",
         "executor_config": "map<ExecutorInstanceDefinition>",
         "exons_uploads": "ExonsUploadsFlowConfig",
         "expression_functions": "list<map<scalar>>",
@@ -1062,6 +1285,7 @@
         "pattern": "scalar",
         "required": "scalar",
         "type": "scalar",
+        "untrusted": "scalar",
         "visible_when": "VisibleWhenPredicate"
       },
       "LoopDefinition": {
@@ -1071,6 +1295,7 @@
         "while": "scalar"
       },
       "LoopStepDefinition": {
+        "allow_untrusted": "list<scalar>",
         "condition": "scalar",
         "credential": "scalar",
         "credentials": "map<StepCredentialBinding>",
@@ -1083,7 +1308,8 @@
         "post_processing": "list<any>",
         "pre_processing": "list<any>",
         "query": "map<any>",
-        "response_evaluation": "scalar"
+        "response_evaluation": "scalar",
+        "trusted_output": "scalar"
       },
       "MockBinaryAsset": {
         "filename": "scalar",
@@ -1171,6 +1397,7 @@
         "properties": "map<PropertyDefinition>",
         "required": "scalar",
         "type": "scalar",
+        "untrusted": "scalar",
         "validation": "scalar"
       },
       "StepCredentialBinding": {
@@ -1178,6 +1405,7 @@
         "source": "scalar"
       },
       "StepDefinition": {
+        "allow_untrusted": "list<scalar>",
         "condition": "scalar",
         "credential": "scalar",
         "credentials": "map<StepCredentialBinding>",
@@ -1195,7 +1423,8 @@
         "quality_gate": "QualityGateDefinition",
         "query": "map<any>",
         "response_evaluation": "scalar",
-        "response_expectation": "map<FieldExpectationDefinition>"
+        "response_expectation": "map<FieldExpectationDefinition>",
+        "trusted_output": "scalar"
       },
       "ThrottleDefinition": {
         "batch_delay": "scalar",

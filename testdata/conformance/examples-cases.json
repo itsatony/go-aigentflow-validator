@@ -1,0 +1,604 @@
+[
+ {
+  "file": "examples-invalid-examples-too-many.yaml",
+  "code": "examples_too_many",
+  "field": "examples",
+  "message": "flow declares 51 examples; the limit is 50",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-examples-block-too-large.yaml",
+  "code": "examples_block_too_large",
+  "field": "examples",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-id-missing.yaml",
+  "code": "example_id_missing",
+  "field": "examples[0].id",
+  "message": "example #1 has no id",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-id-invalid.yaml",
+  "code": "example_id_invalid",
+  "field": "examples[0].id",
+  "message": "example id \"Bad-ID\" is not valid: use lower-case letters, digits and underscores, starting with a letter (2 to 48 characters)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-id-slash.yaml",
+  "code": "example_id_invalid",
+  "field": "examples[0].id",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-id-duplicate.yaml",
+  "code": "example_id_duplicate",
+  "field": "examples[1].id",
+  "message": "example id \"standard_eur_invoice\" is used by examples #1 and #2",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-title-missing.yaml",
+  "code": "example_title_missing",
+  "field": "examples[0].title",
+  "message": "example \"standard_eur_invoice\" has no title; the title is what a person sees in the list of examples",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-title-too-long.yaml",
+  "code": "example_title_too_long",
+  "field": "examples[0].title",
+  "message": "example \"standard_eur_invoice\" title is 81 characters; the limit is 80",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-guidance-too-long.yaml",
+  "code": "example_guidance_too_long",
+  "field": "examples[0].guidance",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-guidance-missing.yaml",
+  "code": "example_guidance_missing",
+  "field": "examples[0].guidance",
+  "message": "example \"standard_eur_invoice\" has no guidance. One sentence on why this case matters helps the judge and the next author.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-notes-too-long.yaml",
+  "code": "example_notes_too_long",
+  "field": "examples[0].notes",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-tag-invalid.yaml",
+  "code": "example_tag_invalid",
+  "field": "examples[0].tags[0]",
+  "message": "example \"standard_eur_invoice\" has an invalid tag \"Happy Path\"",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-tag-duplicate.yaml",
+  "code": "example_tag_invalid",
+  "field": "examples[0].tags[1]",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-tags-too-many.yaml",
+  "code": "example_tag_invalid",
+  "field": "examples[0].tags",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-weight-range.yaml",
+  "code": "example_weight_range",
+  "field": "examples[0].weight",
+  "message": "example \"standard_eur_invoice\" has weight 0; use a number above 0 and at most 10",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-weight-too-big.yaml",
+  "code": "example_weight_range",
+  "field": "examples[0].weight",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-holdout-in-public-flow.yaml",
+  "code": "example_holdout_in_public_flow",
+  "field": "examples[0].hold_out",
+  "message": "example \"standard_eur_invoice\" is held out but this flow is public: a held-out example must stay private, and a public flow's definition is readable by everyone. Make the flow private or remove hold_out.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-conflict.yaml",
+  "code": "example_input_conflict",
+  "field": "examples[0]",
+  "message": "example \"standard_eur_invoice\" sets both input and input_ref; use exactly one",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-missing.yaml",
+  "code": "example_input_missing",
+  "field": "examples[0]",
+  "message": "example \"standard_eur_invoice\" has neither input nor input_ref; use input: {} for a flow that takes no input",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-too-large.yaml",
+  "code": "example_input_too_large",
+  "field": "examples[0].input",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-invalid.yaml",
+  "code": "example_input_invalid",
+  "field": "examples[0].input.invoice_text",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-unknown-field.yaml",
+  "code": "example_input_invalid",
+  "field": "examples[0].input.nope",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-required-missing.yaml",
+  "code": "example_input_invalid",
+  "field": "examples[0].input.invoice_text",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-enum-violation.yaml",
+  "code": "example_input_invalid",
+  "field": "examples[0].input.currency_hint",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-input-unvalidated.yaml",
+  "code": "example_input_unvalidated",
+  "field": "examples[0].input",
+  "message": "example \"standard_eur_invoice\" cannot be checked: the flow declares no input_schema and no query parameters.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-input-undeclared-query.yaml",
+  "code": "example_input_invalid",
+  "field": "examples[0].input.currency_hint",
+  "message": "example \"standard_eur_invoice\": \"currency_hint\" is not a declared input of this flow (declared: topic)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-file-input-needs-ref.yaml",
+  "code": "example_file_input_needs_ref",
+  "field": "examples[0].input.scan",
+  "message": "example \"standard_eur_invoice\": field \"scan\" is a file; give it as {url: \"https://…\"}. A pasted upload id would stop working as soon as the session ends.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-secret-value.yaml",
+  "code": "example_secret_value",
+  "field": "examples[0].input.crm_token",
+  "message": "example \"standard_eur_invoice\" gives a value for \"crm_token\", which is a secret field. Examples are saved inside the flow and are never allowed to hold secrets; remove it. The person running the evaluation is asked for it at run time.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-secret-like-value.yaml",
+  "code": "example_secret_like_value",
+  "field": "examples[0].guidance",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-scheme.yaml",
+  "code": "example_ref_scheme",
+  "field": "examples[0].input.scan",
+  "message": "only https:// references are allowed (got \"http\")",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-scheme-reserved.yaml",
+  "code": "example_ref_scheme_reserved",
+  "field": "examples[0].input.scan",
+  "message": "artifact: references are not available yet. Use an https URL, or paste the text into the example.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-invalid.yaml",
+  "code": "example_ref_invalid",
+  "field": "examples[0].input_ref",
+  "message": "a reference must not carry a login or a fragment",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-fragment.yaml",
+  "code": "example_ref_invalid",
+  "field": "examples[0].input_ref",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-url-too-long.yaml",
+  "code": "example_ref_invalid",
+  "field": "examples[0].input_ref",
+  "message": "the file reference needs a url of at most 2048 characters",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-sha256-invalid.yaml",
+  "code": "example_ref_sha256_invalid",
+  "field": "examples[0].input_ref",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-ref-media-type-invalid.yaml",
+  "code": "example_ref_media_type_invalid",
+  "field": "examples[0].input_ref",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-ref-unpinned.yaml",
+  "code": "example_ref_unpinned",
+  "field": "examples[0].input_ref",
+  "message": "this reference is not pinned. If the file at that address changes, your scores change with it. Add sha256 to freeze it.",
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-ref-signed-url.yaml",
+  "code": "example_ref_signed_url",
+  "field": "examples[0].input_ref",
+  "message": "this address looks like a signed link. Anyone who can read the flow can use it until it expires, and it will stop working. Prefer a stable public address.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-missing.yaml",
+  "code": "example_expected_missing",
+  "field": "examples[0].expected",
+  "message": "example \"standard_eur_invoice\" does not say what a good result is: add a rubric, fields, exact or reference",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-empty.yaml",
+  "code": "example_expected_empty",
+  "field": "examples[0].expected",
+  "message": "this expectation checks nothing; add a rubric, fields, exact, reference, must_not or must_not_contain",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-status-alone.yaml",
+  "code": "example_expected_empty",
+  "field": "examples[0].expected",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-conflict.yaml",
+  "code": "example_expected_conflict",
+  "field": "examples[0].expected",
+  "message": "use fields (some fields) or exact (the whole result), not both",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-failed-with-fields.yaml",
+  "code": "example_expected_conflict",
+  "field": "examples[0].expected",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-field-unknown.yaml",
+  "code": "example_expected_field_unknown",
+  "field": "examples[0].expected.fields.totl",
+  "message": "\"totl\" is not an output of this flow (outputs: vendor, total, currency)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expected-exact-key-unknown.yaml",
+  "code": "example_expected_field_unknown",
+  "field": "examples[0].expected.exact.totl",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-expected-field-unchecked.yaml",
+  "code": "example_expected_field_unchecked",
+  "field": "examples[0].expected.fields.currency",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-field-matcher-invalid.yaml",
+  "code": "example_field_matcher_invalid",
+  "field": "examples[0].expected.fields.total",
+  "message": "write exactly one of equals, contains, not_contains, matches, one_of, approx, present",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-matcher-two-operators.yaml",
+  "code": "example_field_matcher_invalid",
+  "field": "examples[0].expected.fields.total",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-matcher-bad-regex.yaml",
+  "code": "example_field_matcher_invalid",
+  "field": "examples[0].expected.fields.total",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-matcher-approx-no-tolerance.yaml",
+  "code": "example_field_matcher_invalid",
+  "field": "examples[0].expected.fields.total",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-matcher-negative-tolerance.yaml",
+  "code": "example_field_matcher_invalid",
+  "field": "examples[0].expected.fields.total",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-rubric-empty.yaml",
+  "code": "example_rubric_empty",
+  "field": "examples[0].expected.rubric",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-rubric-too-long.yaml",
+  "code": "example_rubric_too_long",
+  "field": "examples[0].expected.rubric",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-reference-invalid.yaml",
+  "code": "example_reference_invalid",
+  "field": "examples[0].expected.reference",
+  "message": "a reference needs exactly one of text or ref",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-reference-neither.yaml",
+  "code": "example_reference_invalid",
+  "field": "examples[0].expected.reference",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-reference-binary.yaml",
+  "code": "example_reference_binary",
+  "field": "examples[0].expected.reference",
+  "message": "this reference is not text, so it cannot be compared in this version; the example will be skipped, not failed.",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-must-not-invalid.yaml",
+  "code": "example_must_not_invalid",
+  "field": "examples[0].expected.must_not[0]",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-must-not-contain-invalid.yaml",
+  "code": "example_must_not_contain_invalid",
+  "field": "examples[0].expected.must_not_contain[0]",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-expectation-contradiction.yaml",
+  "code": "example_expectation_contradiction",
+  "field": "examples[0].expected.fields.currency",
+  "message": "\"eur\" is required by \"currency\" and forbidden by must_not_contain",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-status-invalid.yaml",
+  "code": "example_status_invalid",
+  "field": "examples[0].expected.status",
+  "message": "status must be completed, failed or paused_for_human",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-min-score-range.yaml",
+  "code": "example_min_score_range",
+  "field": "examples[0].min_score",
+  "message": "example \"standard_eur_invoice\" has min_score 1.2; use a number from 0 to 1 (0.7 is 7.3 out of 10)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-expectation-min-score-range.yaml",
+  "code": "example_min_score_range",
+  "field": "examples[0].expected.min_score",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-side-effects-invalid.yaml",
+  "code": "example_side_effects_invalid",
+  "field": "examples[0].side_effects",
+  "message": "example \"standard_eur_invoice\" has side_effects \"maybe\"; use refuse or allow",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-checkpoint-step-unknown.yaml",
+  "code": "example_checkpoint_step_unknown",
+  "field": "examples[0].checkpoints.classify",
+  "message": "example \"standard_eur_invoice\": checkpoint \"classify\" is not a step of this flow (steps: extract, finish)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-checkpoint-step-composite.yaml",
+  "code": "example_checkpoint_step_composite",
+  "field": "examples[0].checkpoints.finish",
+  "message": "example \"standard_eur_invoice\": step \"finish\" repeats or branches, so there is no single result to check; put the checkpoint on a plain step or check the final output",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-checkpoint-status.yaml",
+  "code": "example_checkpoint_status",
+  "field": "examples[0].checkpoints.extract.status",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-checkpoint-field-unchecked.yaml",
+  "code": "example_expected_field_unchecked",
+  "field": "examples[0].checkpoints.extract.fields.x",
+  "message": "this step declares no output_schema, so \"x\" cannot be checked against it",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-checkpoint-field-unknown.yaml",
+  "code": "example_expected_field_unknown",
+  "field": "examples[0].checkpoints.extract.fields.x",
+  "message": "\"x\" is not a field this step declares in its output_schema (declared: vendor)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variants-too-many.yaml",
+  "code": "example_variants_too_many",
+  "field": "examples[0].variants",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-id-invalid.yaml",
+  "code": "example_variant_id_invalid",
+  "field": "examples[0].variants[0].id",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-id-duplicate.yaml",
+  "code": "example_variant_id_duplicate",
+  "field": "examples[0].variants[1].id",
+  "message": "variant id \"same\" is used twice in example \"standard_eur_invoice\"",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-origin-invalid.yaml",
+  "code": "example_variant_origin_invalid",
+  "field": "examples[0].variants[0].origin",
+  "message": "variant \"smudged\" of example \"standard_eur_invoice\" has origin \"\"; use author (a person wrote or approved it) or synthetic (generated)",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-empty.yaml",
+  "code": "example_variant_empty",
+  "field": "examples[0].variants[0]",
+  "message": "variant \"nothing\" of example \"standard_eur_invoice\" changes neither the input nor the expectation",
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-input-conflict.yaml",
+  "code": "example_variant_input_conflict",
+  "field": "examples[0].variants[0]",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-input-invalid.yaml",
+  "code": "example_variant_input_invalid",
+  "field": "examples[0].variants[0].input_patch.currency_hint",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-invalid-example-variant-patch-secret.yaml",
+  "code": "example_secret_value",
+  "field": "examples[0].variants[0].input_patch.crm_token",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-example-variant-unchecked.yaml",
+  "code": "example_variant_unchecked",
+  "field": "examples[0].variants[0].input_patch",
+  "message": null,
+  "clean": false
+ },
+ {
+  "file": "examples-warn-examples-all-held-out.yaml",
+  "code": "examples_all_held_out",
+  "field": "examples",
+  "message": "every example is held out, so nothing is left to tune on",
+  "clean": false
+ },
+ {
+  "file": "examples-warn-examples-published-with-public-flow.yaml",
+  "code": "examples_published_with_public_flow",
+  "field": "examples",
+  "message": "this flow is public, so everyone who can see it can read its examples, including their expected results. Only publish examples you are happy to show.",
+  "clean": false
+ },
+ {
+  "file": "examples-warn-examples-unreadable-by-judge.yaml",
+  "code": "examples_unreadable_by_judge",
+  "field": "examples[0].expected",
+  "message": "this example can be run but not scored",
+  "clean": false
+ },
+ {
+  "file": "examples-valid-base.yaml",
+  "code": null,
+  "field": null,
+  "message": null,
+  "clean": true
+ },
+ {
+  "file": "examples-valid-variants.yaml",
+  "code": null,
+  "field": null,
+  "message": null,
+  "clean": true
+ },
+ {
+  "file": "examples-valid-checkpoints.yaml",
+  "code": null,
+  "field": null,
+  "message": null,
+  "clean": true
+ },
+ {
+  "file": "examples-valid-secret-omitted.yaml",
+  "code": null,
+  "field": null,
+  "message": null,
+  "clean": true
+ },
+ {
+  "file": "examples-valid-exact.yaml",
+  "code": null,
+  "field": null,
+  "message": null,
+  "clean": true
+ },
+ {
+  "file": "examples-valid-prose-and-public-hosts.yaml",
+  "code": null,
+  "field": null,
+  "message": null,
+  "clean": true
+ }
+]
