@@ -127,6 +127,7 @@ version rejected them has no way to understand it.
 | Orchestrator / campaign | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `child_flows`, `max_credits_per_child`, campaign handoff |
 | Inline `.exons` documents | orchestrator: a frontmatter spec, `execution.provider`, no `requirements.resources`; a tool one of `orchestrator.tools` / `tools.allow` withholds (warning); with [`exonsinspect`](#exons-documents): the document parses, and every tag of an orchestrator or `exons://` step document can render |
 | `executor_config` | a `${VAR}` reference may name only the variables of the key it is written under |
+| Examples | the optional top-level `examples:` block: ids, limits, input against `input_schema` (unknown / missing / wrong kind / enum), file references (https only), expectations, checkpoints, variants, credential-shaped literals (`example_*`, `examples_*`) |
 | Display name | the optional top-level `display_name` is at most 80 characters, counted in runes (`display_name_too_long`) |
 | Server-owned parameters | a step or loop sub-step `query:` may not declare `aiv_api_key`, `aiv_base_url` or `aiv_delegation` |
 | Credential endpoints | an endpoint a server-supplied credential will never be sent to: an `ai://` `<provider>_base_url` (or a literal `executor_config.<provider>.base_url`) with no key of the flow's own, a family secret that is a server `${AIGENTFLOW_…}` variable beside a literal non-default endpoint, a `nexus://` endpoint with no key of its own (warning, `credential_endpoint_unpaired`) |

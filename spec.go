@@ -118,6 +118,53 @@ type rawSpec struct {
 	// CredentialEndpointPairing feeds credential_endpoint_unpaired (AIgentFlow
 	// DC-FORGE-231 and DC-FORGE-233).
 	CredentialEndpointPairing credentialEndpointSpec `json:"credentialEndpointPairing"`
+	// Examples feeds the examples: block rules (v0.7.0): limits, vocabularies,
+	// the credential-shaped-literal patterns and each code's severity.
+	Examples examplesSpec `json:"examples"`
+}
+
+// examplesSpec is the data of the examples: block rules. Every limit, pattern,
+// vocabulary and severity the walker uses is read from here, never typed into Go.
+type examplesSpec struct {
+	Limits struct {
+		MaxPerFlow              int     `json:"maxPerFlow"`
+		MaxBlockBytes           int     `json:"maxBlockBytes"`
+		MaxInlineInputBytes     int     `json:"maxInlineInputBytes"`
+		MaxReferenceTextBytes   int     `json:"maxReferenceTextBytes"`
+		MaxVariants             int     `json:"maxVariants"`
+		MaxTags                 int     `json:"maxTags"`
+		MaxMustNot              int     `json:"maxMustNot"`
+		MaxMustNotContain       int     `json:"maxMustNotContain"`
+		MaxRubricRunes          int     `json:"maxRubricRunes"`
+		MaxGuidanceRunes        int     `json:"maxGuidanceRunes"`
+		MaxNotesRunes           int     `json:"maxNotesRunes"`
+		TitleMaxRunes           int     `json:"titleMaxRunes"`
+		MaxMustNotRunes         int     `json:"maxMustNotRunes"`
+		MaxMustNotContainLength int     `json:"maxMustNotContainLength"`
+		MaxProvenanceRunes      int     `json:"maxProvenanceRunes"`
+		MaxNoteRunes            int     `json:"maxNoteRunes"`
+		MaxURLBytes             int     `json:"maxUrlBytes"`
+		MaxPatternLength        int     `json:"maxPatternLength"`
+		WeightMax               float64 `json:"weightMax"`
+		MinScoreMin             float64 `json:"minScoreMin"`
+		MinScoreMax             float64 `json:"minScoreMax"`
+	} `json:"limits"`
+	IDPattern                string   `json:"idPattern"`
+	TagPattern               string   `json:"tagPattern"`
+	SHA256Pattern            string   `json:"sha256Pattern"`
+	MediaTypePattern         string   `json:"mediaTypePattern"`
+	SignedURLQueryKeyPattern string   `json:"signedUrlQueryKeyPattern"`
+	Origins                  []string `json:"origins"`
+	SideEffects              []string `json:"sideEffects"`
+	Statuses                 []string `json:"statuses"`
+	ReservedRefSchemes       []string `json:"reservedRefSchemes"`
+	SecretPatterns           []struct {
+		Name  string `json:"name"`
+		Expr  string `json:"expr"`
+		Flags string `json:"flags"`
+	} `json:"secretPatterns"`
+	// Codes maps every code the walker raises to its severity.
+	Codes map[string]string `json:"codes"`
 }
 
 // credentialEndpointSpec is the data of credential_endpoint_unpaired: the ai://
@@ -265,6 +312,7 @@ func init() {
 	processingLoopSubStepTypes = newSet(spec.ProcessingOperations.LoopSubStepTypes)
 	processingOpenKeyTypes = newSet(spec.ProcessingOperations.OpenKeyTypes)
 	serverOwnedQueryKeys = newSet(spec.ServerOwnedQueryKeys.Keys)
+	initExamples()
 }
 
 // ExpressionFunctionCatalog returns the fixed expression-function catalog

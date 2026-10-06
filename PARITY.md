@@ -7,11 +7,49 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.802.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.811.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
-(v0.6.3, below) from AIgentFlow v2.802.0.
+(v0.6.3, below) from AIgentFlow v2.802.0, plus the `examples:` block (v0.7.0, below) from
+AIgentFlow v2.811.0.
+
+> **v0.7.0 — the `examples:` block.** A flow may carry concrete cases (an input, what a good result
+> looks like, why the case matters, what must never happen) in a top-level `examples:` list. The flow
+> engine never reads the block; this library judges it statically and offline (nothing is fetched, no
+> host is resolved). Every limit, pattern, vocabulary and each code's severity is data in the spec's
+> `examples` section; the strict key sets (a typo at example, expected, matcher, checkpoint, variant or
+> file-reference depth) come from the generated `knownKeys`, with nothing hand-listed.
+>
+> One walker (`validate.examples.go`), run after the credential-endpoint rule. Field paths use the index
+> form: `examples[2].expected.fields.total`, `examples[0].variants[1].id`. A warning never blocks.
+>
+> | Area | Code | Severity |
+> | --- | --- | --- |
+> | Set | `examples_too_many` (> 50), `examples_block_too_large` (> 256 KiB as serialised), `examples_all_held_out`, `examples_published_with_public_flow` | error, error, warning, warning |
+> | Identity | `example_id_missing`, `example_id_invalid`, `example_id_duplicate`, `example_title_missing`, `example_title_too_long` | error |
+> | Prose | `example_guidance_missing` (warning), `example_guidance_too_long`, `example_notes_too_long` (also a variant's `provenance`) | warning / error |
+> | Metadata | `example_tag_invalid` (pattern, duplicate, > 8), `example_weight_range` (0 < w <= 10), `example_min_score_range` (0..1, on the example and on an expectation), `example_side_effects_invalid`, `example_holdout_in_public_flow` | error |
+> | Input | `example_input_conflict`, `example_input_missing`, `example_input_too_large` (> 32 KiB), `example_input_invalid`, `example_input_unvalidated` (warning: no `input_schema` and no `query`), `example_file_input_needs_ref`, `example_secret_value` | error / warning |
+> | File references | `example_ref_invalid`, `example_ref_scheme` (https only), `example_ref_scheme_reserved` (`artifact trove aiv s3 gs`), `example_ref_sha256_invalid`, `example_ref_media_type_invalid`; warnings `example_ref_unpinned`, `example_ref_signed_url` | error / warning |
+> | Expectation | `example_expected_missing`, `example_expected_empty`, `example_expected_conflict` (fields+exact, or fields/exact with a `failed`/`paused_for_human` status), `example_expected_field_unknown`, `example_field_matcher_invalid`, `example_rubric_empty`, `example_rubric_too_long`, `example_reference_invalid`, `example_must_not_invalid`, `example_must_not_contain_invalid`, `example_status_invalid`; warnings `example_expected_field_unchecked`, `example_reference_binary`, `example_expectation_contradiction`, `examples_unreadable_by_judge` | error / warning |
+> | Checkpoints | `example_checkpoint_step_unknown`, `example_checkpoint_step_composite` (`for_each`, `loop`, `next.parallel`), `example_checkpoint_status` | error |
+> | Variants | `example_variants_too_many` (> 10), `example_variant_id_invalid`, `example_variant_id_duplicate`, `example_variant_origin_invalid` (`author` or `synthetic`, no default), `example_variant_empty`, `example_variant_input_conflict`, `example_variant_input_invalid`; warning `example_variant_unchecked` (parent uses `input_ref`) | error / warning |
+> | Credential-shaped literals | `example_secret_like_value`: any string leaf of an example matching one of the spec's eight patterns | error |
+>
+> - A variant's `input_patch` is an RFC 7386 merge patch over the parent's inline `input`; the patched
+>   input is judged like the parent's, under the variant's own code. A `null` patch value deleting a
+>   secret field is fine; a patch that supplies a secret value is `example_secret_value`.
+> - `fields` / `exact` keys are checked against the flow's `output:` (final expectation) or the step's
+>   `output_schema` (checkpoint); no declared list is the warning `example_expected_field_unchecked`.
+> - `matches` is compiled with Go's RE2, exactly as the reference does (the JS port approximates).
+> - The signed-URL query-key pattern in the spec carries no flag; it is matched case-insensitively
+>   (`X-Amz-Signature` is the canonical case), as the reference does.
+> - Divergences from the reference: #20 (reference-only `example_ref_blocked_host`), #21 (the input
+>   check is narrowed) and #22 (messages), below.
+> - Fixtures: `testdata/conformance/examples-*.yaml` with the manifest `examples-cases.json` (one
+>   fixture per code, plus the all-correct flows that carry `forbidWarningCodes` for every examples
+>   warning so a false positive cannot hide).
 
 > **v0.6.3 — the optional top-level `display_name` (aigentflow#187).** A free-form human label, at
 > most 80 characters **counted in runes** (the bound is go-exons', kept equal so one rule holds for
@@ -572,6 +610,48 @@ save-time rule nor this library reads any of them; the run time is the control.
   AIgentFlow resolves can take.
 - **A document the reference refuses at its parse** reports this warning here beside the
   refusing error (as every rule does, PARITY.md "The differential"); the reference stops first.
+
+### 20. `example_ref_blocked_host`: reference-only (v0.7.0)
+
+The reference additionally refuses an `https` reference whose host is a literal private, loopback,
+link-local or metadata address, or a name with an internal suffix (`.internal`, `.local`,
+`.localhost`), as `example_ref_blocked_host`. This library does not carry it: a literal-IP table in
+each implementation is one more copy of the guard the reference's runtime fetcher already applies, and
+the fetch itself (the actual control) never happens here. The spec's `examples.codes` lists the code so
+the severity map is complete; this library never raises it, and `TestExamplesCodesMatchTheSpecBothWays`
+holds that. Looser only: a document with such a host passes here and is refused by the reference's host
+application, which refuses the union of both verdicts.
+
+### 21. The example input check is NARROWED (v0.7.0)
+
+The reference judges an example's inline `input` with its full runtime input-schema walker. This
+library has no value validator, so it judges only:
+
+- an **unknown field** (against `input_schema`, or against the declared `query` keys when there is no
+  `input_schema`);
+- a **required field that is missing**, honouring `visible_when`, and skipping a `secret`-typed field
+  (a required secret nobody may supply at save is not an error);
+- a **value of the wrong KIND**: `string`/`multiline`/`secret`/`enum`/`date` take a string, `number` a
+  number, `bool` a boolean, `array_of_strings` a list of strings, `file` a mapping of only
+  `url`/`sha256`/`media_type`/`note` (anything else is `example_file_input_needs_ref`);
+- **enum membership**.
+
+It does NOT judge `min_length`/`max_length`, `min`/`max`, `pattern`, `min_items`/`max_items` or the
+date format (`2026-02-30` passes). An unquoted YAML date decodes to a timestamp and is normalised to the
+string a live run receives before it is judged. The same narrowed check runs on a variant's patched
+input (`example_variant_input_invalid`). Rule of thumb: this library may be weaker than the reference,
+never stricter, and a consumer that needs the reference's full verdict gets it by also running the
+reference (the union of both). The reference's cap on the number of input keys is not judged either.
+The block-size limit is measured on the document with struct-level empties omitted (the reference
+measures its typed structs), so a document within a few bytes of the limit may pass here and fail there.
+
+### 22. Example messages
+
+Finding wording is not part of the parity contract (compare on `code`), and the examples messages are
+kept identical to the reference's wherever the text does not depend on a Go-only detail. Where a
+message is composed from the walker's own state the text can still differ between the three
+implementations; the manifest in `testdata/conformance/examples-cases.json` carries the exact text this
+library produces for the fixtures that pin one.
 
 ## The differential
 

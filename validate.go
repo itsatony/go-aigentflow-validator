@@ -98,6 +98,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateExecutorConfigEnvScopes(flow, iss)
 	validateServerOwnedQueryKeys(flow, iss)
 	validateCredentialEndpointPairing(flow, iss)
+	validateExamples(flow, iss)
 	inspector := exonsInspectorOf(opts)
 	validateInlineExonsSteps(flow, iss, inspector)
 	validateOrchestratorExons(flow, iss, inspector)

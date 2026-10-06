@@ -1,0 +1,54 @@
+aigentflow_version: "2.0.0"
+name: support_triage
+description: "Classifies a support message and drafts a reply."
+version: "1.0.0"
+start: classify
+input_schema:
+  version: 1
+  fields:
+    - { name: message, type: multiline, label: "Customer message", required: true }
+output: [reply]
+steps:
+  classify:
+    executor: "ai://anthropic/chat"
+    output_schema:
+      version: 1
+      fields:
+        - { name: category, type: string }
+        - { name: urgent, type: bool }
+    query:
+      model: "claude-sonnet-5-5"
+      messages:
+        - role: user
+          content: "Classify: {{ .query.message }}"
+    next:
+      default: "draft_reply"
+  draft_reply:
+    executor: "ai://anthropic/chat"
+    query:
+      model: "claude-sonnet-5-5"
+      messages:
+        - role: user
+          content: "Reply to: {{ .query.message }}"
+    post_processing:
+      - output.set:
+          reply: "{{ .step.response.content }}"
+    next:
+      default: "null"
+examples:
+  - id: refund_request
+    title: "A refund request"
+    guidance: "Refunds are billing matters, and the reply must stay polite."
+    input:
+      message: "I was charged twice for my subscription."
+    checkpoints:
+      classify:
+        fields:
+          category: { equals: billing }
+          urgent: { present: true }
+      draft_reply:
+        optional: true
+        rubric: "Apologises and names the next step."
+    expected:
+      rubric: "A short, polite reply that offers a refund."
+      must_not_contain: ["guarantee"]
