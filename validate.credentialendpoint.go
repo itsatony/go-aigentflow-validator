@@ -39,8 +39,7 @@ import (
 //     family whose plugin expands such references, beside an endpoint that is
 //     certainly the author's (a literal: not templated, not a variable, not the
 //     family's default origin). A family whose client carries an implicit
-//     service credential is not judged (that is a property of the deployment),
-//     and nexus:// / aigentchat:// get the ai:// shape.
+//     service credential is not judged (that is a property of the deployment).
 //
 // Everything that decides it is data (spec credentialEndpointPairing): the
 // ai:// parameter names, the keyless and provider sets, the family table with
@@ -223,7 +222,7 @@ func warnUnpairedAI(iss *issues, field, provider string) {
 // --- the executor families -------------------------------------------------
 
 // credentialEndpointFamilyOf returns the family row a step's executor belongs
-// to: the protocol (after its alias) with its first path segment as the
+// to: the protocol with its first path segment as the
 // driver, else the protocol alone.
 func credentialEndpointFamilyOf(executor string) (string, credentialEndpointFamily, bool) {
 	cfg := spec.CredentialEndpointPairing
@@ -233,9 +232,6 @@ func credentialEndpointFamilyOf(executor string) (string, credentialEndpointFami
 	}
 	protocol := executor[:sep]
 	driver, _, _ := strings.Cut(executor[sep+len(cfg.ProtocolSeparator):], "/")
-	if alias, ok := cfg.ProtocolAliases[protocol]; ok {
-		protocol = alias
-	}
 	candidates := []string{protocol}
 	if driver != "" {
 		candidates = []string{protocol + cfg.FamilyKeySeparator + driver, protocol}
@@ -360,34 +356,10 @@ func staticFamilyAuthorEndpoint(flow doc, family credentialEndpointFamily, step 
 	return ""
 }
 
-// storedKeyShapeHasOwnKey reports whether a stored-key-shape step (nexus://)
-// supplies a key of its own: a non-empty string key, or a credentials mapping.
-func storedKeyShapeHasOwnKey(family credentialEndpointFamily, query doc) bool {
-	for _, key := range family.StoredKeyShape.OwnKeyParams {
-		if _, ok := queryNonEmptyString(query, key); ok {
-			return true
-		}
-	}
-	_, hasMap := getRecord(query, family.StoredKeyShape.OwnCredentialsMapParam)
-	return hasMap
-}
-
 func validateFamilyCredentialEndpointPairing(flow doc, steps []credentialEndpointStep, iss *issues) {
 	for _, step := range steps {
 		familyKey, family, ok := credentialEndpointFamilyOf(step.executor)
 		if !ok || family.ImplicitServerCredential {
-			continue
-		}
-		if family.StoredKeyShape != nil {
-			if storedKeyShapeHasOwnKey(family, step.query) {
-				continue
-			}
-			for _, key := range family.EndpointParams {
-				if _, ok := queryNonEmptyString(step.query, key); ok {
-					warnUnpairedAI(iss, step.field(key), family.StoredKeyShape.Provider)
-					break
-				}
-			}
 			continue
 		}
 		secret := staticFamilySecret(flow, family, step, iss)

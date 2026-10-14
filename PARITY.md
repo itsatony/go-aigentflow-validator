@@ -7,12 +7,24 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.811.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.819.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
 (v0.6.3, below) from AIgentFlow v2.802.0, plus the `examples:` block (v0.7.0, below) from
-AIgentFlow v2.811.0.
+AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (below).
+
+> **v0.8.0 — the AigentChat executor is gone.** AIgentFlow v2.819.0 deleted the `nexus://` /
+> `aigentchat://` executor. The spec drops `nexus` from `executorSchemes`, the `nexus` and
+> `aigentchat` `executorConfigEnvScopes` keys, the `nexus` family row, the `aigentchat`→`nexus`
+> `protocolAliases` table and the `storedKeyShape` mechanism (its only user); `specVersion` is
+> `2.819.0`. Consequences, each the reference's own: a `nexus://` or `aigentchat://` step is now an
+> **unknown scheme** (`unknown_executor_scheme`, a WARNING: the reference never rejects on scheme,
+> only its run-time registry does, with a message naming the removal) and the credential-endpoint
+> rule no longer judges it; an `executor_config.nexus` / `.aigentchat` block is a key with an EMPTY
+> scope, so any `${…}` reference in it is `executor_config_env_scope` (as for any unknown key).
+> Strictly a removal: no code was added. Divergence #19's `credentials:`-mapping half and the
+> `nexus` own-key shape history below describe v0.6.2 and are retired with the rule.
 
 > **v0.7.0 — the `examples:` block.** A flow may carry concrete cases (an input, what a good result
 > looks like, why the case matters, what must never happen) in a top-level `examples:` list. The flow
@@ -98,8 +110,7 @@ AIgentFlow v2.811.0.
 >   is certainly the author's: not templated, not a `${…}` reference, and not of the same origin as
 >   the row's default (scheme, host and port, lower-cased, the scheme's default port filled). A
 >   family whose client carries an implicit service credential (`getmd://`, the trove drivers) is
->   not judged; `nexus://` and its alias `aigentchat://` get the ai:// shape (an endpoint with no
->   key of its own and no `credentials:` mapping).
+>   not judged; `nexus://` and its alias `aigentchat://` used to get the ai:// shape (removed in v0.8.0).
 > - **Measured** against the reference at its DC-FORGE-233 commit (strict parse, then its full
 >   save-door verdict). On the 403-file differential corpus (the 216 bundled flows including the 10
 >   starter templates, the flow-create examples, all 111 conformance fixtures and the 49-shape

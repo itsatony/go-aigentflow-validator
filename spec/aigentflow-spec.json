@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.811.0",
+  "specVersion": "2.819.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -31,7 +31,6 @@
     "messenger",
     "mock",
     "mqtt",
-    "nexus",
     "opencorporates",
     "openmeteo",
     "overpass",
@@ -334,12 +333,6 @@
     "fields": ["api_key", "base_url", "organization"],
     "extraKey": "extra",
     "scopes": {
-      "aigentchat": [
-        "AIGENTFLOW_AIGENTCHAT_API_KEY",
-        "AIGENTFLOW_AIGENTCHAT_BASE_URL",
-        "AIGENTFLOW_NEXUS_API_KEY",
-        "AIGENTFLOW_NEXUS_BASE_URL"
-      ],
       "anthropic": [
         "AIGENTFLOW_ANTHROPIC_API_KEY",
         "AIGENTFLOW_ANTHROPIC_BASE_URL"
@@ -446,12 +439,6 @@
         "AIGENTFLOW_MQTT_BROKER_URL",
         "AIGENTFLOW_MQTT_PASSWORD",
         "AIGENTFLOW_MQTT_USERNAME"
-      ],
-      "nexus": [
-        "AIGENTFLOW_AIGENTCHAT_API_KEY",
-        "AIGENTFLOW_AIGENTCHAT_BASE_URL",
-        "AIGENTFLOW_NEXUS_API_KEY",
-        "AIGENTFLOW_NEXUS_BASE_URL"
       ],
       "ollama": [
         "AIGENTFLOW_OLLAMA_API_KEY",
@@ -574,9 +561,6 @@
       ]
     },
     "familyKeySeparator": "/",
-    "protocolAliases": {
-      "aigentchat": "nexus"
-    },
     "families": {
       "db": {
         "protocol": "db",
@@ -734,40 +718,6 @@
           "AIGENTFLOW_MQTT_USERNAME",
           "AIGENTFLOW_MQTT_PASSWORD"
         ]
-      },
-      "nexus": {
-        "protocol": "nexus",
-        "configKeys": [
-          "nexus",
-          "aigentchat"
-        ],
-        "secretParams": [
-          "aigentchat_api_key",
-          "api_key"
-        ],
-        "endpointParams": [
-          "aigentchat_base_url",
-          "base_url"
-        ],
-        "defaultEndpoints": [],
-        "configApiKeyParam": "",
-        "configBaseUrlParam": "",
-        "implicitServerCredential": false,
-        "expandsServerEnvReferences": false,
-        "serverEnv": [
-          "AIGENTFLOW_NEXUS_BASE_URL",
-          "AIGENTFLOW_NEXUS_API_KEY",
-          "AIGENTFLOW_AIGENTCHAT_API_KEY",
-          "AIGENTFLOW_AIGENTCHAT_BASE_URL"
-        ],
-        "storedKeyShape": {
-          "ownKeyParams": [
-            "aigentchat_api_key",
-            "api_key"
-          ],
-          "ownCredentialsMapParam": "credentials",
-          "provider": "aigentchat"
-        }
       },
       "opencorporates": {
         "protocol": "opencorporates",

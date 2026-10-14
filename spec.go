@@ -189,7 +189,6 @@ type credentialEndpointSpec struct {
 		ExecutorConfigProviders    []string `json:"executorConfigProviders"`
 	} `json:"ai"`
 	FamilyKeySeparator string                              `json:"familyKeySeparator"`
-	ProtocolAliases    map[string]string                   `json:"protocolAliases"`
 	Families           map[string]credentialEndpointFamily `json:"families"`
 }
 
@@ -206,14 +205,6 @@ type credentialEndpointFamily struct {
 	ImplicitServerCredential   bool     `json:"implicitServerCredential"`
 	ExpandsServerEnvReferences bool     `json:"expandsServerEnvReferences"`
 	ServerEnv                  []string `json:"serverEnv"`
-	// StoredKeyShape marks a family judged like ai:// (nexus): the resolver
-	// plans a stored key for every step, so an endpoint without a key of the
-	// flow's own can only be paired with a stored key.
-	StoredKeyShape *struct {
-		OwnKeyParams           []string `json:"ownKeyParams"`
-		OwnCredentialsMapParam string   `json:"ownCredentialsMapParam"`
-		Provider               string   `json:"provider"`
-	} `json:"storedKeyShape"`
 }
 
 // The decoded enum surface, built once at init. These are package-level because
