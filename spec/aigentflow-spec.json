@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.819.0",
+  "specVersion": "2.820.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -1290,6 +1290,7 @@
         "deny_tools": "list<scalar>",
         "discoverable_tools": "list<scalar>",
         "enable_signals": "scalar",
+        "enforce_region": "scalar",
         "engram_scope": "scalar",
         "exons": "scalar",
         "human_question_timeout": "scalar",
@@ -1298,6 +1299,7 @@
         "max_tool_turns": "scalar",
         "max_turns": "scalar",
         "mode": "scalar",
+        "region": "scalar",
         "require_approval_for": "list<scalar>",
         "timeout_seconds": "scalar",
         "tool_discovery": "scalar",

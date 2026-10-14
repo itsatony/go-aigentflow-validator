@@ -1,0 +1,28 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-enforce-region-no-region
+version: '1.0.0'
+description: >
+  AIF v2.820.0 (#217). enforce_region: true with no region would make the provider
+  refuse every orchestrator turn, so the reference parser refuses it at save.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  enforce_region: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}

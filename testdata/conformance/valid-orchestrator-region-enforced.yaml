@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-region-enforced
+version: '1.0.0'
+description: >
+  AIF v2.820.0 (#217). The orchestrator block names the provider region its model
+  runs in and enforces it. region alone is a pin and is valid too (see the
+  unit tests); the pair is the proof-bearing form.
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  region: eu
+  enforce_region: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}

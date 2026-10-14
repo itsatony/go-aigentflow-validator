@@ -179,6 +179,16 @@ var conformanceCases = []conformanceCase{
 		file: "valid-orchestrator-human-question-timeout.yaml", valid: true,
 	},
 	{
+		// v2.820.0 (#217): the region pin and its enforcement, together.
+		file: "valid-orchestrator-region-enforced.yaml", valid: true,
+		forbidErrorCodes: []string{codeOrchEnforceRegionNeeds},
+	},
+	{
+		// v2.820.0 (#217): enforce_region without a region fails every turn closed.
+		file: "invalid-orchestrator-enforce-region-no-region.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchEnforceRegionNeeds},
+	},
+	{
 		// DC-COND-2: campaign.on_children_complete naming a real step.
 		file: "valid-campaign-handoff.yaml", valid: true,
 	},

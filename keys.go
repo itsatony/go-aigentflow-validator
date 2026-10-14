@@ -91,6 +91,8 @@ const (
 	keyFlowID               = "flow_id"
 	keyFlowName             = "flow_name"
 	keyHumanQuestionTimeout = "human_question_timeout"
+	keyRegion               = "region"
+	keyEnforceRegion        = "enforce_region"
 	keyMaxDuration          = "max_duration"
 	keyResponseEvaluation   = "response_evaluation"
 	keyCondition            = "condition"
@@ -265,6 +267,7 @@ const (
 	// orchestrator / campaign / step warnings (v2.695.0 – v2.728.0).
 	codeOrchHumanQTimeoutInvalid = "orchestrator_human_question_timeout_invalid"
 	codeCampaignMaxCreditsChild  = "campaign_invalid_max_credits_per_child"
+	codeOrchEnforceRegionNeeds   = "orchestrator_enforce_region_needs_region" // v2.820.0
 	codeRespExpUnread            = "response_expectation_unread"
 	codeStepMaxDurationIgnored   = "step_max_duration_ignored"
 

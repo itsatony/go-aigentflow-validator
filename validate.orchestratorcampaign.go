@@ -3,6 +3,7 @@ package aifvalidate
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,7 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 		}
 
 		validateHumanQuestionTimeout(orch, iss)
+		validateEnforceRegion(orch, iss)
 
 		// DC-COND-1 termination authority. An absent/empty mode defaults to
 		// monitor, which is valid.
@@ -317,4 +319,27 @@ func validateCampaignChildFlows(campaign doc, iss *issues) {
 			Suggestion: "Name the child flow with flow_name (resolved in the caller's org) or pin it with flow_id",
 		})
 	}
+}
+
+// validateEnforceRegion ports the reference's orchestrator region rule (AIF
+// v2.820.0): `enforce_region: true` makes the provider refuse a call that
+// carries no region, so declaring it without naming `region` would fail every
+// orchestrator turn closed. Whitespace-only counts as unnamed (the reference
+// trims). `enforce_region: false` or absent needs nothing, and `region` alone
+// is a pin, not an error. The reference runs this in its parser, so it is an
+// error at the save door.
+func validateEnforceRegion(orch doc, iss *issues) {
+	enforce, ok := asBool(get(orch, keyEnforceRegion))
+	if !ok || !enforce {
+		return
+	}
+	region, _ := iss.stringOf(orch, keyRegion, keyOrchestrator)
+	if strings.TrimSpace(region) != "" {
+		return
+	}
+	iss.error(Issue{
+		Field: keyOrchestrator + "." + keyEnforceRegion, Code: codeOrchEnforceRegionNeeds,
+		Message:    "orchestrator: enforce_region requires region (name the region the model must run in, e.g. region: eu)",
+		Suggestion: "Add orchestrator.region (for example region: eu), or remove enforce_region",
+	})
 }
