@@ -1,0 +1,90 @@
+aigentflow_version: '2.0.0'
+name: compliance-residency-pinned
+version: '1.0.0'
+description: >-
+  AIgentFlow v2.821.0, the control for compliance_residency_unenforced. Every call
+  below is on a region-lane provider under an EU-only residency and every one is
+  pinned in a different accepted way: region alone, enforce_region alone (a bool
+  and the string yes), the author's own base_url on the step, an executor_config
+  base_url, a loop sub-step, and an orchestrator with a region. No warning of
+  that code may appear.
+compliance:
+  residency: ['eu', ' DE ']
+executor_config:
+  azure:
+    base_url: 'https://example.openai.azure.com'
+start: region_only
+steps:
+  region_only:
+    executor: ai://openai/chat
+    query:
+      model: gpt-5
+      prompt: 'hi'
+      region: eu
+    next:
+      default: enforce_bool
+  enforce_bool:
+    executor: ai://mistral/chat
+    query:
+      model: mistral-large-latest
+      prompt: 'hi'
+      enforce_region: true
+    next:
+      default: enforce_string
+  enforce_string:
+    executor: ai://google/chat
+    query:
+      model: gemini-2.5-pro
+      prompt: 'hi'
+      enforce_region: 'yes'
+    next:
+      default: own_base_url
+  own_base_url:
+    executor: ai://openai/chat
+    query:
+      model: gpt-5
+      prompt: 'hi'
+      openai_base_url: 'https://llm.example.eu/v1'
+      openai_api_key: 'sk-own'
+    next:
+      default: config_base_url
+  config_base_url:
+    executor: ai://azure/chat
+    query:
+      model: gpt-5
+      prompt: 'hi'
+    next:
+      default: looper
+  looper:
+    loop:
+      while: '{{ lt (atoi .loop.vars.counter) 2 }}'
+      max_iterations: 3
+      vars:
+        counter: '0'
+      steps:
+        - id: body
+          executor: ai://openai/chat
+          query:
+            model: gpt-5
+            prompt: 'hi'
+            region: eu
+            enforce_region: true
+          post_processing:
+            - loop.set:
+                counter: '{{ add (atoi .loop.vars.counter) 1 }}'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  region: eu
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: openai
+      model: gpt-5
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}

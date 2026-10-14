@@ -1,0 +1,35 @@
+aigentflow_version: '2.0.0'
+name: compliance-residency-unenforced-loop
+version: '1.0.0'
+description: >-
+  AIgentFlow v2.821.0. A loop body is a second step table: the unpinned
+  region-lane call inside it draws compliance_residency_unenforced at
+  steps.<loop>.loop.steps.<sub-step>.executor, and the pinned sibling beside it
+  does not.
+compliance:
+  residency: ['FR']
+start: looper
+steps:
+  looper:
+    loop:
+      while: '{{ lt (atoi .loop.vars.counter) 2 }}'
+      max_iterations: 3
+      vars:
+        counter: '0'
+      steps:
+        - id: unpinned
+          executor: ai://openai/chat
+          query:
+            model: gpt-5
+            prompt: 'hi'
+        - id: pinned
+          executor: ai://openai/chat
+          query:
+            model: gpt-5
+            prompt: 'hi'
+            region: eu
+          post_processing:
+            - loop.set:
+                counter: '{{ add (atoi .loop.vars.counter) 1 }}'
+    next:
+      default: 'null'

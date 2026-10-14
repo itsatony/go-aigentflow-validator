@@ -1,0 +1,60 @@
+aigentflow_version: '2.0.0'
+name: compliance-residency-silent-providers
+version: '1.0.0'
+description: >-
+  AIgentFlow v2.821.0, the control for compliance_residency_unenforced from the
+  other side. Under an EU-only residency, a provider with no region lane
+  (anthropic native, scaleway, vaiembed) cannot be pinned by region or
+  enforce_region, so the rule is silent on it; so is a step that is not an ai://
+  call, one whose provider is templated, and an orchestrator on such a provider.
+compliance:
+  residency: ['EU']
+start: native
+steps:
+  native:
+    executor: ai://anthropic/chat
+    query:
+      model: claude-sonnet-4-6
+      prompt: 'hi'
+    next:
+      default: paris
+  paris:
+    executor: ai://scaleway/chat
+    query:
+      model: llama-3.3-70b-instruct
+      prompt: 'hi'
+    next:
+      default: embed
+  embed:
+    executor: ai://vaiembed/embed
+    query:
+      model: vai-embed
+      input: 'hi'
+    next:
+      default: dynamic
+  dynamic:
+    executor: 'ai://{{ .query.provider }}/chat'
+    query:
+      model: '{{ .query.model }}'
+      prompt: 'hi'
+    next:
+      default: plain
+  plain:
+    executor: function://text/template
+    query:
+      message: 'hi'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}

@@ -92,6 +92,8 @@ const (
 	keyFlowName             = "flow_name"
 	keyHumanQuestionTimeout = "human_question_timeout"
 	keyRegion               = "region"
+	keyCompliance           = "compliance"
+	keyResidency            = "residency"
 	keyEnforceRegion        = "enforce_region"
 	keyMaxDuration          = "max_duration"
 	keyResponseEvaluation   = "response_evaluation"
@@ -286,6 +288,9 @@ const (
 	codeExonsResourcesRefused  = "exons_resources_unhonoured"      // ERR_MSG_EXONS_RESOURCES_REFUSED
 	codeOrchToolWithheld       = "orchestrator_tool_withheld"      // VALIDATION_CODE_ORCH_TOOL_WITHHELD
 	codeExprFnUndeclaredUse    = "expression_function_undeclared_use"
+
+	// v0.10.0 — AIgentFlow v2.821.0 (#217): an EU-only compliance.residency does not pin a call.
+	codeComplianceResidencyUnenforced = "compliance_residency_unenforced"
 
 	// v0.6.1 — AIgentFlow CFX-05: a step query naming a server-owned parameter.
 	codeServerOwnedQueryKey = "server_owned_query_key" // VALIDATION_CODE_SERVER_OWNED_QUERY_KEY

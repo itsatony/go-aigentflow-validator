@@ -7,13 +7,48 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.820.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.821.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
 (v0.6.3, below) from AIgentFlow v2.802.0, plus the `examples:` block (v0.7.0, below) from
 AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (below), then
-v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (below).
+v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (below), then
+v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below).
+
+> **v0.10.0 — `compliance_residency_unenforced`.** AIgentFlow v2.821.0 (#217 item 1) found that
+> `compliance.residency` is a catalogue ELIGIBILITY check (go-vaibstract's declared deployments),
+> not endpoint evidence, and added a catalogue-free warning for what it does not pin. **Ported:
+> that warning only** (WARNING, never an error, so no verdict changes). Rule, identical in both
+> ports: when `compliance.residency` is non-empty and every code (trimmed, upper-cased) is one of
+> `EU, DE, FR, IE, NL, IT, ES`, then for every top-level step and loop sub-step whose executor
+> starts `ai://` (provider = the literal segment before the first `/`; empty or templated is
+> skipped), and for the orchestrator (provider = `execution.provider` of its exons frontmatter,
+> read by the configured `ExonsInspector`), if the provider is a **region-lane provider** and the
+> call is not pinned, warn. *Pinned* = `region` is a non-empty string, OR `enforce_region` is true
+> (YAML `true`, or on a step the strings `true`/`1`/`yes`; on the orchestrator the YAML bool), OR the
+> call names its endpoint (step query `<provider>_base_url` non-empty, or
+> `executor_config.<provider>.base_url` non-empty). Field: `steps.<id>.executor`,
+> `steps.<id>.loop.steps.<sub-id>.executor` or `orchestrator.exons`; `step_id` is the top-level step
+> (none for the orchestrator). Not checked: `exons://`/`aiv://` steps, a `quality_gate` judge, a
+> failover chain, a run-level `region` input. Message text follows the reference's but, as always,
+> is not the contract.
+>
+> **The region-lane set is a HAND COPY.** It is go-vaibstract's `RuntimeRegionProviders` at
+> v1.304.0 (`assemblyai, azure, bedrock, deepgram, google, mistral, openai, speechmatics`), carried
+> in the spec under `complianceResidency.regionLaneProviders`, because neither port imports
+> go-vaibstract (the Go module would drag a provider SDK tree into a WASM-clean library). The
+> reference guards its own copy with a test against the library's list; THIS side can only pin the
+> literal (`TestResidencyRegionLaneSetIsPinned`). **Refresh it whenever AIgentFlow bumps
+> go-vaibstract** and its `RuntimeRegionProviders` changes, in the JS spec first, then copy.
+>
+> **Not ported, and why:** the reference also WIDENED its catalogue check (`compliance_violation`,
+> `compliance_unknown_deployment`, `compliance_dynamic_skipped`) to loop bodies, `quality_gate`
+> judges and the orchestrator's model, and relabelled its message. Neither port has the catalogue
+> (README "Scope"), so there is nothing to widen; `compliance_catalog_missing`/`_violation` remain
+> out of scope. Gates: `validate_v0100_test.go` (warn/silent matrix, fields, set pin) and
+> `TestResidencyCorpusIsSilent` (opt-in `AIF_CORPUS_DIR=<aigentflow checkout>`: zero findings
+> across 233 flows incl. the 12 `.demo.` flows at the reference's 272dbda8).
 
 > **v0.9.0 — `orchestrator.region` and `orchestrator.enforce_region`.** AIgentFlow v2.820.0 (#217)
 > lets the `orchestrator:` block pin its model calls to a provider region. Both keys are now known
