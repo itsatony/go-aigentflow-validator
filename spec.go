@@ -121,6 +121,32 @@ type rawSpec struct {
 	// Examples feeds the examples: block rules (v0.7.0): limits, vocabularies,
 	// the credential-shaped-literal patterns and each code's severity.
 	Examples examplesSpec `json:"examples"`
+	// ResidencyEnforcement feeds compliance_residency_unenforced (AIgentFlow
+	// v2.821.0, #217): the EU code set, the region-lane provider set and the
+	// names of the keys that pin a call.
+	ResidencyEnforcement residencyEnforcementSpec `json:"complianceResidency"`
+}
+
+// residencyEnforcementSpec is the data of compliance_residency_unenforced.
+// RegionLaneProviders is a hand copy of go-vaibstract's RuntimeRegionProviders
+// (this library imports no catalogue); see PARITY.md.
+type residencyEnforcementSpec struct {
+	EUCodes                    []string `json:"euResidencyCodes"`
+	RegionLaneProviders        []string `json:"regionLaneProviders"`
+	AIProtocol                 string   `json:"aiProtocol"`
+	ProtocolSeparator          string   `json:"protocolSeparator"`
+	RegionParam                string   `json:"regionParam"`
+	EnforceRegionParam         string   `json:"enforceRegionParam"`
+	EnforceRegionTruthyStrings []string `json:"enforceRegionTrueStrings"`
+	BaseURLParamSuffix         string   `json:"baseUrlParamSuffix"`
+	StepFieldFormat            string   `json:"stepFieldFormat"`
+	LoopStepFieldFormat        string   `json:"loopStepFieldFormat"`
+	OrchestratorField          string   `json:"orchestratorField"`
+	SiteStepFormat             string   `json:"siteStepFormat"`
+	SiteLoopStepFormat         string   `json:"siteLoopStepFormat"`
+	SiteOrchestrator           string   `json:"siteOrchestrator"`
+	MessageFormat              string   `json:"messageFormat"`
+	Suggestion                 string   `json:"suggestion"`
 }
 
 // examplesSpec is the data of the examples: block rules. Every limit, pattern,

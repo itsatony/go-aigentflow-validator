@@ -532,6 +532,13 @@ var conformanceCases = []conformanceCase{
 	// warn-* fixture is valid, and the counter-fixtures FORBID the code: the
 	// whole risk of a warning is a false positive, which `valid: true` cannot
 	// see. The exact fields per fixture are pinned in validate_v0602_test.go.
+	// v0.10.0 (AIgentFlow v2.821.0, #217): compliance_residency_unenforced. The
+	// two controls forbid the code: a warning never changes the verdict, so
+	// `valid: true` alone could not see a false positive.
+	{file: "warn-compliance-residency-unenforced.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
+	{file: "warn-compliance-residency-unenforced-loop.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
+	{file: "valid-compliance-residency-pinned.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},
+	{file: "valid-compliance-residency-silent-providers.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "warn-credential-endpoint-ai-step-query.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-ai-loop-sub-step.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-ai-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},

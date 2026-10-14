@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.820.0",
+  "specVersion": "2.821.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -838,6 +838,35 @@
         ]
       }
     }
+  },
+  "complianceResidency": {
+    "$comment": "compliance_residency_unenforced (WARNING, never an error; needs no catalogue). When compliance.residency is non-empty and every code (trimmed, upper-cased) is in euResidencyCodes, each top-level step and loop sub-step whose executor starts with aiProtocol+protocolSeparator, then the orchestrator (provider = its exons execution.provider), warns when its provider (literal, lower-cased; skipped when empty or containing templateActionOpen) is in regionLaneProviders and the call is not pinned. Pinned = query region (orchestrator.region) a non-empty string after trimming; OR enforce_region true (query: bool true or the strings in enforceRegionTrueStrings; orchestrator: bool true); OR the author named the endpoint: query <provider>+baseUrlParamSuffix a non-empty string after trimming, or executor_config.<provider>.base_url non-empty after trimming. The provider segment of ai://<provider>/<operation> exists only when a slash follows it. regionLaneProviders is the set of providers whose adapter routes on `region`; a provider outside it has no region lane and is never warned. Message, suggestion and site formats fill %s and %q (a Go-quoted string) in order; the message's last placeholder is the residency list as written, printed [A B]. Reference: validateResidencyEnforcement (validation.residency.go).",
+    "code": "compliance_residency_unenforced",
+    "euResidencyCodes": ["EU", "DE", "FR", "IE", "NL", "IT", "ES"],
+    "regionLaneProviders": [
+      "bedrock",
+      "google",
+      "azure",
+      "openai",
+      "assemblyai",
+      "speechmatics",
+      "deepgram",
+      "mistral"
+    ],
+    "aiProtocol": "ai",
+    "protocolSeparator": "://",
+    "regionParam": "region",
+    "enforceRegionParam": "enforce_region",
+    "baseUrlParamSuffix": "_base_url",
+    "enforceRegionTrueStrings": ["true", "1", "yes"],
+    "stepFieldFormat": "steps.%s.executor",
+    "loopStepFieldFormat": "steps.%s.loop.steps.%s.executor",
+    "orchestratorField": "orchestrator.exons",
+    "siteStepFormat": "step %q",
+    "siteLoopStepFormat": "loop sub-step %q of step %q",
+    "siteOrchestrator": "the orchestrator",
+    "messageFormat": "%s calls provider %q, whose default endpoint commits to no jurisdiction, but sets neither region nor enforce_region, so nothing pins it to the declared residency %v. compliance.residency is a catalogue eligibility check, not endpoint evidence",
+    "suggestion": "Add `region: eu` and `enforce_region: true` to the call (an orchestrator: the same two keys on the orchestrator block). Prove it afterwards: the step record's diagnostics.region is stamped from the host actually dialled."
   },
   "examples": {
     "$comment": "The examples: block. Derived from the reference's constants, never hand-typed: limits, vocabularies, the credential-shaped-literal pattern set and each code's severity. example_ref_blocked_host is listed for completeness but is raised by the reference implementation only; the ports never raise it. See PARITY.md, 'The examples block'.",
