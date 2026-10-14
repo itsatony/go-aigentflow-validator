@@ -1,11 +1,11 @@
 aigentflow_version: '2.0.0'
-name: credential-endpoint-nexus
+name: removed-executor-nexus
 version: '1.0.0'
 description: >-
-  nexus:// (and its alias aigentchat://) is judged like ai:// (AIgentFlow DC-FORGE-233,
-  credential_endpoint_unpaired): the resolver plans a stored key for every step, so an endpoint
-  with no key of the flow's own beside it can only be paired with a stored key. Templated or
-  not, it warns.
+  nexus:// and aigentchat:// were removed from AIgentFlow in v2.819.0. The reference never
+  rejects on scheme, so this library treats them like any scheme it does not know: an
+  unknown_executor_scheme WARNING, and nothing else. In particular the credential-endpoint rule
+  (credential_endpoint_unpaired) no longer judges them.
 start: agent
 steps:
   agent:

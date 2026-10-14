@@ -130,7 +130,7 @@ version rejected them has no way to understand it.
 | Examples | the optional top-level `examples:` block: ids, limits, input against `input_schema` (unknown / missing / wrong kind / enum), file references (https only), expectations, checkpoints, variants, credential-shaped literals (`example_*`, `examples_*`) |
 | Display name | the optional top-level `display_name` is at most 80 characters, counted in runes (`display_name_too_long`) |
 | Server-owned parameters | a step or loop sub-step `query:` may not declare `aiv_api_key`, `aiv_base_url` or `aiv_delegation` |
-| Credential endpoints | an endpoint a server-supplied credential will never be sent to: an `ai://` `<provider>_base_url` (or a literal `executor_config.<provider>.base_url`) with no key of the flow's own, a family secret that is a server `${AIGENTFLOW_…}` variable beside a literal non-default endpoint, a `nexus://` endpoint with no key of its own (warning, `credential_endpoint_unpaired`) |
+| Credential endpoints | an endpoint a server-supplied credential will never be sent to: an `ai://` `<provider>_base_url` (or a literal `executor_config.<provider>.base_url`) with no key of the flow's own, a family secret that is a server `${AIGENTFLOW_…}` variable beside a literal non-default endpoint (warning, `credential_endpoint_unpaired`) |
 | Templates | Go `text/template` syntax across `query`, `pre_processing`, `post_processing`, `conditions[].if` |
 | `expression_functions` | exactly one of `package` / `function`; `package:` refused; `function:` must be in the fixed catalog; a template calling an `fn_` name must declare it |
 | Other save-door rules | `tool_discovery` vocabulary, mock-scenario `delay` durations, empty `output:` entries |

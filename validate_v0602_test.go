@@ -60,10 +60,6 @@ func TestCredentialEndpointFixtureFields(t *testing.T) {
 			"executor_config.s3.extra.endpoint",
 			"steps.research.query.base_url",
 		},
-		"warn-credential-endpoint-nexus.yaml": {
-			"steps.agent.query.base_url",
-			"steps.alias.query.aigentchat_base_url",
-		},
 		"valid-credential-endpoint-own-key-own-url.yaml":   nil,
 		"valid-credential-endpoint-server-endpoints.yaml":  nil,
 		"valid-credential-endpoint-keyless-providers.yaml": nil,
@@ -177,15 +173,9 @@ func TestCredentialEndpointShapes(t *testing.T) {
 		{"family: an extra-block secret and endpoint on a loop sub-step",
 			unpairedHead + "executor_config:\n  broker:\n    extra:\n      password: '${AIGENTFLOW_MQTT_PASSWORD}'\n      broker_url: 'tcp://evil.example.com:1883'\nsteps:\n  s:\n    loop:\n      while: '{{ false }}'\n      max_iterations: 1\n      steps:\n        - id: 7\n          executor: mqtt://broker/publish\n          query:\n            topic: t\n",
 			[]string{"executor_config.broker.extra.broker_url"}},
-		{"nexus: a null credentials entry and a numeric key are no key of its own",
-			step("nexus://org/agent", "      credentials: ~\n      api_key: 42\n      base_url: 'https://chat.example.com'\n"),
-			[]string{"steps.s.query.base_url"}},
-		{"nexus: an empty credentials mapping is a key of its own",
-			step("nexus://org/agent", "      credentials: {}\n      base_url: 'https://chat.example.com'\n"),
+		{"removed nexus:// is no family any more: an endpoint with no key is never judged",
+			step("nexus://org/agent", "      base_url: 'https://chat.example.com'\n"),
 			nil},
-		{"nexus: only the first endpoint warns",
-			step("nexus://org/agent", "      aigentchat_base_url: 'https://a.example.com'\n      base_url: 'https://b.example.com'\n"),
-			[]string{"steps.s.query.aigentchat_base_url"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -206,7 +196,7 @@ func TestCredentialEndpointFamilyTableIsTheSpecData(t *testing.T) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	wantKeys := []string{"db", "deepr", "getmd", "homeassistant", "hosting", "mcp/http", "mqtt", "nexus",
+	wantKeys := []string{"db", "deepr", "getmd", "homeassistant", "hosting", "mcp/http", "mqtt",
 		"opencorporates", "shelly", "staticmap", "storage/s3", "storage/trove"}
 	if !slices.Equal(keys, wantKeys) {
 		t.Fatalf("family rows = %v, want %v (a new family is a spec change)", keys, wantKeys)
@@ -224,9 +214,6 @@ func TestCredentialEndpointFamilyTableIsTheSpecData(t *testing.T) {
 		if family.ExpandsServerEnvReferences && len(family.ServerEnv) == 0 {
 			t.Errorf("%s: expands references but names no server variable", key)
 		}
-	}
-	if cfg.Families["nexus"].StoredKeyShape == nil {
-		t.Error("nexus must carry the stored-key shape")
 	}
 }
 

@@ -527,7 +527,13 @@ var conformanceCases = []conformanceCase{
 	{file: "warn-credential-endpoint-ai-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-family-step-query.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-family-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
-	{file: "warn-credential-endpoint-nexus.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
+	{
+		// v0.8.0 (AIgentFlow v2.819.0): the AigentChat executor is gone, so nexus:// and
+		// aigentchat:// are any unknown scheme: a warning, and no family judgement.
+		file: "warn-removed-executor-nexus.yaml", valid: true,
+		wantWarningCodes:   []string{codeUnknownExecScheme},
+		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
+	},
 	{
 		// The author's own key beside the author's own URL, on every arm.
 		file: "valid-credential-endpoint-own-key-own-url.yaml", valid: true,
