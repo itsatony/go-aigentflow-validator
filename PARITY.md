@@ -7,12 +7,24 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.819.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.820.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
 (v0.6.3, below) from AIgentFlow v2.802.0, plus the `examples:` block (v0.7.0, below) from
-AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (below).
+AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (below), then
+v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (below).
+
+> **v0.9.0 — `orchestrator.region` and `orchestrator.enforce_region`.** AIgentFlow v2.820.0 (#217)
+> lets the `orchestrator:` block pin its model calls to a provider region. Both keys are now known
+> orchestrator keys in the spec (`specVersion` `2.820.0`), and one rule is ported:
+> **`orchestrator_enforce_region_needs_region`** (error, field `orchestrator.enforce_region`):
+> `enforce_region: true` with an absent, null, empty or whitespace-only `region` is refused, because
+> the provider would refuse every orchestrator turn. `enforce_region: false` and `region` alone are
+> valid. The reference raises this in its parser (`validateOrchestrator`) with no code of its own, so
+> the code is this library's, named for the reference's message; the verdict (invalid) and the
+> message are the reference's. The JS port (0.19.0) carries the same two keys and the same rule, with
+> the same code, severity and field.
 
 > **v0.8.0 — the AigentChat executor is gone.** AIgentFlow v2.819.0 deleted the `nexus://` /
 > `aigentchat://` executor. The spec drops `nexus` from `executorSchemes`, the `nexus` and
@@ -663,6 +675,15 @@ kept identical to the reference's wherever the text does not depend on a Go-only
 message is composed from the walker's own state the text can still differ between the three
 implementations; the manifest in `testdata/conformance/examples-cases.json` carries the exact text this
 library produces for the fixtures that pin one.
+
+### 23. The JS port does not judge a field matcher's `matches` syntax (shared with JS, #21 there)
+
+This library compiles an example field matcher's `matches` pattern with RE2, as the reference does,
+and refuses a syntax error (`example_field_matcher_invalid`). The JS port judges that pattern by length
+only, because RE2 and a JavaScript `RegExp` disagree about what is valid and a compile check there
+could refuse what the reference accepts. So on `examples-invalid-example-matcher-bad-regex.yaml` this
+library is invalid and the JS port is valid. `TestParityVerdictsMatchTheJSImplementation` excuses
+exactly that code on exactly that fixture (`jsLooserFixtures`); everything else on it must agree.
 
 ## The differential
 

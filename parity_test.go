@@ -109,6 +109,14 @@ type jsVerdict struct {
 // here", not equality, because this implementation may legitimately produce more
 // (see PARITY.md — the Go template parser is exact where the JS one approximates,
 // and RE2 is authoritative for `pattern`).
+// jsLooserFixtures names the fixtures on which the JS port is DELIBERATELY looser, with the one error
+// code it does not raise. Each is a numbered divergence in PARITY.md (#23); an entry needs one.
+// Only that code is excused: every other code, and the verdict once that code is set aside, must
+// still agree.
+var jsLooserFixtures = map[string]string{
+	"examples-invalid-example-matcher-bad-regex.yaml": codeExMatcherInvalid,
+}
+
 func TestParityVerdictsMatchTheJSImplementation(t *testing.T) {
 	repo := jsRepoOrSkip(t)
 	cli := filepath.Join(repo, jsCLIRelPath)
@@ -142,11 +150,24 @@ func TestParityVerdictsMatchTheJSImplementation(t *testing.T) {
 
 			ours := ValidateFlow(source, Options{})
 
-			if ours.Valid != theirs.Valid {
+			goErrs, jsErrs := uniqueSorted(codesOf(ours.Errors)), uniqueSorted(jsCodes(theirs.Errors))
+			oursValid := ours.Valid
+			if excused, ok := jsLooserFixtures[name]; ok {
+				var kept []string
+				for _, c := range goErrs {
+					if c != excused {
+						kept = append(kept, c)
+					}
+				}
+				if len(kept) != len(goErrs) {
+					oursValid = len(kept) == 0
+				}
+				goErrs = kept
+			}
+			if oursValid != theirs.Valid {
 				t.Errorf("verdict differs: go=%v js=%v\ngo errors: %s",
 					ours.Valid, theirs.Valid, formatIssues(ours.Errors))
 			}
-			goErrs, jsErrs := uniqueSorted(codesOf(ours.Errors)), uniqueSorted(jsCodes(theirs.Errors))
 			if strings.Join(goErrs, ",") != strings.Join(jsErrs, ",") {
 				t.Errorf("error codes differ:\n  go: %v\n  js: %v", goErrs, jsErrs)
 			}

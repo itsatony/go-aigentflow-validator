@@ -179,6 +179,16 @@ var conformanceCases = []conformanceCase{
 		file: "valid-orchestrator-human-question-timeout.yaml", valid: true,
 	},
 	{
+		// v2.820.0 (#217): the region pin and its enforcement, together.
+		file: "valid-orchestrator-region-enforced.yaml", valid: true,
+		forbidErrorCodes: []string{codeOrchEnforceRegionNeeds},
+	},
+	{
+		// v2.820.0 (#217): enforce_region without a region fails every turn closed.
+		file: "invalid-orchestrator-enforce-region-no-region.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchEnforceRegionNeeds},
+	},
+	{
 		// DC-COND-2: campaign.on_children_complete naming a real step.
 		file: "valid-campaign-handoff.yaml", valid: true,
 	},
@@ -561,6 +571,11 @@ var conformanceCases = []conformanceCase{
 	// characters counted in runes. The multibyte pair straddles the boundary
 	// where a byte count would disagree with a rune count.
 	{file: "valid-display-name.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "valid-display-name-80-code-points.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "invalid-display-name-81.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
+	{file: "valid-untrusted-inputs.yaml", valid: true, forbidErrorCodes: []string{codeUnknownYAMLKey}},
+	{file: "invalid-untrusted-misspelt.yaml", valid: false, wantErrorCodes: []string{codeUnknownYAMLKey}},
+	{file: "valid-orchestrator-region.yaml", valid: true, forbidErrorCodes: []string{codeOrchEnforceRegionNeeds}},
 	{file: "valid-display-name-80-runes.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "valid-display-name-80-runes-multibyte.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "invalid-display-name-81-runes.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},

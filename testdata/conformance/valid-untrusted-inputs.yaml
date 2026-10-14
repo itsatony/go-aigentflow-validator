@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: untrusted-inputs-flow
+version: '1.0.0'
+start: classify
+query:
+  trigger:
+    type: object
+    untrusted: true
+input_schema:
+  version: 1
+  fields:
+    - name: mail_body
+      type: multiline
+      untrusted: true
+steps:
+  classify:
+    executor: ai://anthropic/chat
+    trusted_output: true
+    query:
+      prompt: 'Classify this event: {{ .query.trigger }}'
+    next:
+      default: post
+  post:
+    executor: http://request/json
+    allow_untrusted: [url]
+    query:
+      url: 'https://api.example.com/issues/{{ .query.trigger.payload.number }}'
+    next:
+      default: 'null'

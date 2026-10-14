@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.819.0",
+  "specVersion": "2.820.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -510,7 +510,7 @@
     "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s"
   },
   "credentialEndpointPairing": {
-    "$comment": "credential_endpoint_unpaired (WARNING, never an error): the one statically certain shape of AIgentFlow's run-time credential/endpoint pairing refusal. ai: an ai://<provider>/... step (top-level or loop sub-step) whose query holds a non-empty string <provider>+providerBaseUrlParamSuffix while neither its query (genericKeyParam or <provider>+providerKeyParamSuffix, non-empty strings) nor executor_config.<provider>.api_key (a literal, not an env reference) supplies a key; and executor_config.<provider>.base_url for a provider in executorConfigProviders when it is a literal, the block has no literal api_key, and it is not the case that at least one step uses the provider and every such step brings its own query key. keylessProviders are exempt from both. families: a step whose executor resolves (protocolAliases first, then the key protocol+familyKeySeparator+driver, else protocol) to a row. implicitServerCredential rows are never judged. A row with storedKeyShape warns on the first non-empty string endpointParam in the query unless the query holds an own key (a non-empty string in ownKeyParams, or a mapping under ownCredentialsMapParam). Any other row warns when its secret (the first non-empty string secretParam in the query, else per configKey in order: executor_config api_key when configApiKeyParam is a secretParam, else the first non-empty string secretParam under extra) is exactly an env reference to a serverEnv name on a row with expandsServerEnvReferences, and its endpoint (the first non-empty string endpointParam in the query, else per configKey: base_url when configBaseUrlParam is an endpointParam, else the first non-empty string endpointParam under extra) is a literal: no templateActionOpen, not an env reference, and not of the same origin as a defaultEndpoint (lower-cased scheme://host:port, defaultPorts filled). serverEnv is the reference's per-family server-variable set, evaluated. Field formats are the reference's. Reference: validateCredentialEndpointPairing (DC-FORGE-231) and validateFamilyCredentialEndpointPairing (DC-FORGE-233).",
+    "$comment": "credential_endpoint_unpaired (WARNING, never an error): the one statically certain shape of AIgentFlow's run-time credential/endpoint pairing refusal. ai: an ai://<provider>/... step (top-level or loop sub-step) whose query holds a non-empty string <provider>+providerBaseUrlParamSuffix while neither its query (genericKeyParam or <provider>+providerKeyParamSuffix, non-empty strings) nor executor_config.<provider>.api_key (a literal, not an env reference) supplies a key; and executor_config.<provider>.base_url for a provider in executorConfigProviders when it is a literal, the block has no literal api_key, and it is not the case that at least one step uses the provider and every such step brings its own query key. keylessProviders are exempt from both. families: a step whose executor resolves (the key protocol+familyKeySeparator+driver, else protocol) to a row. implicitServerCredential rows are never judged. A row warns when its secret (the first non-empty string secretParam in the query, else per configKey in order: executor_config api_key when configApiKeyParam is a secretParam, else the first non-empty string secretParam under extra) is exactly an env reference to a serverEnv name on a row with expandsServerEnvReferences, and its endpoint (the first non-empty string endpointParam in the query, else per configKey: base_url when configBaseUrlParam is an endpointParam, else the first non-empty string endpointParam under extra) is a literal: no templateActionOpen, not an env reference, and not of the same origin as a defaultEndpoint (lower-cased scheme://host:port, defaultPorts filled). serverEnv is the reference's per-family server-variable set, evaluated. Field formats are the reference's. Reference: validateCredentialEndpointPairing (DC-FORGE-231) and validateFamilyCredentialEndpointPairing (DC-FORGE-233).",
     "stepFieldFormat": "steps.%s.query.%s",
     "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s",
     "executorConfigBaseUrlFieldFormat": "executor_config.%s.base_url",
@@ -1290,6 +1290,7 @@
         "deny_tools": "list<scalar>",
         "discoverable_tools": "list<scalar>",
         "enable_signals": "scalar",
+        "enforce_region": "scalar",
         "engram_scope": "scalar",
         "exons": "scalar",
         "human_question_timeout": "scalar",
@@ -1298,6 +1299,7 @@
         "max_tool_turns": "scalar",
         "max_turns": "scalar",
         "mode": "scalar",
+        "region": "scalar",
         "require_approval_for": "list<scalar>",
         "timeout_seconds": "scalar",
         "tool_discovery": "scalar",

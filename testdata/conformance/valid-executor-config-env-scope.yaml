@@ -2,8 +2,9 @@ aigentflow_version: '2.0.0'
 name: executor-config-env-scope-own
 version: '1.0.0'
 description: >-
-  Every reference here is in scope: a provider's own pair, the Vertex AI name google reads, a driver key
-  (broker) governed by its protocol (mqtt), a db extra string. Not references at all: a literal, a reference inside a longer string, an empty
+  Every reference here is in scope: a provider's own pair, the Vertex AI name google reads, the
+  a driver key (broker) governed by its protocol (mqtt), a db
+  extra string. Not references at all: a literal, a reference inside a longer string, an empty
   ${}, an unclosed brace, and non-string extra values (a number, a nested mapping, a list), which
   the reference never reads as text. A null instance is skipped.
 start: work

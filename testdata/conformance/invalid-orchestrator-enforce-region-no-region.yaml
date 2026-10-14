@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: orchestrator-enforce-region-no-region
+version: '1.0.0'
+description: enforce_region without a region is refused (every turn would fail closed).
+start: work
+steps:
+  work:
+    executor: function://text/template
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  enforce_region: true
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message
