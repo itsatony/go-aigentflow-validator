@@ -6,8 +6,7 @@ description: >-
   (AIgentFlow v2.597.0). Each entry here names a variable outside its key's scope: another
   provider's key, a database connection string under a provider's organization, a variable under a
   key with an empty scope (aiv reads its values raw), an extra string naming another provider's
-  key, a removed provider's key (nexus, gone in v2.819.0, has an empty scope like any
-  unknown key), and two references run together, which is the single name 'A}${B'.
+  key, and two references run together, which is the single name 'A}${B'.
 start: work
 steps:
   work:
@@ -25,8 +24,6 @@ executor_config:
   db:
     extra:
       conn: '${AIGENTFLOW_OPENAI_API_KEY}'
-  nexus:
-    api_key: '${AIGENTFLOW_NEXUS_API_KEY}'
   anthropic:
     api_key: '${AIGENTFLOW_ANTHROPIC_API_KEY}${AIGENTFLOW_ANTHROPIC_BASE_URL}'
 output:

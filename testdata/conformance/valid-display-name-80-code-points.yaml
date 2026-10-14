@@ -1,0 +1,10 @@
+aigentflow_version: '2.0.0'
+name: display-name-flow
+version: '1.0.0'
+display_name: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa😀😀é'
+start: only
+steps:
+  only:
+    executor: function://text/noop
+    next:
+      default: 'null'
