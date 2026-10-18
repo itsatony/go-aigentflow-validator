@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-flow-data-key-dot-prefix
+version: '1.0.0'
+description: >-
+  A data key starting with a dot is an engine step-response slot.
+data:
+  '.step.response': x
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

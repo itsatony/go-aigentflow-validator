@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: invalid-flow-data-key-namespace
+version: '1.0.0'
+description: >-
+  The engine namespaces, bare and as a dotted prefix, are refused.
+data:
+  memory: x
+  orchestrator.state: x
+  campaign.state: x
+  voiceagent.session_id: x
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

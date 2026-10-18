@@ -115,6 +115,17 @@ type rawSpec struct {
 		StepFieldFormat     string   `json:"stepFieldFormat"`
 		LoopStepFieldFormat string   `json:"loopStepFieldFormat"`
 	} `json:"serverOwnedQueryKeys"`
+	// FlowDataReservedKeys feeds flow_data_key_reserved (AIgentFlow v2.828.0).
+	FlowDataReservedKeys struct {
+		Exact    map[string]string `json:"exact"`
+		Prefixes []struct {
+			Prefix string `json:"prefix"`
+			Reason string `json:"reason"`
+		} `json:"prefixes"`
+		FieldFormat   string `json:"fieldFormat"`
+		MessageFormat string `json:"messageFormat"`
+		Suggestion    string `json:"suggestion"`
+	} `json:"flowDataReservedKeys"`
 	// CredentialEndpointPairing feeds credential_endpoint_unpaired (AIgentFlow
 	// DC-FORGE-231 and DC-FORGE-233).
 	CredentialEndpointPairing credentialEndpointSpec `json:"credentialEndpointPairing"`

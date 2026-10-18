@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.827.0",
+  "specVersion": "2.828.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -499,6 +499,33 @@
         "AIGENTFLOW_XAI_BASE_URL"
       ]
     }
+  },
+  "flowDataReservedKeys": {
+    "$comment": "flow_data_key_reserved (ERROR, no loop demotion): a key of the top-level data: map (the flow's pre-populated state) that names engine state. data: is seeded into the mission's .data namespace, where the engine keeps its own bookkeeping, so such a key would forge internal state. A key is reserved when it equals an entry of exact (case-sensitive) or starts with a prefix entry; the first match supplies the reason text. Field format: fieldFormat with the key. Reference: FlowDataKeyReservation / validateFlowDataKeysAreNotReserved (AIgentFlow v2.828.0). Order of exact and prefixes is the reference's lookup order.",
+    "exact": {
+      "org_id": "the mission's organization, set by the engine for Thalamus/Engram calls",
+      "memory": "the memory scope namespace",
+      "orchestrator": "the orchestrator's state namespace",
+      "campaign": "the campaign's state namespace",
+      "voiceagent": "the voice agent's state namespace",
+      "current_flow": "engine bookkeeping (the current flow definition)",
+      "modified_flow": "engine bookkeeping (dynamic flow modification)",
+      "modification_history": "engine bookkeeping (dynamic flow modification)",
+      "modification_pending": "engine bookkeeping (dynamic flow modification)",
+      "modification_requests": "engine bookkeeping (dynamic flow modification)",
+      "bottleneck_state": "engine bookkeeping (bottleneck analysis)"
+    },
+    "prefixes": [
+      { "prefix": "_", "reason": "keys starting with `_` are engine bookkeeping (current flow, loop and for_each context, taint lists such as `__untrusted_*`)" },
+      { "prefix": ".", "reason": "keys starting with `.` are engine step-response slots" },
+      { "prefix": "memory.", "reason": "the `memory.` namespace belongs to the engine" },
+      { "prefix": "orchestrator.", "reason": "the `orchestrator.` namespace belongs to the orchestrator" },
+      { "prefix": "campaign.", "reason": "the `campaign.` namespace belongs to the campaign engine" },
+      { "prefix": "voiceagent.", "reason": "the `voiceagent.` namespace belongs to the voice agent" }
+    ],
+    "fieldFormat": "data.%s",
+    "messageFormat": "data: key %q is reserved: %s. It would write into the engine's own state, so it is not seeded.",
+    "suggestion": "Rename the key (no leading `_` or `.`, and not one of the engine namespaces memory., orchestrator., campaign., voiceagent.)."
   },
   "serverOwnedQueryKeys": {
     "$comment": "Executor parameters only the server's credential resolver may set. A key in keys, matched exactly and case-sensitively, is refused (error) in the query of a top-level step (field stepFieldFormat) and of a loop sub-step (field loopStepFieldFormat, whose second placeholder is the sub-step's id as written). No other surface is scanned. A new server-owned key is a change to keys. Reference: validateNoServerOwnedStepQueryKeys, IsServerOwnedParamKey (CFX-05, after v2.790.0).",

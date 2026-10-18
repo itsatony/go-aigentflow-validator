@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: invalid-flow-data-key-exact
+version: '1.0.0'
+description: >-
+  A data key equal to an engine-owned name is refused.
+data:
+  org_id: someone-elses-org
+  ok_key: kept
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

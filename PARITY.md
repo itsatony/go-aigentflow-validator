@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.827.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.828.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -15,7 +15,33 @@ This document defines how this Go implementation stays in step with two things:
 AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (below), then
 v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (below), then
 v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below), then
-v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (below).
+v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (below), then
+v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below).
+
+> **v0.12.0 — `flow_data_key_reserved`.** One change already shipped in AIgentFlow v2.828.0;
+> `specVersion` is `2.828.0`. The top-level `data:` map is the flow's pre-populated state: it is
+> seeded into the mission's `.data` namespace, which is also where the engine keeps its own
+> bookkeeping. A `data:` key that names engine state would forge it (a pre-seeded taint list, a
+> shadowed flow definition, another tenant's org), so the reference refuses it at save.
+> **ERROR**, code `flow_data_key_reserved`, field `data.<key>`, one finding per offending key, in
+> sorted key order. No loop demotion: a `data:` block has no loop-body twin, and only the top level
+> of the map is scanned (a reserved name nested inside a value, or in a step, is not a `data:` key).
+> A `data:` that is absent, null, or not a mapping is not this rule's concern. Matching is exact and
+> case-sensitive (`Memory`, `ORG_ID`, `memory_notes`, `orgid`, `my.key` are ordinary keys). A key is
+> reserved when it equals one of `memory, orchestrator, campaign, voiceagent, org_id, current_flow,
+> modified_flow, modification_history, modification_pending, modification_requests,
+> bottleneck_state`, or starts with `_`, `.`, `memory.`, `orchestrator.`, `campaign.` or
+> `voiceagent.`; exact names are tried first, and the first match supplies the reason in the message.
+> The set, the reasons, the message format and the suggestion live in the spec under
+> `flowDataReservedKeys`. **The set is a HAND COPY** of the reference's engine-owned names (it is
+> built from the engine's own constants there); a new engine-owned `.data` key is a change to the
+> spec, and nothing in this repository can notice that the reference grew one. The reference's run
+> door tolerates this code (a stored flow that predates the rule still runs, the key is just not
+> seeded) while its save doors refuse; as before, that is a consumer decision. Gates:
+> `validate_v0120_test.go` (reserved table with field, message and suggestion, false-positive table,
+> sorted multi-key report, non-map and nested shapes), fixtures `valid-flow-data-keys` (forbids the
+> code), `invalid-flow-data-key-{exact,bookkeeping,underscore-prefix,dot-prefix,namespace}`.
+> Go-first: the JS port has not taken this yet.
 
 > **v0.11.0 — `here://`, `strict_templates`, `template_default_piped`.** Three changes already
 > shipped in AIgentFlow; `specVersion` is `2.827.0` (the release that carries all three).
