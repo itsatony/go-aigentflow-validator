@@ -158,7 +158,17 @@ func (w templateWalker) check(value, field string) {
 	if w.demote {
 		report = w.iss.warn
 	}
-	for _, problem := range checkGoTemplateSyntax(value) {
+	problems, parsed := parseGoTemplate(value)
+	for _, pipeline := range pipedDefaultPipelines(parsed) {
+		// Same positional severity as the syntax findings: a loop body demotes it.
+		report(Issue{
+			Field: field, Code: codeTemplateDefaultPiped, StepID: w.stepID,
+			Message:    templateDefaultPipedMessage(pipeline),
+			Context:    "Template: " + value,
+			Suggestion: sugTemplateDefaultPiped,
+		})
+	}
+	for _, problem := range problems {
 		if problem.isFunctionError {
 			// Divergence #4: an unknown function is a WARNING by default, because
 			// the vendored allow-list can lag the live registry; an error only

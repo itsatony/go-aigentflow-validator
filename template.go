@@ -70,28 +70,39 @@ func stubFunc(...any) any { return nil }
 // so a document with an unknown function still has the REST of its syntax
 // checked (a single-pass parse would stop at the first unknown name).
 func checkGoTemplateSyntax(src string) []templateIssue {
+	issues, _ := parseGoTemplate(src)
+	return issues
+}
+
+// parseGoTemplate is checkGoTemplateSyntax that also returns the parsed
+// template (nil when the source has a genuine syntax error) so a rule that
+// judges the parse tree reads the SAME parse the syntax check used. Unknown
+// functions are stubbed, so the tree exists for them too.
+func parseGoTemplate(src string) ([]templateIssue, *template.Template) {
 	funcs := make(template.FuncMap, len(knownFuncMap)+4)
 	for name, fn := range knownFuncMap {
 		funcs[name] = fn
 	}
 
 	var unknown []string
+	var parsed *template.Template
 	for range maxUnknownFuncLoop {
-		_, err := template.New(templateName).Funcs(funcs).Parse(src)
+		t, err := template.New(templateName).Funcs(funcs).Parse(src)
 		if err == nil {
+			parsed = t
 			break
 		}
 		match := undefinedFuncRe.FindStringSubmatch(err.Error())
 		if match == nil {
 			// A genuine syntax problem. Go's parser reports one at a time, and the
 			// first is the one an author should fix, so this is the whole result.
-			return []templateIssue{{message: cleanTemplateError(err)}}
+			return []templateIssue{{message: cleanTemplateError(err)}}, nil
 		}
 		name := match[1]
 		if _, already := funcs[name]; already {
 			// Defensive: the stub is registered yet Go still reports it undefined.
 			// Report as syntax rather than loop forever.
-			return []templateIssue{{message: cleanTemplateError(err)}}
+			return []templateIssue{{message: cleanTemplateError(err)}}, nil
 		}
 		funcs[name] = stubFunc
 		unknown = append(unknown, name)
@@ -102,7 +113,7 @@ func checkGoTemplateSyntax(src string) []templateIssue {
 	// v0.3.0 they were dropped entirely outside strict mode, which said nothing
 	// at all about a name the reference refuses.
 	if len(unknown) == 0 {
-		return nil
+		return nil, parsed
 	}
 	out := make([]templateIssue, 0, len(unknown))
 	for _, name := range unknown {
@@ -111,7 +122,7 @@ func checkGoTemplateSyntax(src string) []templateIssue {
 			isFunctionError: true,
 		})
 	}
-	return out
+	return out, parsed
 }
 
 // cleanTemplateError renders a Go parse error without its position prefix.

@@ -7,7 +7,7 @@ steps:
   greet:
     executor: function://text/template
     query:
-      message: 'Hello, {{ .query.name | default "world" }}!'
+      message: 'Hello, {{ default .query.name "world" }}!'
     next:
       default: 'null'
 query:

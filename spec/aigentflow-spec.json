@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.821.0",
+  "specVersion": "2.827.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -24,6 +24,7 @@
     "geocoding",
     "geovisualize",
     "getmd",
+    "here",
     "homeassistant",
     "hosting",
     "http",
@@ -1202,6 +1203,7 @@
         "rate_limit": "FlowRateLimitConfig",
         "start": "scalar",
         "steps": "map<StepDefinition>",
+        "strict_templates": "scalar",
         "tags": "list<scalar>",
         "template": "FlowTemplateMetadata",
         "tool_discovery": "scalar",

@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: strict-templates-not-bool
+version: '1.0.0'
+description: >-
+  strict_templates is a boolean. A number where the flag belongs would not save.
+strict_templates: 5
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

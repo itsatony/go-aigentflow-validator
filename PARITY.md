@@ -7,14 +7,53 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.821.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.827.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
 (v0.6.3, below) from AIgentFlow v2.802.0, plus the `examples:` block (v0.7.0, below) from
 AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (below), then
 v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (below), then
-v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below).
+v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below), then
+v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (below).
+
+> **v0.11.0 — `here://`, `strict_templates`, `template_default_piped`.** Three changes already
+> shipped in AIgentFlow; `specVersion` is `2.827.0` (the release that carries all three).
+>
+> 1. **`here` executor scheme** (`here://maps/{geocode|reverse_geocode|route|places}`): added to
+>    `executorSchemes`. Before, a `here://` step drew `unknown_executor_scheme`.
+> 2. **`strict_templates`**: a new optional top-level boolean. Known flow key (spec `knownKeys`
+>    `Flow.strict_templates`, shape `scalar`, so a list or mapping is the generic `invalid_type`)
+>    plus a dedicated kind check, `validateStrictTemplates`: a non-null value that is not a bool
+>    (a number, a list, a mapping, a string other than the YAML 1.1 bool spellings the reference's
+>    decoder still accepts: `y/yes/on/n/no/off` in any of the three cases) is `invalid_type` on
+>    field `strict_templates`. The spec's shape vocabulary has no `bool`, so the check is a
+>    rule, not a shape. Before, the key was `unknown_yaml_key` and any consumer admitting flows
+>    with this port refused every flow declaring it.
+> 3. **`template_default_piped`** (error; WARNING inside a loop body, positional exactly like
+>    `template_syntax_error`): the template function `default` takes the VALUE FIRST
+>    (`default .x "fallback"`). A pipeline in which `default` is not the first command hands the
+>    piped value over as the LAST argument, so the fallback is always the result and the data is
+>    never used. Nothing fails at run time, which is why only a static rule sees it. The walk is
+>    over the `text/template` parse tree of every template this port already syntax-checks
+>    (`next.conditions[].if` included), so it cannot fire on a field `.query.default`, a variable
+>    `$default`, a string literal, a comment or plain text; a `default` that is the FIRST command
+>    (even with a piped argument, `default (.a | upper) "w"`) is correct. Any non-first `default` is
+>    flagged wherever the pipeline sits: mid-chain, parenthesised, as an argument, inside
+>    `if`/`range`/`with`/`define`, or in a `$v :=` declaration. A template with a genuine syntax error
+>    has no tree and gets only the syntax finding. The Go port reads the same parse as the syntax
+>    check (`parseGoTemplate`); the JS port has no template parser, so it cannot carry this rule
+>    exactly (a hand-rolled approximation would be a false-positive risk, which is why none is
+>    claimed): treat it as a Go-first rule, like divergence #4's strictness on syntax errors.
+>    Message and suggestion follow the reference's text; as always the text is not the contract.
+>    The shipped `conformance/valid-minimal.yaml` used the pipe form; it is now
+>    `default .query.name "world"`. Gates: `validate_v0110_test.go` (error table, false-positive
+>    table, loop-body demotion, condition site), fixtures `invalid-template-default-piped`,
+>    `warn-template-default-piped-loop`, `valid-template-default-lookalikes` (forbids the code as
+>    both error and warning), `valid-executor-here`, `valid-strict-templates`,
+>    `invalid-strict-templates-not-bool`. The reference's run door tolerates this code (it does not
+>    refuse a MISSION for it) while its save doors refuse; that distinction is a consumer
+>    decision, not this library's.
 
 > **v0.10.0 — `compliance_residency_unenforced`.** AIgentFlow v2.821.0 (#217 item 1) found that
 > `compliance.residency` is a catalogue ELIGIBILITY check (go-vaibstract's declared deployments),

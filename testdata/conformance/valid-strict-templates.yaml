@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: strict-templates-bool
+version: '1.0.0'
+description: >-
+  The optional top-level boolean strict_templates is a known key and a bool is
+  valid.
+strict_templates: true
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

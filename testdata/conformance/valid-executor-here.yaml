@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: executor-here
+version: '1.0.0'
+description: >-
+  A here:// step is a known executor scheme. It must draw no unknown_executor_scheme
+  warning.
+start: s
+steps:
+  s:
+    executor: here://maps/geocode
+    query:
+      q: Berlin
+    next:
+      default: 'null'
+output:
+  - done

@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: template-default-lookalikes
+version: '1.0.0'
+description: >-
+  Shapes that merely contain the word `default`. None is a value piped into the
+  function, so none may raise template_default_piped, as an error or a warning.
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      correct: '{{ default .query.name "world" }}'
+      composed: '{{ atoi (default .query.n "0") }}'
+      pipe_without_default: '{{ .query.name | upper }}'
+      field_named_default: '{{ .query.default }}'
+      field_named_default_piped_out: '{{ .query.default | upper }}'
+      string_literal_key: '{{ index .query "default" }}'
+      plain_text: 'literal text: | default "w"'
+      inside_string_literal: '{{ "x | default y" }}'
+      variable_named_default: '{{ $default := "w" }}{{ $default | upper }}'
+      default_first_with_piped_argument: '{{ default (.query.a | upper) "w" }}'
+      comment: '{{/* .x | default "w" */}}done'
+      other_function_after_pipe: '{{ .query.name | printf "%s" }}'
+    next:
+      default: 'null'
+query:
+  name:
+    type: string
+output:
+  - done
