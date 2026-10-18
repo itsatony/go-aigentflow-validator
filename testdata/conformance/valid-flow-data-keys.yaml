@@ -1,0 +1,26 @@
+aigentflow_version: '2.0.0'
+name: valid-flow-data-keys
+version: '1.0.0'
+description: >-
+  Ordinary data keys, a dotted non-reserved key and keys that merely contain a reserved word stay legal.
+data:
+  versuche: 3
+  counter: 0
+  my.key: x
+  memory_notes: x
+  orgid: x
+  org: x
+  orchestrated: x
+  campaigns: x
+  budget.max: 5
+  a_b: x
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

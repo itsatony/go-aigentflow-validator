@@ -292,6 +292,9 @@ const (
 	// v0.10.0 — AIgentFlow v2.821.0 (#217): an EU-only compliance.residency does not pin a call.
 	codeComplianceResidencyUnenforced = "compliance_residency_unenforced"
 
+	// v0.12.0 — AIgentFlow v2.828.0: a top-level data: key naming engine state.
+	codeFlowDataKeyReserved = "flow_data_key_reserved" // VALIDATION_CODE_FLOW_DATA_KEY_RESERVED
+
 	// v0.6.1 — AIgentFlow CFX-05: a step query naming a server-owned parameter.
 	codeServerOwnedQueryKey = "server_owned_query_key" // VALIDATION_CODE_SERVER_OWNED_QUERY_KEY
 

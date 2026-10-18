@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: invalid-flow-data-key-underscore-prefix
+version: '1.0.0'
+description: >-
+  A data key starting with an underscore is engine bookkeeping, e.g. a forged taint list.
+data:
+  __untrusted_steps: [forged]
+  _current_flow: x
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

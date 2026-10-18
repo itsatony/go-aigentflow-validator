@@ -548,6 +548,14 @@ var conformanceCases = []conformanceCase{
 		forbidWarningCodes: []string{codeTemplateDefaultPiped},
 		forbidErrorCodes:   []string{codeTemplateDefaultPiped},
 	},
+	// v0.12.0 (AIgentFlow v2.828.0): flow_data_key_reserved. The valid fixture
+	// forbids the code: a false positive on an author's key is the whole risk.
+	{file: "valid-flow-data-keys.yaml", valid: true, forbidErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-exact.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-bookkeeping.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-underscore-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-dot-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-namespace.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "warn-compliance-residency-unenforced.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "warn-compliance-residency-unenforced-loop.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "valid-compliance-residency-pinned.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},

@@ -1,0 +1,22 @@
+aigentflow_version: '2.0.0'
+name: invalid-flow-data-key-bookkeeping
+version: '1.0.0'
+description: >-
+  The engine's modification and bottleneck bookkeeping names are refused.
+data:
+  current_flow: x
+  modified_flow: x
+  modification_history: x
+  modification_pending: x
+  modification_requests: x
+  bottleneck_state: x
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done
