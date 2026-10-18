@@ -1,0 +1,27 @@
+aigentflow_version: '2.0.0'
+name: template-default-piped
+version: '1.0.0'
+description: >-
+  `default` takes the value FIRST. Every spelling below pipes a value into it, so
+  the fallback is always the result. Each is an error at the top level.
+start: s
+steps:
+  s:
+    executor: function://text/template
+    query:
+      plain: '{{ .query.name | default "w" }}'
+      mid_chain: '{{ .query.name | default "w" | upper }}'
+      parenthesised: '{{ (.query.name | default "w") }}'
+      nested_arg: '{{ upper (.query.a | default "w") }}'
+      in_if: '{{ if .query.a }}{{ .query.b | default "x" }}{{ end }}'
+      in_range: '{{ range .query.items }}{{ . | default "x" }}{{ end }}'
+      in_with: '{{ with .query.a }}{{ . | default "x" }}{{ end }}'
+      in_define: '{{ define "d" }}{{ .x | default "w" }}{{ end }}{{ template "d" . }}'
+      in_variable: '{{ $v := .query.a | default "w" }}{{ $v }}'
+    next:
+      default: 'null'
+query:
+  name:
+    type: string
+output:
+  - done

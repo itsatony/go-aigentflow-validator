@@ -94,6 +94,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateQualityGates(flow, iss)
 	validateProcessingOperations(flow, iss)
 	validateStepMaxDuration(flow, iss)
+	validateStrictTemplates(flow, iss)
 	validateSaveDoorExtras(flow, iss)
 	validateExecutorConfigEnvScopes(flow, iss)
 	validateServerOwnedQueryKeys(flow, iss)

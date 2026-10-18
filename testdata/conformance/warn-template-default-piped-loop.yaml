@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: template-default-piped-loop
+version: '1.0.0'
+description: >-
+  A piped default inside a loop body is a WARNING, positional like
+  template_syntax_error: the loop engine swallows template failures in its body,
+  and stored flows predate the rule. The code survives the demotion.
+start: looper
+steps:
+  looper:
+    loop:
+      while: 'true'
+      max_iterations: 3
+      vars:
+        counter: '0'
+      steps:
+        - id: body
+          executor: function://text/template
+          query:
+            message: '{{ .query.x | default "w" }}'
+    next:
+      default: 'null'
+output:
+  - done

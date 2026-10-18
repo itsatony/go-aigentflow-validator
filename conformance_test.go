@@ -535,6 +535,19 @@ var conformanceCases = []conformanceCase{
 	// v0.10.0 (AIgentFlow v2.821.0, #217): compliance_residency_unenforced. The
 	// two controls forbid the code: a warning never changes the verdict, so
 	// `valid: true` alone could not see a false positive.
+	// v0.11.0 (AIgentFlow v2.827.0): the here:// scheme, the strict_templates key
+	// and the template_default_piped rule. Fixtures are Go-first: the JS port has
+	// not taken these yet.
+	{file: "valid-executor-here.yaml", valid: true, forbidWarningCodes: []string{codeUnknownExecScheme}},
+	{file: "valid-strict-templates.yaml", valid: true, forbidErrorCodes: []string{codeUnknownYAMLKey, codeInvalidType}},
+	{file: "invalid-strict-templates-not-bool.yaml", valid: false, wantErrorCodes: []string{codeInvalidType}},
+	{file: "invalid-template-default-piped.yaml", valid: false, wantErrorCodes: []string{codeTemplateDefaultPiped}},
+	{file: "warn-template-default-piped-loop.yaml", valid: true, wantWarningCodes: []string{codeTemplateDefaultPiped}, forbidErrorCodes: []string{codeTemplateDefaultPiped}},
+	{
+		file: "valid-template-default-lookalikes.yaml", valid: true,
+		forbidWarningCodes: []string{codeTemplateDefaultPiped},
+		forbidErrorCodes:   []string{codeTemplateDefaultPiped},
+	},
 	{file: "warn-compliance-residency-unenforced.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "warn-compliance-residency-unenforced-loop.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "valid-compliance-residency-pinned.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},
