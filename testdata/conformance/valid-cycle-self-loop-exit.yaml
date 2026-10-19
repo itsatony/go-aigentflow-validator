@@ -1,0 +1,22 @@
+aigentflow_version: '2.0.0'
+name: valid-cycle-self-loop-exit
+version: '1.0.0'
+description: >-
+  A step that repeats itself until a condition sends it to done has an exit.
+start: a
+steps:
+  a:
+    executor: function://utils/log
+    query:
+      message: 'a'
+    next:
+      default: a
+      conditions:
+        - if: "{{ .ok }}"
+          goto: done
+  done:
+    executor: function://utils/log
+    query:
+      message: 'done'
+output:
+  - message

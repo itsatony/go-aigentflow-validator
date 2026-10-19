@@ -1,0 +1,25 @@
+aigentflow_version: '2.0.0'
+name: valid-cycle-unreachable-not-reported
+version: '1.0.0'
+description: >-
+  An exit-less cycle that nothing reaches is reported as unreachable steps, never as a potential infinite loop.
+start: a
+steps:
+  a:
+    executor: function://utils/log
+    query:
+      message: 'a'
+  x:
+    executor: function://utils/log
+    query:
+      message: 'x'
+    next:
+      default: y
+  y:
+    executor: function://utils/log
+    query:
+      message: 'y'
+    next:
+      default: x
+output:
+  - message

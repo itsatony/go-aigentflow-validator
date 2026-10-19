@@ -114,14 +114,12 @@ func validateConnectivity(flow doc, iss *issues) {
 		}
 	}
 
-	// Cycle detection (DFS with a recursion stack).
-	visited := make(map[string]struct{}, len(steps))
-	recStack := make(map[string]struct{}, len(steps))
-	if hasCycle(steps, start, visited, recStack, iss) {
+	// Cycle detection: only a cycle with no way out is potentially infinite.
+	if cycleWithoutExit(steps, start, iss) {
 		iss.warn(Issue{
 			Field: keySteps, Code: codePotentialInfiniteLop,
-			Message:    "Potential infinite loop detected in step flow",
-			Suggestion: "Review your step transitions to ensure they eventually terminate",
+			Message:    "Potential infinite loop detected in step flow: a cycle of steps has no way out",
+			Suggestion: "Give one step in the cycle a `next.conditions` branch that leaves it (or end the flow there)",
 		})
 	}
 }
@@ -209,22 +207,137 @@ func reachTargets(steps doc, stepID string, iss *issues) []string {
 	return out
 }
 
-func hasCycle(steps doc, stepID string, visited, recStack map[string]struct{}, iss *issues) bool {
-	if _, onStack := recStack[stepID]; onStack {
+// cycleEdges returns every target the cycle analysis follows from a step —
+// next.default and next.conditions[].goto — INCLUDING the terminal markers,
+// which the exit check needs to see (cycleTargets drops them).
+func cycleEdges(steps doc, stepID string, iss *issues) []string {
+	step, ok := asRecord(steps[stepID])
+	if !ok {
+		return nil
+	}
+	next, ok := getRecord(step, keyNext)
+	if !ok {
+		return nil
+	}
+	nextPath := stepField(stepID, keyNext)
+	var out []string
+	if target, ok := iss.stringOf(next, keyDefault, nextPath); ok && target != "" {
+		out = append(out, target)
+	}
+	conds, _ := getSlice(next, keyConditions)
+	for i, raw := range conds {
+		cond, isMap := asRecord(raw)
+		if !isMap {
+			continue
+		}
+		if target, ok := iss.stringOf(cond, keyGoto, childPath(nextPath, indexed(keyConditions, i))); ok && target != "" {
+			out = append(out, target)
+		}
+	}
+	return out
+}
+
+// stepLeavesCycle reports whether control can leave the strongly connected set
+// from this step: the flow can end here (no next, or no default so the flow
+// ends when no condition matches), it fans out (parallel edges are not
+// followed, so a fan-out is treated as an exit rather than guessed at), or a
+// branch names a terminal marker or a step outside the set.
+func stepLeavesCycle(steps doc, stepID string, inCycle map[string]bool, iss *issues) bool {
+	step, ok := asRecord(steps[stepID])
+	if !ok {
 		return true
 	}
-	if _, seen := visited[stepID]; seen {
-		return false
+	next, ok := getRecord(step, keyNext)
+	if !ok {
+		return true
 	}
-	visited[stepID] = struct{}{}
-	recStack[stepID] = struct{}{}
-	for _, target := range cycleTargets(steps, stepID, iss) {
-		if hasCycle(steps, target, visited, recStack, iss) {
+	if parallel, present := next[keyParallel]; present && parallel != nil {
+		return true
+	}
+	if def, ok := iss.stringOf(next, keyDefault, stepField(stepID, keyNext)); !ok || def == "" {
+		return true
+	}
+	for _, target := range cycleEdges(steps, stepID, iss) {
+		if isNextMarker(target) || !inCycle[target] {
 			return true
 		}
 	}
-	delete(recStack, stepID)
 	return false
+}
+
+// cycleWithoutExit reports whether a cycle reachable from start has no exit
+// (Tarjan's strongly connected components over default + condition edges).
+// It cannot prove an exit condition ever fires; that is undecidable from YAML.
+func cycleWithoutExit(steps doc, start string, iss *issues) bool {
+	index := 0
+	indices := map[string]int{}
+	low := map[string]int{}
+	onStack := map[string]bool{}
+	var stack []string
+	found := false
+
+	var strong func(id string)
+	strong = func(id string) {
+		indices[id] = index
+		low[id] = index
+		index++
+		stack = append(stack, id)
+		onStack[id] = true
+
+		for _, target := range cycleEdges(steps, id, iss) {
+			if isNextMarker(target) || !has(steps, target) {
+				continue
+			}
+			if _, seen := indices[target]; !seen {
+				strong(target)
+				if low[target] < low[id] {
+					low[id] = low[target]
+				}
+			} else if onStack[target] && indices[target] < low[id] {
+				low[id] = indices[target]
+			}
+		}
+
+		if low[id] != indices[id] {
+			return
+		}
+		var component []string
+		for {
+			top := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			onStack[top] = false
+			component = append(component, top)
+			if top == id {
+				break
+			}
+		}
+		inCycle := make(map[string]bool, len(component))
+		for _, member := range component {
+			inCycle[member] = true
+		}
+		cyclic := len(component) > 1
+		if !cyclic {
+			for _, target := range cycleEdges(steps, id, iss) {
+				if target == id {
+					cyclic = true
+				}
+			}
+		}
+		if !cyclic {
+			return
+		}
+		for _, member := range component {
+			if stepLeavesCycle(steps, member, inCycle, iss) {
+				return
+			}
+		}
+		found = true
+	}
+
+	if has(steps, start) {
+		strong(start)
+	}
+	return found
 }
 
 // missingStepIssue builds the shared "referenced step does not exist" finding.

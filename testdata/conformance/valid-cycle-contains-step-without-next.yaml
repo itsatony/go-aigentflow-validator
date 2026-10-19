@@ -1,0 +1,25 @@
+aigentflow_version: '2.0.0'
+name: valid-cycle-contains-step-without-next
+version: '1.0.0'
+description: >-
+  A step with no next ends the flow, so no cycle through it is exit-less.
+start: a
+steps:
+  a:
+    executor: function://utils/log
+    query:
+      message: 'a'
+    next:
+      default: b
+  b:
+    executor: function://utils/log
+    query:
+      message: 'b'
+    next:
+      default: c
+  c:
+    executor: function://utils/log
+    query:
+      message: 'c'
+output:
+  - message

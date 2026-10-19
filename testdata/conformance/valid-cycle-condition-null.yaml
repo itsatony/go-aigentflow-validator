@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: valid-cycle-condition-null
+version: '1.0.0'
+description: >-
+  A cycle whose condition goes to the end marker null can end the flow.
+start: a
+steps:
+  a:
+    executor: function://utils/log
+    query:
+      message: 'a'
+    next:
+      default: b
+  b:
+    executor: function://utils/log
+    query:
+      message: 'b'
+    next:
+      default: a
+      conditions:
+        - if: "{{ .ok }}"
+          goto: 'null'
+output:
+  - message
