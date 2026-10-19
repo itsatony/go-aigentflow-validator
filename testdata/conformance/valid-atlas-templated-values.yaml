@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-templated-values
+version: '1.0.0'
+description: >-
+  Templates in the prompt, in inputs values and in capability args are fine; only the agent and the capability list must be literal.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: 'Report on {{ .query.topic }} for {{ .query.customer }}.'
+      capabilities:
+        - calc_evaluate
+      inputs:
+        topic: '{{ .query.topic }}'
+        customer: '{{ .query.customer }}'
+    next:
+      default: 'null'
+output:
+  - done

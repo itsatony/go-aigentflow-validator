@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-capability-call
+version: '1.0.0'
+description: >-
+  A capability step with a well-formed reference.
+start: s
+steps:
+  s:
+    executor: atlas://capability/calc_evaluate
+    query:
+      args:
+        expression: 1+1
+    next:
+      default: 'null'
+output:
+  - done

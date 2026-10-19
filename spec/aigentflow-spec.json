@@ -8,6 +8,7 @@
     "ai",
     "aiv",
     "async",
+    "atlas",
     "browser",
     "chart",
     "db",
@@ -498,6 +499,49 @@
         "AIGENTFLOW_XAI_API_KEY",
         "AIGENTFLOW_XAI_BASE_URL"
       ]
+    }
+  },
+  "atlasExecutor": {
+    "$comment": "atlas://<provider>/<resource>: calls into the Atlas platform. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string in query.capabilities may not contain templateActionOpen, while prompt, inputs and capability args may. A message format takes the quoted step id first.",
+    "scheme": "atlas",
+    "providerAgent": "agent",
+    "providerCapability": "capability",
+    "agentResource": "run",
+    "capabilityRefPattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+    "operationUnknown": {
+      "code": "atlas_operation_unknown",
+      "messageFormat": "step %s uses %s, which is not an Atlas operation. The providers are agent (resource run) and capability (resource: a capability reference).",
+      "suggestion": "Use atlas://agent/run or atlas://capability/<capability-ref>."
+    },
+    "agentMissing": {
+      "code": "atlas_agent_missing",
+      "messageFormat": "step %s runs an Atlas agent but query.agent is missing or empty.",
+      "suggestion": "Set query.agent to the agent to run, written out as a literal such as @acme/reporter."
+    },
+    "agentNotLiteral": {
+      "code": "atlas_agent_not_literal",
+      "messageFormat": "step %s computes query.agent from a template. The agent must be a fixed literal, never derived from input.",
+      "suggestion": "Write the agent out as a literal such as @acme/reporter. Data may go into the prompt or the inputs instead."
+    },
+    "capabilitiesNotLiteral": {
+      "code": "atlas_capabilities_not_literal",
+      "messageFormat": "step %s computes an entry of query.capabilities from a template. Capabilities must be fixed literals, never derived from input.",
+      "suggestion": "Write each capability out as a literal. Data may go into the prompt or the inputs instead."
+    },
+    "promptMissing": {
+      "code": "atlas_prompt_missing",
+      "messageFormat": "step %s runs an Atlas agent with neither query.prompt nor query.prompt_template.",
+      "suggestion": "Set exactly one of query.prompt or query.prompt_template."
+    },
+    "promptBoth": {
+      "code": "atlas_prompt_both",
+      "messageFormat": "step %s sets both query.prompt and query.prompt_template.",
+      "suggestion": "Keep exactly one of query.prompt or query.prompt_template."
+    },
+    "capabilityRefInvalid": {
+      "code": "atlas_capability_ref_invalid",
+      "messageFormat": "step %s uses atlas://capability/%s, which is not a valid capability reference.",
+      "suggestion": "A capability reference starts with a letter or digit and continues with letters, digits and _ . : - up to 128 characters in all."
     }
   },
   "flowDataReservedKeys": {

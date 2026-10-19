@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-agent-run-prompt-template
+version: '1.0.0'
+description: >-
+  A literal agent with a prompt_template and inputs is a complete atlas agent run.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt_template: 'Write a report about {{ .topic }}.'
+      inputs:
+        topic: '{{ .query.topic }}'
+    next:
+      default: 'null'
+output:
+  - done

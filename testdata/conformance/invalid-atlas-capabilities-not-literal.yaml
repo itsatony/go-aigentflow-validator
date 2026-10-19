@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-capabilities-not-literal
+version: '1.0.0'
+description: >-
+  Each capability handed to an atlas agent is a fixed literal, never computed from input.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: hello
+      capabilities:
+        - calc_evaluate
+        - '{{ .query.capability }}'
+    next:
+      default: 'null'
+output:
+  - done

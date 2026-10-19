@@ -18,7 +18,32 @@ v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below), then
 v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (below), then
 v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below), then
 v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning message (below), then
-v0.14.0, which narrows `potential_infinite_loop` (below).
+v0.14.0, which narrows `potential_infinite_loop` (below), then
+v0.15.0, which adds the `atlas://` scheme and seven rules (below).
+
+> **v0.15.0 — the `atlas://` executor scheme and seven rules.** `atlas` becomes a known scheme (no
+> `unknown_executor_scheme` warning). The URL form is `atlas://<provider>/<resource>`: provider
+> `agent` has the single resource `run`, provider `capability` takes a capability reference as its
+> resource. Seven new **errors**, all with the step as `field` (a loop sub-step reports its sub-step
+> path and the composite `parent.child` step id): `atlas_operation_unknown` (any other provider, or
+> `agent` with a resource other than `run`); `atlas_agent_missing` (an agent run whose `query.agent`
+> is absent, empty or not a string); `atlas_agent_not_literal` (`query.agent` contains `{{`: the
+> agent is always written out, never computed from input); `atlas_capabilities_not_literal` (a
+> string entry of `query.capabilities` contains `{{`); `atlas_prompt_missing` and `atlas_prompt_both`
+> (an agent run takes exactly one of `query.prompt` and `query.prompt_template`; an empty string
+> counts as absent); `atlas_capability_ref_invalid` (the reference fails
+> `^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$`). Templates in `prompt`, in `inputs` values and in a
+> capability's `args` are fine. A templated executor is skipped, an unparsable URL stays
+> `invalid_executor_url`'s, and the scheme match is exact (`ATLAS://` is a known scheme but gets none
+> of these rules). The shape check runs first, so a reference containing a character outside
+> letters, digits, `_`, `-` and `/` (a dot or colon, say) is reported as `invalid_executor_url` and
+> never reaches the reference pattern. `specVersion` is unchanged (`2.831.0`). Spec block
+> `atlasExecutor` (the JS port carries the same block; the two spec files already differed in
+> formatting and in the `functionOperations` message fields before this release, so the block was
+> merged in, not copied over). Gates: thirteen `invalid-atlas-*` / `valid-atlas-*` fixtures (the
+> valid ones forbid every atlas code and `unknown_executor_scheme`), byte-identical with the
+> JavaScript port, and `validate_v0150_test.go`. On the 227 bundled example flows the findings are
+> unchanged (0 errors, 36 warnings, none new).
 
 > **v0.14.0 — `potential_infinite_loop` fires only on a cycle with no way out.** It used to fire on
 > every cycle reachable from the start step, so a deliberate ask-again loop (a step that routes back

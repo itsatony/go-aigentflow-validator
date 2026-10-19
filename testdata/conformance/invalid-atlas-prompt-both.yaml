@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-prompt-both
+version: '1.0.0'
+description: >-
+  An atlas agent run takes a prompt or a prompt_template, not both.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: hello
+      prompt_template: 'hello {{ .name }}'
+    next:
+      default: 'null'
+output:
+  - done

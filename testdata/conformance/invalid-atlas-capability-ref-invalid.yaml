@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-capability-ref-invalid
+version: '1.0.0'
+description: >-
+  A capability reference starts with a letter or digit; a leading underscore is refused.
+start: s
+steps:
+  s:
+    executor: atlas://capability/_bad
+    query:
+      args:
+        expression: 1+1
+    next:
+      default: 'null'
+output:
+  - done

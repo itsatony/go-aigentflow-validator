@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-agent-not-literal
+version: '1.0.0'
+description: >-
+  The agent of an atlas agent run is a fixed literal, never computed from input.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '{{ .query.agent }}'
+      prompt: hello
+    next:
+      default: 'null'
+output:
+  - done

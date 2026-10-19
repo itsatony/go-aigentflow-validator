@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-agent-run-prompt
+version: '1.0.0'
+description: >-
+  A literal agent with a prompt is a complete atlas agent run.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: Summarise the quarter.
+    next:
+      default: 'null'
+output:
+  - done
