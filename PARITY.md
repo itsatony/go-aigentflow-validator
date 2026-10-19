@@ -17,7 +17,23 @@ v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (bel
 v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below), then
 v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (below), then
 v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below), then
-v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning message (below).
+v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning message (below), then
+v0.14.0, which narrows `potential_infinite_loop` (below).
+
+> **v0.14.0 — `potential_infinite_loop` fires only on a cycle with no way out.** It used to fire on
+> every cycle reachable from the start step, so a deliberate ask-again loop (a step that routes back
+> until a condition sends it onward) carried a warning that told the author nothing. The reference
+> now computes the strongly connected sets (Tarjan) over `next.default` and
+> `next.conditions[].goto` edges reachable from start (markers `null`/`orchestrator` and unknown steps
+> are not followed; `end` is an ordinary step) and warns once when a cyclic set (more than one step,
+> or a self-loop) has no exit. A member leaves the set when it has no `next`, its `next` has
+> `parallel` (a fan-out is treated as an exit, not guessed at), its `next.default` is empty (when no
+> condition matches the flow ends), or any default/condition target is `null`, `orchestrator` or a
+> step outside the set. Severity and code are unchanged; the message now ends "a cycle of steps has
+> no way out" and the suggestion asks for a `next.conditions` branch that leaves the cycle. It cannot
+> prove an exit ever fires; that is undecidable from the YAML. Gates: ten `valid-cycle-*` /
+> `warn-cycle-*` fixtures (the valid ones use `forbidWarningCodes`, the only way to assert a
+> false-positive risk), shared byte-for-byte with the JavaScript port.
 
 > **v0.13.0 — `unknown_function_operation`, and an actionable `unknown_executor_scheme`.** Both
 > shipped in AIgentFlow v2.831.0; `specVersion` is `2.831.0`. A step whose executor is

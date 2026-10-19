@@ -1,0 +1,36 @@
+aigentflow_version: '2.0.0'
+name: warn-cycle-after-exiting-cycle
+version: '1.0.0'
+description: >-
+  An exit-less cycle (c and d) is still reported when another cycle (a and b) has an exit.
+start: a
+steps:
+  a:
+    executor: function://utils/log
+    query:
+      message: 'a'
+    next:
+      default: b
+      conditions:
+        - if: '{{ .ok }}'
+          goto: c
+  b:
+    executor: function://utils/log
+    query:
+      message: 'b'
+    next:
+      default: a
+  c:
+    executor: function://utils/log
+    query:
+      message: 'c'
+    next:
+      default: d
+  d:
+    executor: function://utils/log
+    query:
+      message: 'd'
+    next:
+      default: c
+output:
+  - message

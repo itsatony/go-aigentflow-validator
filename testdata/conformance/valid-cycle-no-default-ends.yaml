@@ -1,0 +1,23 @@
+aigentflow_version: '2.0.0'
+name: valid-cycle-no-default-ends
+version: '1.0.0'
+description: >-
+  A step with conditions and no default ends the flow when no condition matches, which is an exit from the cycle.
+start: a
+steps:
+  a:
+    executor: function://utils/log
+    query:
+      message: 'a'
+    next:
+      default: b
+  b:
+    executor: function://utils/log
+    query:
+      message: 'b'
+    next:
+      conditions:
+        - if: '{{ .ok }}'
+          goto: a
+output:
+  - message

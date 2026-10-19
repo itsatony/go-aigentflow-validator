@@ -1,0 +1,28 @@
+aigentflow_version: '2.0.0'
+name: valid-cycle-ask-again-exit
+version: '1.0.0'
+description: >-
+  A deliberate ask-again loop: check routes back to ask until a condition sends it to done, so the cycle has an exit and is not a potential infinite loop.
+start: ask
+steps:
+  ask:
+    executor: function://utils/log
+    query:
+      message: 'ask'
+    next:
+      default: check
+  check:
+    executor: function://utils/log
+    query:
+      message: 'check'
+    next:
+      default: ask
+      conditions:
+        - if: '{{ .ok }}'
+          goto: done
+  done:
+    executor: function://utils/log
+    query:
+      message: 'done'
+output:
+  - message
