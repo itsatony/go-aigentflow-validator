@@ -18,7 +18,7 @@ steps:
     next:
       default: a
       conditions:
-        - if: "{{ .ok }}"
+        - if: '{{ .ok }}'
           goto: 'null'
 output:
   - message

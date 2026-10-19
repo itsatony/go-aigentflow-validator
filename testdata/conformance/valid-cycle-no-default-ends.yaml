@@ -17,7 +17,7 @@ steps:
       message: 'b'
     next:
       conditions:
-        - if: "{{ .ok }}"
+        - if: '{{ .ok }}'
           goto: a
 output:
   - message

@@ -12,7 +12,7 @@ steps:
     next:
       default: a
       conditions:
-        - if: "{{ .ok }}"
+        - if: '{{ .ok }}'
           goto: done
   done:
     executor: function://utils/log

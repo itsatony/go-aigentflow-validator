@@ -18,7 +18,7 @@ steps:
     next:
       default: ask
       conditions:
-        - if: "{{ .ok }}"
+        - if: '{{ .ok }}'
           goto: done
   done:
     executor: function://utils/log
