@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.828.0",
+  "specVersion": "2.831.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -526,6 +526,45 @@
     "fieldFormat": "data.%s",
     "messageFormat": "data: key %q is reserved: %s. It would write into the engine's own state, so it is not seeded.",
     "suggestion": "Rename the key (no leading `_` or `.`, and not one of the engine namespaces memory., orchestrator., campaign., voiceagent.)."
+  },
+  "functionOperations": {
+    "$comment": "unknown_function_operation (ERROR, no loop demotion): a step or loop sub-step whose executor is function://<provider>/<resource> where <provider>/<resource> is not one of the built-ins registered in the reference binary (a closed, compile-time set; nothing is loaded at run time). Templated executors, unparsable URLs and other schemes are skipped. Field: the step's executor field. Reference: validateFunctionOperationKnown (AIgentFlow v2.831.0).",
+    "operations": [
+      "binary-processor/validate-and-store",
+      "data/create",
+      "data/from-json",
+      "data/to-json",
+      "data/validate",
+      "demo/adult-processor",
+      "demo/calculator",
+      "demo/data-processor",
+      "demo/finalizer",
+      "demo/senior-processor",
+      "demo/youth-processor",
+      "document/finalize",
+      "document/prepare",
+      "json/validate",
+      "math/basic",
+      "math/calculate",
+      "math/sum",
+      "results-compiler/aggregate",
+      "system/info",
+      "text/analysis",
+      "text/count-characters",
+      "text/count-lines",
+      "text/count-occurrences",
+      "text/count-words",
+      "text/find-pattern",
+      "text/generate",
+      "text/replace-text",
+      "text/search",
+      "utils/datetime",
+      "utils/format-date",
+      "utils/log",
+      "utils/parse-date"
+    ],
+    "messageFormat": "step %q uses function://%s, which is not a built-in function. Available: %s",
+    "suggestion": "Use one of the built-in functions: %s."
   },
   "serverOwnedQueryKeys": {
     "$comment": "Executor parameters only the server's credential resolver may set. A key in keys, matched exactly and case-sensitively, is refused (error) in the query of a top-level step (field stepFieldFormat) and of a loop sub-step (field loopStepFieldFormat, whose second placeholder is the sub-step's id as written). No other surface is scanned. A new server-owned key is a change to keys. Reference: validateNoServerOwnedStepQueryKeys, IsServerOwnedParamKey (CFX-05, after v2.790.0).",

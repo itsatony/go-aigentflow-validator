@@ -138,7 +138,7 @@ name: f
 start: a
 steps:
   a:
-    executor: function://text/n
+    executor: function://utils/log
     next:
       conditions:
         - if: "{{ if .a }}"
@@ -148,8 +148,8 @@ steps:
 			codeTemplateSyntax, "steps.a.next.conditions[0].if")
 	})
 	t.Run("response_expectation templates are counted but not checked", func(t *testing.T) {
-		src := strings.Replace(minimalFlow, "    executor: function://text/noop",
-			"    executor: function://text/noop\n    response_expectation:\n      out:\n        type: string\n        required: \"{{ if .a }}\"", 1)
+		src := strings.Replace(minimalFlow, "    executor: function://utils/log",
+			"    executor: function://utils/log\n    response_expectation:\n      out:\n        type: string\n        required: \"{{ if .a }}\"", 1)
 		result := ValidateFlow(src, Options{})
 		if hasCode(result.Errors, codeTemplateSyntax) {
 			t.Errorf("response_expectation templates must not be syntax-checked: %s",
@@ -172,7 +172,7 @@ steps:
       good: "{{ .query.x }}"
       bad: "{{ .query.y "
   b:
-    executor: function://text/n
+    executor: function://utils/log
 `
 	result := ValidateFlow(src, Options{})
 	if result.Summary.TotalSteps != 2 {
@@ -202,7 +202,7 @@ func TestFindingsCarrySourcePositions(t *testing.T) {
 		"start: a\n" + // 3
 		"steps:\n" + // 4
 		"  a:\n" + // 5
-		"    executor: function://text/n\n" + // 6
+		"    executor: function://utils/log\n" + // 6
 		"    next:\n" + // 7
 		"      default: ghost\n" // 8
 
@@ -253,7 +253,7 @@ func TestResultSlicesMarshalAsArraysNotNull(t *testing.T) {
 		source string
 	}{
 		{"valid flow", minimalFlow},
-		{"invalid flow", strings.Replace(minimalFlow, "function://text/noop", "notauri", 1)},
+		{"invalid flow", strings.Replace(minimalFlow, "function://utils/log", "notauri", 1)},
 		{"unparseable", "- not a mapping\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -284,7 +284,7 @@ func TestResultSlicesMarshalAsArraysNotNull(t *testing.T) {
 func TestValidateFlowObjectMatchesValidateFlow(t *testing.T) {
 	// The two entry points must agree on the verdict; only positions differ,
 	// because the object form has no source to locate findings in.
-	src := strings.Replace(minimalFlow, "function://text/noop", "notauri", 1)
+	src := strings.Replace(minimalFlow, "function://utils/log", "notauri", 1)
 	fromText := ValidateFlow(src, Options{})
 	flow, _, _ := ParseFlow(src)
 	fromObject := ValidateFlowObject(flow, Options{})
@@ -319,11 +319,11 @@ name: f
 start: a
 steps:
   a:
-    executor: function://text/n
+    executor: function://utils/log
     next:
       default: ghost1
   b:
-    executor: function://text/n
+    executor: function://utils/log
     next:
       default: ghost2
   c:

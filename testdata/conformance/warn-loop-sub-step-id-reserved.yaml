@@ -13,7 +13,7 @@ steps:
       max_iterations: 3
       steps:
         - id: vars
-          executor: function://text/template
+          executor: function://utils/log
           query:
             message: 'tick'
     next:

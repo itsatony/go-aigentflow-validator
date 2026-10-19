@@ -12,35 +12,35 @@ query:
 start: eager_step
 steps:
   eager_step:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'eager'
       tool_discovery: eager
     next:
       default: off_step
   off_step:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'off'
       tool_discovery: 'off'
     next:
       default: empty_step
   empty_step:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'unset'
       tool_discovery: ''
     next:
       default: templated_step
   templated_step:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'templated'
       tool_discovery: '{{ .query.mode }}'
     next:
       default: numeric_step
   numeric_step:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'not a string, not judged'
       tool_discovery: 5

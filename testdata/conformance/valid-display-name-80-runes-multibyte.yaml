@@ -6,4 +6,4 @@ description: 80 runes but 160+ bytes, so the bound counts characters, not bytes.
 start: only
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log

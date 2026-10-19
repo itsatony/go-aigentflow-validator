@@ -295,6 +295,9 @@ const (
 	// v0.12.0 — AIgentFlow v2.828.0: a top-level data: key naming engine state.
 	codeFlowDataKeyReserved = "flow_data_key_reserved" // VALIDATION_CODE_FLOW_DATA_KEY_RESERVED
 
+	// v0.13.0 — AIgentFlow v2.831.0: function:// naming no registered built-in.
+	codeUnknownFunctionOperation = "unknown_function_operation" // VALIDATION_CODE_UNKNOWN_FUNCTION_OPERATION
+
 	// v0.6.1 — AIgentFlow CFX-05: a step query naming a server-owned parameter.
 	codeServerOwnedQueryKey = "server_owned_query_key" // VALIDATION_CODE_SERVER_OWNED_QUERY_KEY
 

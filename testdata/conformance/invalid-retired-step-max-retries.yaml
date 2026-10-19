@@ -7,7 +7,7 @@ description: >-
 start: a
 steps:
   a:
-    executor: function://text/template
+    executor: function://utils/log
     max_retries: 0
     next:
       default: 'null'

@@ -556,6 +556,12 @@ var conformanceCases = []conformanceCase{
 	{file: "invalid-flow-data-key-underscore-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-dot-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-namespace.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	// v0.13.0 (AIgentFlow v2.831.0): unknown_function_operation. The valid
+	// fixtures forbid the code: a false positive on a real built-in is the risk.
+	{file: "invalid-function-operation-unknown.yaml", valid: false, wantErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "invalid-function-operation-unknown-loop-substep.yaml", valid: false, wantErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "valid-function-operation-builtins.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "valid-function-operation-templated.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
 	{file: "warn-compliance-residency-unenforced.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "warn-compliance-residency-unenforced-loop.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "valid-compliance-residency-pinned.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},

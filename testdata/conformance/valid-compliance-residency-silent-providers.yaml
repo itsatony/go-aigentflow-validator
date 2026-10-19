@@ -40,7 +40,7 @@ steps:
     next:
       default: plain
   plain:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'hi'
     next:

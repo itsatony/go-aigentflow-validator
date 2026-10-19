@@ -7,13 +7,13 @@ description: >-
 start: summarise
 steps:
   summarise:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'A short summary.'
     next:
       default: finish
   finish:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Done.'
     response_expectation: {}

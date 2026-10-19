@@ -8,7 +8,7 @@ description: >-
 start: coordinate
 steps:
   coordinate:
-    executor: function://text/template
+    executor: function://utils/log
     next:
       default: 'null'
 orchestrator:

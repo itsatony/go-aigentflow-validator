@@ -15,7 +15,7 @@ steps:
         counter: '0'
       steps:
         - id: body
-          executor: function://text/template
+          executor: function://utils/log
           query:
             message: '{{ .query.x | default "w" }}'
     next:

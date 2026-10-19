@@ -17,7 +17,7 @@ steps:
         counter: '0'
       steps:
         - id: body
-          executor: function://text/template
+          executor: function://utils/log
           condition: '{{ eq (mod .loop.vars.counter 2) 0 }}'
           query:
             message: 'iteration {{ .loop.iteration }} of {{ int 3 }}'

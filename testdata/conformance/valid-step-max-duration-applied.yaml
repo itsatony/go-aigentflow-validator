@@ -9,42 +9,42 @@ description: >-
 start: seconds
 steps:
   seconds:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Seconds.'
     max_duration: 90s
     next:
       default: compound
   compound:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Compound.'
     max_duration: 1h30m
     next:
       default: unbounded_none
   unbounded_none:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'None.'
     max_duration: none
     next:
       default: unbounded_never
   unbounded_never:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Never.'
     max_duration: never
     next:
       default: unbounded_infinite
   unbounded_infinite:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Infinite.'
     max_duration: infinite
     next:
       default: bounded
   bounded:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Bounded.'
     max_duration: 30s
@@ -56,7 +56,7 @@ steps:
       max_iterations: 2
       steps:
         - id: work
-          executor: function://text/template
+          executor: function://utils/log
           query:
             message: 'Work.'
     next:

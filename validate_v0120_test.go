@@ -17,7 +17,7 @@ description: data probe
 ` + dataBlock + `start: s
 steps:
   s:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: hello
     next:

@@ -8,13 +8,13 @@ description: >-
 start: Orchestrator
 steps:
   Orchestrator:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'legal: the check is case-sensitive'
     next:
       default: 'null'
   orchestrator:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'refused'
     next:

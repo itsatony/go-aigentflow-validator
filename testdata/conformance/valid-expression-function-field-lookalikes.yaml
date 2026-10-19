@@ -9,7 +9,7 @@ version: '1.0.0'
 start: fn_build
 steps:
   fn_build:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       dotted_data: '{{ .data.fn_total }}'
       dotted_step: '{{ .step.response.fn_score }}'

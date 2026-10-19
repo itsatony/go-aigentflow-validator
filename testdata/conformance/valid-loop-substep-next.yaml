@@ -13,14 +13,14 @@ steps:
       max_iterations: 5
       steps:
         - id: fetch
-          executor: function://text/template
+          executor: function://utils/log
           next:
             conditions:
               - if: '{{ .data.fetch.cached }}'
                 goto: record
             default: ''
         - id: inspect
-          executor: function://text/template
+          executor: function://utils/log
           next:
             conditions:
               - if: '{{ .data.inspect.stale }}'

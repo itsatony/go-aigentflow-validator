@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.828.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.831.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -16,7 +16,32 @@ AIgentFlow v2.811.0, then v0.8.0 (AIgentFlow v2.819.0), which only **removes** (
 v0.9.0 (AIgentFlow v2.820.0), which adds two orchestrator keys and one rule (below), then
 v0.10.0 (AIgentFlow v2.821.0), which adds one warning (below), then
 v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (below), then
-v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below).
+v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below), then
+v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning message (below).
+
+> **v0.13.0 — `unknown_function_operation`, and an actionable `unknown_executor_scheme`.** Both
+> shipped in AIgentFlow v2.831.0; `specVersion` is `2.831.0`. A step whose executor is
+> `function://<a>/<b>` where `<a>/<b>` is not one of the reference's 32 registered built-ins used to
+> validate and then fail every run with "function '<a>/<b>' not found"; the reference now refuses it at
+> save. **ERROR**, code `unknown_function_operation`, field the step's `executor` (top-level step or
+> loop sub-step, the latter with the composite `parent.child` step id, exactly where
+> `invalid_executor_url` reports). The operation is `authority + "/" + path`. **Skipped:** a templated
+> executor (contains `{{`), an unparsable URL (`invalid_executor_url` owns it) and any other scheme.
+> The closed set, the message format and the suggestion live in the spec under `functionOperations`;
+> **the set is a HAND COPY** of the reference's compile-time registrations and nothing here can notice
+> that the reference registered a new built-in (a missing entry is a false ERROR, so refresh it on
+> every bump). Divergence #24 states the load-door behaviour. Separately, the
+> `unknown_executor_scheme` **warning** (code and severity unchanged, no verdict moves) now says what
+> to do: scheme `decide` is told that decision models run through `ai://{provider}/decide`, and any
+> other unknown scheme within edit distance 2 (case-insensitive, ties to the alphabetically first)
+> of a known one gets `Did you mean '<scheme>'?`. Gates: `validate_v0130_test.go` (every spec op is
+> accepted at top level and in a loop, an unknown-op table with exact message, skip table, scheme
+> message table), fixtures `invalid-function-operation-unknown`,
+> `invalid-function-operation-unknown-loop-substep`, `valid-function-operation-builtins` and
+> `valid-function-operation-templated` (both forbid the code). **Fixture consequence:** about 150
+> fixtures and probes used `function://text/template`, `text/noop` or `notify/send` as an inert
+> placeholder; all now use `function://utils/log`, so each still tests its own rule. Go-first: the JS
+> port has not taken this yet.
 
 > **v0.12.0 — `flow_data_key_reserved`.** One change already shipped in AIgentFlow v2.828.0;
 > `specVersion` is `2.828.0`. The top-level `data:` map is the flow's pre-populated state: it is
@@ -784,6 +809,15 @@ only, because RE2 and a JavaScript `RegExp` disagree about what is valid and a c
 could refuse what the reference accepts. So on `examples-invalid-example-matcher-bad-regex.yaml` this
 library is invalid and the JS port is valid. `TestParityVerdictsMatchTheJSImplementation` excuses
 exactly that code on exactly that fixture (`jsLooserFixtures`); everything else on it must agree.
+
+### 24. `unknown_function_operation`: the reference tolerates it on its LOAD door (v0.13.0)
+
+The reference enforces this with `validateFunctionOperationKnown` (`aigentflow/aigentflow.parser.go`)
+and applies it **retroactively-tolerantly** on its load door: a stored flow that predates the rule
+still loads (it simply fails at the step, as before), while its save doors refuse. This library is a
+save-door-style validator, so it errors unconditionally; a consumer that revalidates stored flows
+should decide for itself whether to treat the code as blocking, as it does for the other
+save-time-only codes. The built-in set is a hand copy (see the v0.13.0 note above).
 
 ## The differential
 

@@ -17,7 +17,7 @@ description: default probe
 start: a
 steps:
   a:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: %q
     next:
@@ -103,7 +103,7 @@ steps:
       max_iterations: 3
       steps:
         - id: body
-          executor: function://text/template
+          executor: function://utils/log
           query:
             m: '{{ .query.x | default "w" }}'
           next:
@@ -136,7 +136,7 @@ description: d
 start: a
 steps:
   a:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       m: x
     next:
@@ -184,7 +184,7 @@ strict_templates: ` + v + `
 start: a
 steps:
   a:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       m: x
     next:

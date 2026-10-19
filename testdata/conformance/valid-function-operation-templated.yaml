@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: valid-function-operation-templated
+version: '1.0.0'
+description: >-
+  A templated function:// executor is rendered by the engine before dispatch and
+  cannot be judged statically, so it is skipped.
+start: s
+steps:
+  s:
+    executor: 'function://{{ .query.provider }}/{{ .query.op }}'
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

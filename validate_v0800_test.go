@@ -33,7 +33,7 @@ func TestRemovedNexusSchemesAreOnlyUnknownSchemeWarnings(t *testing.T) {
 
 func TestRemovedNexusExecutorConfigKeysHaveAnEmptyScope(t *testing.T) {
 	for _, key := range []string{"nexus", "aigentchat"} {
-		src := unpairedHead + "executor_config:\n  " + key + ":\n    api_key: '${AIGENTFLOW_NEXUS_API_KEY}'\nsteps:\n  s:\n    executor: function://text/template\n    query:\n      message: hi\n"
+		src := unpairedHead + "executor_config:\n  " + key + ":\n    api_key: '${AIGENTFLOW_NEXUS_API_KEY}'\nsteps:\n  s:\n    executor: function://utils/log\n    query:\n      message: hi\n"
 		result := ValidateFlow(src, Options{})
 		got := false
 		for _, e := range result.Errors {

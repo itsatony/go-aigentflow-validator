@@ -18,7 +18,7 @@ steps:
         counter: '0'
       steps:
         - id: body
-          executor: function://text/template
+          executor: function://utils/log
           condition: '{{ eq .loop.vars.counter '
           query:
             message: '{{ .data.x '

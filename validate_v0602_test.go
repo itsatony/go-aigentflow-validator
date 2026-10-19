@@ -123,7 +123,7 @@ func TestCredentialEndpointShapes(t *testing.T) {
 			unpairedHead + "executor_config:\n  openai: ~\nsteps:\n  s:\n    executor: ai://openai/chat\n    query:\n      openai_base_url: 'https://x.example.com'\n",
 			[]string{"steps.s.query.openai_base_url"}},
 		{"ai: executor_config base_url warns with no step using the provider",
-			unpairedHead + "executor_config:\n  cohere:\n    base_url: 8080\n  not_a_provider:\n    base_url: 'https://x.example.com'\nsteps:\n  s:\n    executor: function://text/template\n    query:\n      message: hi\n",
+			unpairedHead + "executor_config:\n  cohere:\n    base_url: 8080\n  not_a_provider:\n    base_url: 'https://x.example.com'\nsteps:\n  s:\n    executor: function://utils/log\n    query:\n      message: hi\n",
 			[]string{"executor_config.cohere.base_url"}},
 		{"ai: a templated executor_config base_url is still a literal to the ai arm",
 			unpairedHead + "executor_config:\n  openai:\n    base_url: '{{ .query.u }}'\nsteps:\n  s:\n    executor: ai://openai/chat\n    query:\n      prompt: hi\n",

@@ -5,7 +5,7 @@ description: A single-step flow that greets the caller.
 start: greet
 steps:
   greet:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Hello, {{ default .query.name "world" }}!'
     next:

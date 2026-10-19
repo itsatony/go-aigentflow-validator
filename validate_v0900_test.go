@@ -13,7 +13,7 @@ description: orchestrator region probe
 start: work
 steps:
   work:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'working'
     next:

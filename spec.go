@@ -126,6 +126,12 @@ type rawSpec struct {
 		MessageFormat string `json:"messageFormat"`
 		Suggestion    string `json:"suggestion"`
 	} `json:"flowDataReservedKeys"`
+	// FunctionOperations feeds unknown_function_operation (AIgentFlow v2.831.0).
+	FunctionOperations struct {
+		Operations    []string `json:"operations"`
+		MessageFormat string   `json:"messageFormat"`
+		Suggestion    string   `json:"suggestion"`
+	} `json:"functionOperations"`
 	// CredentialEndpointPairing feeds credential_endpoint_unpaired (AIgentFlow
 	// DC-FORGE-231 and DC-FORGE-233).
 	CredentialEndpointPairing credentialEndpointSpec `json:"credentialEndpointPairing"`
@@ -280,6 +286,9 @@ var (
 	// credential resolver may set; a step query naming one is refused.
 	serverOwnedQueryKeys set
 
+	// functionOperations are the function:// built-ins the reference registers.
+	functionOperations set
+
 	fieldNameRe *regexp.Regexp
 	// executorURLRe is the ONE executor-URL shape, mirrored verbatim from the
 	// reference's URL_PATTERN_REGEX.
@@ -340,6 +349,7 @@ func init() {
 	processingLoopSubStepTypes = newSet(spec.ProcessingOperations.LoopSubStepTypes)
 	processingOpenKeyTypes = newSet(spec.ProcessingOperations.OpenKeyTypes)
 	serverOwnedQueryKeys = newSet(spec.ServerOwnedQueryKeys.Keys)
+	functionOperations = newSet(spec.FunctionOperations.Operations)
 	initExamples()
 }
 
