@@ -132,6 +132,9 @@ type rawSpec struct {
 		MessageFormat string   `json:"messageFormat"`
 		Suggestion    string   `json:"suggestion"`
 	} `json:"functionOperations"`
+	// AtlasExecutor feeds the atlas:// rules (providers, resources and the seven
+	// finding texts).
+	AtlasExecutor atlasSpec `json:"atlasExecutor"`
 	// CredentialEndpointPairing feeds credential_endpoint_unpaired (AIgentFlow
 	// DC-FORGE-231 and DC-FORGE-233).
 	CredentialEndpointPairing credentialEndpointSpec `json:"credentialEndpointPairing"`
@@ -289,6 +292,9 @@ var (
 	// functionOperations are the function:// built-ins the reference registers.
 	functionOperations set
 
+	// atlasCapabilityRefRe is the shape of an atlas://capability/<ref> reference.
+	atlasCapabilityRefRe *regexp.Regexp
+
 	fieldNameRe *regexp.Regexp
 	// executorURLRe is the ONE executor-URL shape, mirrored verbatim from the
 	// reference's URL_PATTERN_REGEX.
@@ -350,6 +356,7 @@ func init() {
 	processingOpenKeyTypes = newSet(spec.ProcessingOperations.OpenKeyTypes)
 	serverOwnedQueryKeys = newSet(spec.ServerOwnedQueryKeys.Keys)
 	functionOperations = newSet(spec.FunctionOperations.Operations)
+	atlasCapabilityRefRe = regexp.MustCompile(spec.AtlasExecutor.CapabilityRefPattern)
 	initExamples()
 }
 
@@ -383,4 +390,28 @@ func ExecutorSchemes() []string {
 	out := make([]string, 0, len(spec.ExecutorSchemes))
 	out = append(out, spec.ExecutorSchemes...)
 	return out
+}
+
+// atlasRule is the code, message format (first %s: the quoted step id) and
+// suggestion of one atlas:// finding.
+type atlasRule struct {
+	Code          string `json:"code"`
+	MessageFormat string `json:"messageFormat"`
+	Suggestion    string `json:"suggestion"`
+}
+
+// atlasSpec is the spec's atlasExecutor block.
+type atlasSpec struct {
+	Scheme                 string    `json:"scheme"`
+	ProviderAgent          string    `json:"providerAgent"`
+	ProviderCapability     string    `json:"providerCapability"`
+	AgentResource          string    `json:"agentResource"`
+	CapabilityRefPattern   string    `json:"capabilityRefPattern"`
+	OperationUnknown       atlasRule `json:"operationUnknown"`
+	AgentMissing           atlasRule `json:"agentMissing"`
+	AgentNotLiteral        atlasRule `json:"agentNotLiteral"`
+	CapabilitiesNotLiteral atlasRule `json:"capabilitiesNotLiteral"`
+	PromptMissing          atlasRule `json:"promptMissing"`
+	PromptBoth             atlasRule `json:"promptBoth"`
+	CapabilityRefInvalid   atlasRule `json:"capabilityRefInvalid"`
 }

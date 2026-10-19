@@ -33,6 +33,7 @@ func validateExecutors(flow doc, iss *issues) {
 		}
 		if executor, isStr := iss.stringOf(step, keyExecutor, stepField(stepID)); isStr && executor != "" {
 			checkExecutor(executor, stepField(stepID, keyExecutor), stepID, iss)
+			checkAtlasStep(executor, get(step, keyQuery), stepField(stepID), stepID, iss)
 		}
 
 		// Loop sub-steps each carry their own executor.
@@ -55,6 +56,9 @@ func validateExecutors(flow doc, iss *issues) {
 			}
 			checkExecutor(executor,
 				stepField(stepID, keyLoop, indexed(keySteps, i), keyExecutor),
+				subStepID(stepID, sub, i, iss), iss)
+			checkAtlasStep(executor, get(sub, keyQuery),
+				stepField(stepID, keyLoop, indexed(keySteps, i)),
 				subStepID(stepID, sub, i, iss), iss)
 		}
 	}
@@ -181,4 +185,72 @@ func checkFunctionOperation(executor, field, stepID string, iss *issues) {
 		Message:    fmt.Sprintf(spec.FunctionOperations.MessageFormat, stepID, op, list),
 		Suggestion: fmt.Sprintf(spec.FunctionOperations.Suggestion, list),
 	})
+}
+
+// checkAtlasStep applies the atlas:// rules. It runs only for an untemplated,
+// parsable atlas:// URL (the scheme match is exact). The URL says which Atlas
+// operation the step performs; the query is checked against what that operation
+// needs. field is the step itself, as the findings are about the step as a whole.
+func checkAtlasStep(executor string, query any, field, stepID string, iss *issues) {
+	if strings.Contains(executor, templateOpenDelim) {
+		return
+	}
+	m := executorURLRe.FindStringSubmatch(executor)
+	if m == nil || m[1] != spec.AtlasExecutor.Scheme {
+		return
+	}
+	provider, resource := m[2], m[3]
+	quoted := strconv.Quote(stepID)
+	report := func(rule atlasRule, args ...any) {
+		iss.error(Issue{
+			Field: field, Code: rule.Code, StepID: stepID,
+			Message:    fmt.Sprintf(rule.MessageFormat, append([]any{quoted}, args...)...),
+			Suggestion: rule.Suggestion,
+		})
+	}
+	q, _ := asRecord(query)
+
+	switch {
+	case provider == spec.AtlasExecutor.ProviderCapability:
+		if !atlasCapabilityRefRe.MatchString(resource) {
+			report(spec.AtlasExecutor.CapabilityRefInvalid, resource)
+		}
+	case provider == spec.AtlasExecutor.ProviderAgent && resource == spec.AtlasExecutor.AgentResource:
+		agent, isStr := getString(q, "agent")
+		if !isStr || agent == "" {
+			report(spec.AtlasExecutor.AgentMissing)
+		} else if strings.Contains(agent, templateOpenDelim) {
+			report(spec.AtlasExecutor.AgentNotLiteral)
+		}
+		hasPrompt := atlasTextPresent(get(q, "prompt"))
+		hasTemplate := atlasTextPresent(get(q, "prompt_template"))
+		if !hasPrompt && !hasTemplate {
+			report(spec.AtlasExecutor.PromptMissing)
+		} else if hasPrompt && hasTemplate {
+			report(spec.AtlasExecutor.PromptBoth)
+		}
+	default:
+		report(spec.AtlasExecutor.OperationUnknown, executor)
+		return
+	}
+
+	// A templated capability entry is refused wherever the list appears on an
+	// atlas:// step.
+	caps, _ := getSlice(q, "capabilities")
+	for _, c := range caps {
+		if s, ok := asString(c); ok && strings.Contains(s, templateOpenDelim) {
+			report(spec.AtlasExecutor.CapabilitiesNotLiteral)
+			break
+		}
+	}
+}
+
+// atlasTextPresent reports a prompt-like value that is set: not absent, null or
+// the empty string.
+func atlasTextPresent(v any) bool {
+	if v == nil {
+		return false
+	}
+	s, isStr := v.(string)
+	return !isStr || s != ""
 }
