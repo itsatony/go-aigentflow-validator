@@ -197,7 +197,7 @@ func TestBuiltInReaderAgreesWithTheEngineOnFrontmatterShapes(t *testing.T) {
 	refused := 0
 	for name, doc := range shapes {
 		t.Run(name, func(t *testing.T) {
-			src := "aigentflow_version: '2.0.0'\nname: f\nversion: '1.0.0'\nstart: s\nsteps:\n  s:\n    executor: function://text/template\n" +
+			src := "aigentflow_version: '2.0.0'\nname: f\nversion: '1.0.0'\nstart: s\nsteps:\n  s:\n    executor: function://utils/log\n" +
 				"orchestrator:\n  agentic: true\n  exons: " + quote(doc) + "\n"
 			builtin := aifvalidate.ValidateFlow(src, aifvalidate.Options{})
 			engine := aifvalidate.ValidateFlow(src, aifvalidate.Options{Exons: New()})

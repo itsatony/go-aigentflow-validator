@@ -5,7 +5,7 @@ description: An output entry may not be the empty string.
 start: only
 steps:
   only:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'hello'
     next:

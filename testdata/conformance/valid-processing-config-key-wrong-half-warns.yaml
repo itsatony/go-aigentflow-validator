@@ -8,7 +8,7 @@ description: >-
 start: work
 steps:
   work:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'hello'
     post_processing:

@@ -8,7 +8,7 @@ query:
     untrustd: true
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log
     trusted_outputs: true
     next:
       default: 'null'

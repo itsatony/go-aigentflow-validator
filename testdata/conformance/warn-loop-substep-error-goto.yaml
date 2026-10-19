@@ -19,7 +19,7 @@ steps:
         n: '0'
       steps:
         - id: work
-          executor: function://text/template
+          executor: function://utils/log
           error_strategy:
             action: goto
             goto_step: handle_error

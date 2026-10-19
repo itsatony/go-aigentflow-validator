@@ -8,6 +8,6 @@ max_retries: 3
 start: a
 steps:
   a:
-    executor: function://text/template
+    executor: function://utils/log
     next:
       default: 'null'

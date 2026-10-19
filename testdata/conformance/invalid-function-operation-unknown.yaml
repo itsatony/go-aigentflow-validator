@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-function-operation-unknown
+version: '1.0.0'
+description: >-
+  A function:// executor naming no registered built-in is refused at save; it
+  would otherwise fail every run with "function not found".
+start: s
+steps:
+  s:
+    executor: function://utils/noop
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

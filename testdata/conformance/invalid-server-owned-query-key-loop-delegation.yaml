@@ -12,7 +12,7 @@ steps:
       max_iterations: 3
       steps:
         - id: draft
-          executor: function://text/template
+          executor: function://utils/log
           query:
             message: 'round {{ .loop.index }}'
         - id: review

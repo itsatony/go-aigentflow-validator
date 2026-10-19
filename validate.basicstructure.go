@@ -133,7 +133,7 @@ func validateBasicStructure(flow doc, iss *issues) {
 			iss.error(Issue{
 				Field: stepField(stepID, keyExecutor), Code: codeMissingField, StepID: stepID,
 				Message:    "Executor is required for each step",
-				Suggestion: "Specify an executor URL (e.g., 'function://demo/processor')",
+				Suggestion: "Specify an executor URL (e.g., 'function://demo/data-processor')",
 			})
 		case !isScalar:
 			iss.error(Issue{

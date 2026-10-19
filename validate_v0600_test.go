@@ -97,7 +97,7 @@ func TestInlineExonsSteps(t *testing.T) {
           query:
             exons: 'doc'
 `
-	src = strings.Replace(src, "    executor: function://text/noop\n",
+	src = strings.Replace(src, "    executor: function://utils/log\n",
 		"    executor: exons://agent/execute\n    query:\n      exons: 'doc'\n    next:\n      default: loopy\n", 1)
 	engine := Options{Exons: fakeInspector{ExonsReport{Engine: true, IntakeErrors: []string{"line 1, column 1: bad"}}}}
 	result := ValidateFlow(src, engine)

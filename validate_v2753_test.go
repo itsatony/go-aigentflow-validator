@@ -25,20 +25,20 @@ func fieldsWithCode(list []Issue, code string) []string {
 
 func TestNextEnd(t *testing.T) {
 	t.Run("end is refused in a default and in a condition's goto when no step is called end", func(t *testing.T) {
-		assertError(t, ValidateFlow(withStep("    executor: function://text/noop\n    next:\n      default: end\n"), Options{}),
+		assertError(t, ValidateFlow(withStep("    executor: function://utils/log\n    next:\n      default: end\n"), Options{}),
 			codeStepNotFound, "steps.only.next.default")
-		src := withStep("    executor: function://text/noop\n    next:\n      conditions:\n" +
+		src := withStep("    executor: function://utils/log\n    next:\n      conditions:\n" +
 			"        - if: \"{{ true }}\"\n          goto: end\n      default: \"null\"\n")
 		assertError(t, ValidateFlow(src, Options{}), codeStepNotFound, "steps.only.next.conditions[0].goto")
 	})
 	t.Run("null, a YAML null and an empty default finish the flow", func(t *testing.T) {
 		for _, v := range []string{`"null"`, "null", `""`, ""} {
-			assertValid(t, ValidateFlow(withStep("    executor: function://text/noop\n    next:\n      default: "+v+"\n"), Options{}))
+			assertValid(t, ValidateFlow(withStep("    executor: function://utils/log\n    next:\n      default: "+v+"\n"), Options{}))
 		}
 	})
 	t.Run("a step named end saves and is reachable, as in the reference since v2.760.0", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    next:\n      default: end\n") +
-			"  end:\n    executor: function://text/noop\n"
+		src := withStep("    executor: function://utils/log\n    next:\n      default: end\n") +
+			"  end:\n    executor: function://utils/log\n"
 		result := ValidateFlow(src, Options{})
 		assertValid(t, result)
 		if got := fieldsWithCode(result.Warnings, codeUnreachableStep); len(got) != 0 {
@@ -46,8 +46,8 @@ func TestNextEnd(t *testing.T) {
 		}
 	})
 	t.Run("a cycle through a step named end is a cycle", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    next:\n      default: end\n") +
-			"  end:\n    executor: function://text/noop\n    next:\n      default: only\n"
+		src := withStep("    executor: function://utils/log\n    next:\n      default: end\n") +
+			"  end:\n    executor: function://utils/log\n    next:\n      default: only\n"
 		result := ValidateFlow(src, Options{})
 		assertValid(t, result)
 		if !hasCode(result.Warnings, codePotentialInfiniteLop) {
@@ -119,8 +119,8 @@ orchestrator:
 	})
 	t.Run("a location another rule named is reported once", func(t *testing.T) {
 		src := minimalFlow + "budget: 5\n"
-		src = strings.Replace(src, "    executor: function://text/noop\n",
-			"    executor: function://text/noop\n    max_retries: 2\n    next:\n      conditions:\n"+
+		src = strings.Replace(src, "    executor: function://utils/log\n",
+			"    executor: function://utils/log\n    max_retries: 2\n    next:\n      conditions:\n"+
 				"        - if: \"{{ true }}\"\n          goto_step: only\n      default: \"null\"\n", 1)
 		got := fieldsWithCode(ValidateFlow(src, Options{}).Errors, codeUnknownYAMLKey)
 		want := []string{"budget", "steps.only.max_retries", "steps.only.next.conditions[0].goto_step"}
@@ -129,7 +129,7 @@ orchestrator:
 		}
 	})
 	t.Run("a retired key is named as retired wherever it appears", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    for_each:\n      items: x\n      max_retries: 1\n")
+		src := withStep("    executor: function://utils/log\n    for_each:\n      items: x\n      max_retries: 1\n")
 		issue, ok := findByField(ValidateFlow(src, Options{}).Errors, "steps.only.for_each.max_retries")
 		if !ok || issue.Code != codeUnknownYAMLKey || !strings.Contains(issue.Message, "removed from the grammar") {
 			t.Errorf("got %+v", issue)
@@ -160,8 +160,8 @@ mock_scenarios:
 	})
 	t.Run("null is accepted for every struct, list and scalar key", func(t *testing.T) {
 		src := minimalFlow + "description:\nerror_strategy:\ntags:\n"
-		src = strings.Replace(src, "    executor: function://text/noop\n",
-			"    executor: function://text/noop\n    for_each:\n    next:\n    error_strategy:\n", 1)
+		src = strings.Replace(src, "    executor: function://utils/log\n",
+			"    executor: function://utils/log\n    for_each:\n    next:\n    error_strategy:\n", 1)
 		result := ValidateFlow(src, Options{})
 		if hasCode(result.Errors, codeInvalidType) || hasCode(result.Errors, codeUnknownYAMLKey) {
 			t.Errorf("got %s", formatIssues(result.Errors))
@@ -241,7 +241,7 @@ func TestDurationNumericSpellings(t *testing.T) {
 	})
 	t.Run("throttle delays and max_delay are judged the same way", func(t *testing.T) {
 		fan := func(throttle, maxDelay string) string {
-			return withStep("    executor: function://text/noop\n    for_each:\n      items: \"{{ .query.l }}\"\n" +
+			return withStep("    executor: function://utils/log\n    for_each:\n      items: \"{{ .query.l }}\"\n" +
 				"      throttle:\n        delay: " + throttle + "\n        batch_size: 2\n        batch_delay: " + throttle + "\n" +
 				"    error_strategy:\n      action: retry\n      max_delay: " + maxDelay + "\n")
 		}
@@ -281,7 +281,7 @@ func findByField(list []Issue, field string) (Issue, bool) {
 // map[any]any beneath a numeric key. It is read as a mapping, and the caller's
 // document is left untouched.
 func TestValidateFlowObjectNormalisesNonStringKeysWithoutMutating(t *testing.T) {
-	inner := map[any]any{1: map[string]any{"executor": "function://text/noop"}}
+	inner := map[any]any{1: map[string]any{"executor": "function://utils/log"}}
 	flow := map[string]any{
 		"aigentflow_version": "2.0.0", "name": "f", "start": "1", "steps": inner,
 	}

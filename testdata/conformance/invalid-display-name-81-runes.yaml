@@ -6,4 +6,4 @@ description: display_name one character over the limit.
 start: only
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log

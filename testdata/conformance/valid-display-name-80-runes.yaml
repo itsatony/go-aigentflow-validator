@@ -6,4 +6,4 @@ description: display_name at exactly the 80-character limit.
 start: only
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log

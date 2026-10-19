@@ -1,0 +1,73 @@
+aigentflow_version: '2.0.0'
+name: valid-function-operation-builtins
+version: '1.0.0'
+description: >-
+  Real function:// built-ins, including hyphenated ones and a loop sub-step, stay legal.
+start: s0
+steps:
+  s0:
+    executor: function://data/create
+    query:
+      message: hello
+    next:
+      default: s1
+  s1:
+    executor: function://text/count-words
+    query:
+      message: hello
+    next:
+      default: s2
+  s2:
+    executor: function://math/sum
+    query:
+      message: hello
+    next:
+      default: s3
+  s3:
+    executor: function://utils/datetime
+    query:
+      message: hello
+    next:
+      default: s4
+  s4:
+    executor: function://binary-processor/validate-and-store
+    query:
+      message: hello
+    next:
+      default: s5
+  s5:
+    executor: function://results-compiler/aggregate
+    query:
+      message: hello
+    next:
+      default: s6
+  s6:
+    executor: function://json/validate
+    query:
+      message: hello
+    next:
+      default: s7
+  s7:
+    executor: function://demo/data-processor
+    query:
+      message: hello
+    next:
+      default: looper
+  looper:
+    loop:
+      while: '{{ lt (atoi .loop.vars.counter) 2 }}'
+      max_iterations: 3
+      vars:
+        counter: '0'
+      steps:
+        - id: body
+          executor: function://utils/log
+          query:
+            message: hello
+          post_processing:
+            - loop.set:
+                counter: '{{ add (atoi .loop.vars.counter) 1 }}'
+    next:
+      default: 'null'
+output:
+  - done

@@ -22,7 +22,7 @@ steps:
           goto: escalate
       default: archive
   escalate:
-    executor: function://notify/send
+    executor: function://utils/log
     query:
       channel: ops
     next:

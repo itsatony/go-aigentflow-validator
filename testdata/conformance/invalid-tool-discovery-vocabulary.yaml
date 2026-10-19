@@ -10,7 +10,7 @@ tool_discovery: of
 start: agent
 steps:
   agent:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'hello'
       tool_discovery: Lazy

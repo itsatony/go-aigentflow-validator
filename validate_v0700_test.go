@@ -476,7 +476,7 @@ start: only
 output: [answer]
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log
 examples:
   - id: the_one_case
     title: "The only case"

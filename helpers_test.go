@@ -117,5 +117,5 @@ version: 1.0.0
 start: only
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log
 `

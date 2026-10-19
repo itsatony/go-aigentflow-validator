@@ -12,7 +12,7 @@ import (
 
 // withStep replaces minimalFlow's step body with body (indented as step keys).
 func withStep(body string) string {
-	return strings.Replace(minimalFlow, "    executor: function://text/noop\n", body, 1)
+	return strings.Replace(minimalFlow, "    executor: function://utils/log\n", body, 1)
 }
 
 func TestRetiredKeys(t *testing.T) {
@@ -25,16 +25,16 @@ func TestRetiredKeys(t *testing.T) {
 		assertError(t, ValidateFlow(minimalFlow+"max_retries: 0\n", Options{}), codeUnknownYAMLKey, keyMaxRetries)
 	})
 	t.Run("step-level max_retries", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    max_retries: 3\n")
+		src := withStep("    executor: function://utils/log\n    max_retries: 3\n")
 		assertError(t, ValidateFlow(src, Options{}), codeUnknownYAMLKey, "steps.only.max_retries")
 	})
 	t.Run("loop sub-step max_retries", func(t *testing.T) {
 		src := withStep("    loop:\n      while: \"{{ true }}\"\n      max_iterations: 2\n      steps:\n" +
-			"        - id: s\n          executor: function://text/noop\n          max_retries: 1\n")
+			"        - id: s\n          executor: function://utils/log\n          max_retries: 1\n")
 		assertError(t, ValidateFlow(src, Options{}), codeUnknownYAMLKey, "steps.only.loop.steps[0].max_retries")
 	})
 	t.Run("the working keys one level down are not refused", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    error_strategy:\n      action: retry\n      max_retries: 3\n") +
+		src := withStep("    executor: function://utils/log\n    error_strategy:\n      action: retry\n      max_retries: 3\n") +
 			"error_strategy:\n  action: retry\n  max_retries: 2\nbilling:\n  max_credits: 100\n"
 		assertValid(t, ValidateFlow(src, Options{}))
 	})
@@ -42,7 +42,7 @@ func TestRetiredKeys(t *testing.T) {
 
 func TestUnreachableErrorGoto(t *testing.T) {
 	t.Run("retry beside goto_step warns", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    error_strategy:\n      action: retry\n      goto_step: only\n")
+		src := withStep("    executor: function://utils/log\n    error_strategy:\n      action: retry\n      goto_step: only\n")
 		assertWarningNotError(t, ValidateFlow(src, Options{}), codeUnreachableErrorGoto)
 	})
 	t.Run("absent action beside goto_step warns (flow level)", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestUnreachableErrorGoto(t *testing.T) {
 		assertWarningNotError(t, ValidateFlow(src, Options{}), codeUnreachableErrorGoto)
 	})
 	t.Run("action goto does not warn", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    error_strategy:\n      action: goto\n      goto_step: only\n")
+		src := withStep("    executor: function://utils/log\n    error_strategy:\n      action: goto\n      goto_step: only\n")
 		if r := ValidateFlow(src, Options{}); hasCode(r.Warnings, codeUnreachableErrorGoto) {
 			t.Fatalf("goto beside action goto must not warn: %s", formatIssues(r.Warnings))
 		}
@@ -62,28 +62,28 @@ func TestLoopSubStepNextAndIDs(t *testing.T) {
 		return withStep("    loop:\n      while: \"{{ true }}\"\n      max_iterations: 2\n      steps:\n" + subs)
 	}
 	t.Run("end inside a loop body is a missing target, not a sentinel", func(t *testing.T) {
-		src := loop("        - id: a\n          executor: function://text/noop\n          next:\n            default: end\n")
+		src := loop("        - id: a\n          executor: function://utils/log\n          next:\n            default: end\n")
 		assertError(t, ValidateFlow(src, Options{}), codeLoopSubstepNextNotFound, "steps.only.loop.steps[0].next.default")
 	})
 	t.Run("a non-string target is invalid_type", func(t *testing.T) {
-		src := loop("        - id: a\n          executor: function://text/noop\n          next:\n            default: [x]\n")
+		src := loop("        - id: a\n          executor: function://utils/log\n          next:\n            default: [x]\n")
 		assertError(t, ValidateFlow(src, Options{}), codeInvalidType, "steps.only.loop.steps[0].next.default")
 	})
 	t.Run("forward jump and empty target are legal", func(t *testing.T) {
-		src := loop("        - id: a\n          executor: function://text/noop\n          next:\n            default: b\n" +
-			"        - id: b\n          executor: function://text/noop\n          next:\n            default: \"\"\n")
+		src := loop("        - id: a\n          executor: function://utils/log\n          next:\n            default: b\n" +
+			"        - id: b\n          executor: function://utils/log\n          next:\n            default: \"\"\n")
 		assertValid(t, ValidateFlow(src, Options{}))
 	})
 	t.Run("reserved sub-step id warns, others do not", func(t *testing.T) {
-		src := loop("        - id: vars\n          executor: function://text/noop\n")
+		src := loop("        - id: vars\n          executor: function://utils/log\n")
 		assertWarningNotError(t, ValidateFlow(src, Options{}), codeLoopSubStepIDReserved)
-		src = loop("        - id: variables\n          executor: function://text/noop\n")
+		src = loop("        - id: variables\n          executor: function://utils/log\n")
 		if r := ValidateFlow(src, Options{}); hasCode(r.Warnings, codeLoopSubStepIDReserved) {
 			t.Fatalf("a non-reserved id must not warn: %s", formatIssues(r.Warnings))
 		}
 	})
 	t.Run("goto_step in a loop body warns; the LOOP step's own goto does not", func(t *testing.T) {
-		src := loop("        - id: a\n          executor: function://text/noop\n          error_strategy:\n            action: goto\n            goto_step: only\n")
+		src := loop("        - id: a\n          executor: function://utils/log\n          error_strategy:\n            action: goto\n            goto_step: only\n")
 		r := ValidateFlow(src, Options{})
 		assertWarningNotError(t, r, codeLoopSubstepErrGotoIgnore)
 		if issue, _ := findByCode(r.Warnings, codeLoopSubstepErrGotoIgnore); issue.Field != "steps.only.loop.steps.a.error_strategy.goto_step" {
@@ -94,7 +94,7 @@ func TestLoopSubStepNextAndIDs(t *testing.T) {
 		}
 	})
 	t.Run("a loop-body template error is a warning, even under StrictRegistries", func(t *testing.T) {
-		src := loop("        - id: a\n          executor: function://text/noop\n          query:\n            x: \"{{ if }}\"\n            y: \"{{ nosuchfn .a }}\"\n")
+		src := loop("        - id: a\n          executor: function://utils/log\n          query:\n            x: \"{{ if }}\"\n            y: \"{{ nosuchfn .a }}\"\n")
 		r := ValidateFlow(src, Options{StrictRegistries: true})
 		assertWarningNotError(t, r, codeTemplateSyntax)
 		assertWarningNotError(t, r, codeTemplateFuncUnkn)
@@ -103,11 +103,11 @@ func TestLoopSubStepNextAndIDs(t *testing.T) {
 
 func TestProcessingOperationPaths(t *testing.T) {
 	t.Run("a template finding is addressed without the operation name", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    post_processing:\n      - data.set:\n          out: \"{{ if }}\"\n")
+		src := withStep("    executor: function://utils/log\n    post_processing:\n      - data.set:\n          out: \"{{ if }}\"\n")
 		assertError(t, ValidateFlow(src, Options{}), codeTemplateSyntax, "steps.only.post_processing[0].out")
 	})
 	t.Run("a malformed two-key entry gets no shape verdict", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    post_processing:\n      - data.set: {a: 1}\n        nope: {b: 2}\n")
+		src := withStep("    executor: function://utils/log\n    post_processing:\n      - data.set: {a: 1}\n        nope: {b: 2}\n")
 		r := ValidateFlow(src, Options{})
 		if hasCode(r.Warnings, codeUnknownProcessingOp) || hasCode(r.Warnings, codeUnknownProcessingConfigKey) {
 			t.Fatalf("divergence #11: no verdict on a malformed entry: %s", formatIssues(r.Warnings))
@@ -123,7 +123,7 @@ func TestStepMaxDurationScalars(t *testing.T) {
 		{"90", true}, {"true", true}, {"2d", true}, {"\"{{ .query.t }}\"", true},
 		{"0", false}, {"0s", false}, {"-5m", false}, {"none", false}, {"1h30m", false},
 	} {
-		src := withStep("    executor: function://text/noop\n    max_duration: " + tc.value + "\n")
+		src := withStep("    executor: function://utils/log\n    max_duration: " + tc.value + "\n")
 		r := ValidateFlow(src, Options{})
 		if got := hasCode(r.Warnings, codeStepMaxDurationIgnored); got != tc.warn {
 			t.Errorf("max_duration %s: warn = %v, want %v (%s)", tc.value, got, tc.warn, formatIssues(r.Warnings))
@@ -133,7 +133,7 @@ func TestStepMaxDurationScalars(t *testing.T) {
 }
 
 func TestResponseExpectationUnreadEmptyEvaluation(t *testing.T) {
-	src := withStep("    executor: function://text/noop\n    response_evaluation: \"\"\n" +
+	src := withStep("    executor: function://utils/log\n    response_evaluation: \"\"\n" +
 		"    response_expectation:\n      x:\n        type: string\n")
 	assertWarningNotError(t, ValidateFlow(src, Options{}), codeRespExpUnread)
 }
@@ -153,7 +153,7 @@ func TestHumanQuestionTimeout(t *testing.T) {
 func TestOrchestratorYieldViaConditionGoto(t *testing.T) {
 	// A conditional yield counts as the owner-mode yield edge. v0.2.0 read the
 	// condition's `goto_step`, so this valid flow was refused.
-	src := withStep("    executor: function://text/noop\n    next:\n      conditions:\n"+
+	src := withStep("    executor: function://utils/log\n    next:\n      conditions:\n"+
 		"        - if: \"{{ true }}\"\n          goto: orchestrator\n") +
 		"orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  mode: owner\n"
 	assertValid(t, ValidateFlow(src, Options{}))
@@ -222,13 +222,13 @@ func TestSaveDoorExtras(t *testing.T) {
 		assertError(t, ValidateFlow(minimalFlow+"tool_discovery: of\n", Options{}), codeToolDiscoveryInvalid, keyToolDiscovery)
 		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  tool_discovery: nope\n"
 		assertError(t, ValidateFlow(src, Options{}), codeToolDiscoveryInvalid, "orchestrator.tool_discovery")
-		src = withStep("    executor: function://text/noop\n    query:\n      tool_discovery: eagr\n")
+		src = withStep("    executor: function://utils/log\n    query:\n      tool_discovery: eagr\n")
 		assertError(t, ValidateFlow(src, Options{}), codeToolDiscoveryInvalid, "steps.only.query.tool_discovery")
 		for _, ok := range []string{"eager", "lazy", "off", "\"\"", "\"{{ .query.mode }}\""} {
 			assertValid(t, ValidateFlow(minimalFlow+"tool_discovery: "+ok+"\n", Options{}))
 		}
 		// On a step the surface is a free-form query key: only a string is judged.
-		assertValid(t, ValidateFlow(withStep("    executor: function://text/noop\n    query:\n      tool_discovery: 5\n"), Options{}))
+		assertValid(t, ValidateFlow(withStep("    executor: function://utils/log\n    query:\n      tool_discovery: 5\n"), Options{}))
 	})
 	t.Run("mock scenario delay", func(t *testing.T) {
 		mock := func(v string) string {
@@ -249,22 +249,22 @@ func TestSaveDoorExtras(t *testing.T) {
 
 func TestExecutorURLShape(t *testing.T) {
 	for _, bad := range []string{"openai:///gpt-4", "ai://openai", "http://api.example.com/v1", "ai://openai/gpt-4.1", "notauri"} {
-		src := strings.Replace(minimalFlow, "function://text/noop", bad, 1)
+		src := strings.Replace(minimalFlow, "function://utils/log", bad, 1)
 		assertError(t, ValidateFlow(src, Options{}), codeInvalidExecutorURL, "steps.only.executor")
 	}
 	for _, good := range []string{"exons://agent/execute", "exons://agent/execute/deep/path", "flow://stored/{{ .query.id }}"} {
-		src := strings.Replace(minimalFlow, "function://text/noop", "\""+good+"\"", 1)
+		src := strings.Replace(minimalFlow, "function://utils/log", "\""+good+"\"", 1)
 		assertValid(t, ValidateFlow(src, Options{}))
 	}
 }
 
 func TestExpressionFunctionUsageScan(t *testing.T) {
 	t.Run("the scan runs with no expression_functions block", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    query:\n      x: \"{{ fn_slugify .query.t }}\"\n")
+		src := withStep("    executor: function://utils/log\n    query:\n      x: \"{{ fn_slugify .query.t }}\"\n")
 		assertError(t, ValidateFlow(src, Options{}), codeExprFnUndeclaredUse, "steps.only.query.x")
 	})
 	t.Run("one finding per distinct name", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    query:\n      x: \"{{ fn_slugify .a }}\"\n      y: \"{{ fn_slugify .b }}\"\n")
+		src := withStep("    executor: function://utils/log\n    query:\n      x: \"{{ fn_slugify .a }}\"\n      y: \"{{ fn_slugify .b }}\"\n")
 		r := ValidateFlow(src, Options{})
 		n := 0
 		for _, e := range r.Errors {
@@ -277,7 +277,7 @@ func TestExpressionFunctionUsageScan(t *testing.T) {
 		}
 	})
 	t.Run("fields, data keys and quoted names are not calls", func(t *testing.T) {
-		src := withStep("    executor: function://text/noop\n    query:\n" +
+		src := withStep("    executor: function://utils/log\n    query:\n" +
 			"      a: \"{{ .data.fn_total }}\"\n      b: \"{{ index .data \\\"fn_result\\\" }}\"\n      c: \"fn_slugify in prose\"\n")
 		assertValid(t, ValidateFlow(src, Options{}))
 	})

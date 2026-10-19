@@ -12,7 +12,7 @@ steps:
       max_iterations: 3
       steps:
         - id: fetch
-          executor: function://text/template
+          executor: function://utils/log
           next:
             parallel:
               steps:

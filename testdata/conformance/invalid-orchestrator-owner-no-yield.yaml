@@ -5,7 +5,7 @@ description: owner mode over a self-terminating DAG with no next-orchestrator yi
 start: work
 steps:
   work:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'working'
     next:

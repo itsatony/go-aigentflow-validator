@@ -10,21 +10,21 @@ description: >-
 start: days
 steps:
   days:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Days.'
     max_duration: 2d
     next:
       default: spelled
   spelled:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Spelled.'
     max_duration: 5 minutes
     next:
       default: templated
   templated:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       message: 'Templated.'
     max_duration: '{{ .query.timeout }}'
@@ -37,7 +37,7 @@ steps:
       max_iterations: 2
       steps:
         - id: work
-          executor: function://text/template
+          executor: function://utils/log
           query:
             message: 'Work.'
     next:

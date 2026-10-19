@@ -7,7 +7,7 @@ description: 'Could use fn_slugify here later; fn_uniq would also help.'
 start: build
 steps:
   build:
-    executor: function://text/template
+    executor: function://utils/log
     description: 'Not a call: fn_round is only named in this sentence.'
     query:
       note: 'fn_sha256 is mentioned but never invoked'

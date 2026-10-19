@@ -47,19 +47,19 @@ func TestServerOwnedQueryKeyFields(t *testing.T) {
 		},
 		{
 			name:      "a loop sub-step is addressed by its id and names the loop step",
-			yaml:      loopFlow("        - id: fetch\n          executor: function://text/noop\n          query:\n            aiv_api_key: k\n"),
+			yaml:      loopFlow("        - id: fetch\n          executor: function://utils/log\n          query:\n            aiv_api_key: k\n"),
 			wantField: []string{"steps.only.loop.steps.fetch.query.aiv_api_key"},
 			wantStep:  "only",
 		},
 		{
 			name:      "a numeric sub-step id is its source text",
-			yaml:      loopFlow("        - id: 07\n          executor: function://text/noop\n          query:\n            aiv_delegation: x\n"),
+			yaml:      loopFlow("        - id: 07\n          executor: function://utils/log\n          query:\n            aiv_delegation: x\n"),
 			wantField: []string{"steps.only.loop.steps.07.query.aiv_delegation"},
 			wantStep:  "only",
 		},
 		{
 			name:      "a sub-step without an id is addressed by the empty string (the reference refuses it at parse)",
-			yaml:      loopFlow("        - executor: function://text/noop\n          query:\n            aiv_base_url: https://h.example\n"),
+			yaml:      loopFlow("        - executor: function://utils/log\n          query:\n            aiv_base_url: https://h.example\n"),
 			wantField: []string{"steps.only.loop.steps..query.aiv_base_url"},
 			wantStep:  "only",
 		},

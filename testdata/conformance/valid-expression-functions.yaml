@@ -9,7 +9,7 @@ expression_functions:
   - function: 'fn_round'
 steps:
   build:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       slug: '{{ fn_slugify .query.company }}'
       price: |

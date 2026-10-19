@@ -5,6 +5,6 @@ display_name: 'Weather Comic Maker'
 start: only
 steps:
   only:
-    executor: function://text/noop
+    executor: function://utils/log
     next:
       default: 'null'

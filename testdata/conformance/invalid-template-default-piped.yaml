@@ -7,7 +7,7 @@ description: >-
 start: s
 steps:
   s:
-    executor: function://text/template
+    executor: function://utils/log
     query:
       plain: '{{ .query.name | default "w" }}'
       mid_chain: '{{ .query.name | default "w" | upper }}'

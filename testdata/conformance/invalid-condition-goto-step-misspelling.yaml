@@ -8,13 +8,13 @@ description: >-
 start: decide
 steps:
   decide:
-    executor: function://text/template
+    executor: function://utils/log
     next:
       default: 'null'
       conditions:
         - if: '{{ eq .data.decide.verdict "escalate" }}'
           goto_step: escalate
   escalate:
-    executor: function://text/template
+    executor: function://utils/log
     next:
       default: 'null'
