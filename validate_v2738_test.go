@@ -252,7 +252,7 @@ func TestExecutorURLShape(t *testing.T) {
 		src := strings.Replace(minimalFlow, "function://utils/log", bad, 1)
 		assertError(t, ValidateFlow(src, Options{}), codeInvalidExecutorURL, "steps.only.executor")
 	}
-	for _, good := range []string{"exons://agent/execute", "exons://agent/execute/deep/path", "flow://stored/{{ .query.id }}"} {
+	for _, good := range []string{"aiv://acme/helper", "ai://openai/chat/deep/path", "flow://stored/{{ .query.id }}"} {
 		src := strings.Replace(minimalFlow, "function://utils/log", "\""+good+"\"", 1)
 		assertValid(t, ValidateFlow(src, Options{}))
 	}

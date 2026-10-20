@@ -32,7 +32,9 @@ func validateExecutors(flow doc, iss *issues) {
 			continue
 		}
 		if executor, isStr := iss.stringOf(step, keyExecutor, stepField(stepID)); isStr && executor != "" {
-			checkExecutor(executor, stepField(stepID, keyExecutor), stepID, iss)
+			if !checkRemovedSurfaces(executor, get(step, keyQuery), stepField(stepID), stepID, stepID, iss) {
+				checkExecutor(executor, stepField(stepID, keyExecutor), stepID, iss)
+			}
 			checkAtlasStep(executor, get(step, keyQuery), stepField(stepID), stepID, iss)
 		}
 
@@ -54,9 +56,13 @@ func validateExecutors(flow doc, iss *issues) {
 			if !isStr || executor == "" {
 				continue
 			}
-			checkExecutor(executor,
-				stepField(stepID, keyLoop, indexed(keySteps, i), keyExecutor),
-				subStepID(stepID, sub, i, iss), iss)
+			if !checkRemovedSurfaces(executor, get(sub, keyQuery),
+				stepField(stepID, keyLoop, indexed(keySteps, i)),
+				subStepID(stepID, sub, i, iss), subStepID(stepID, sub, i, iss), iss) {
+				checkExecutor(executor,
+					stepField(stepID, keyLoop, indexed(keySteps, i), keyExecutor),
+					subStepID(stepID, sub, i, iss), iss)
+			}
 			checkAtlasStep(executor, get(sub, keyQuery),
 				stepField(stepID, keyLoop, indexed(keySteps, i)),
 				subStepID(stepID, sub, i, iss), iss)

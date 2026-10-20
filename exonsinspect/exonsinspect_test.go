@@ -22,8 +22,6 @@ var engineCases = []struct {
 	wantWarns   []string
 	forbidWarns []string
 }{
-	{file: "invalid-exons-step-attributes.yaml", wantErrors: []string{"exons_attributes"}},
-	{file: "valid-exons-step-attributes-skipped.yaml", valid: true},
 	{file: "invalid-orchestrator-exons-no-spec.yaml", wantErrors: []string{"orchestrator_exons_parse_failed"}},
 	{file: "invalid-orchestrator-exons-unclosed-frontmatter.yaml", wantErrors: []string{"orchestrator_exons_parse_failed"}},
 	{file: "invalid-orchestrator-exons-no-provider.yaml", wantErrors: []string{"orchestrator_exons_no_provider"}},

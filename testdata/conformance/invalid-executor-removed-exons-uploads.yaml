@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: invalid-executor-removed-exons-uploads
+version: '1.0.0'
+description: >-
+  The top-level exons_uploads key belonged to the removed exons upload door.
+start: s
+exons_uploads:
+  allowed_providers:
+    - anthropic
+steps:
+  s:
+    executor: function://utils/log
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

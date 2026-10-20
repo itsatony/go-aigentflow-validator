@@ -72,8 +72,7 @@ list equals AIgentFlow's registry, so the warning is a real problem unless your 
 
 ### Exons documents
 
-A flow can carry `.exons` agent definitions inline: a step's `query.exons` on an `exons://` executor,
-and `orchestrator.exons`. AIgentFlow's save door judges them with the go-exons engine: whether the
+A flow can carry an `.exons` agent definition inline in `orchestrator.exons` (the `exons://` step executor was removed in v0.17.0; such a step reports `executor_removed`). AIgentFlow's save door judges it with the go-exons engine: whether the
 document parses, and whether every tag can render. This module has no template engine for `.exons`,
 so by default it reads only a document's YAML frontmatter (`execution.provider`, `tools.allow`,
 `requirements.resources`) and cannot tell whether the document parses or renders. For the
@@ -112,6 +111,7 @@ version rejected them has no way to understand it.
 | Unknown keys and value kinds | any key a flow type does not declare, at every level (`unknown_yaml_key`); a value of the wrong kind, e.g. `next: end` (`invalid_type`) |
 | Retired keys | flow-root `budget:` and `max_retries:`, step and loop sub-step `max_retries:`, `campaign.budget_max_per_child` (all refused as `unknown_yaml_key`) |
 | Executors | the reference's executor-URL shape, `scheme://authority/path` (error; templated URLs skipped), unknown scheme (warning) |
+| Removed agent surfaces | `executor_removed` (an `exons://` or `agent://` step, or the `exons_uploads` key) and `agentic_param_removed` (an `ai://` step carrying `agentic`, `max_tool_turns`, `mcp_server_url`, …) — both errors |
 | Connectivity | `next.default` / `next.conditions[].goto` existence (error; only `null` and `orchestrator` need no step, so `end` must name one), unreachable steps + cycles (warning) |
 | `next.parallel` | rendezvous + member existence, non-empty fan-out, `next: orchestrator` needs an orchestrator |
 | `error_strategy` | action enum, `goto_step` existence, Go durations, `backoff_multiplier > 0`, `retry_on` categories, a `goto_step` no action can take (warning) |
@@ -125,7 +125,7 @@ version rejected them has no way to understand it.
 | `input_schema` / `output_schema` | version, field names, types, constraint/type compatibility, `visible_when`, RE2 patterns |
 | `quality_gate` | rubric, threshold range, `on_fail` enum, self-goto, composite/parallel-member scope |
 | Orchestrator / campaign | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `enforce_region` needs `region`, `child_flows`, `max_credits_per_child`, campaign handoff |
-| Inline `.exons` documents | orchestrator: a frontmatter spec, `execution.provider`, no `requirements.resources`; a tool one of `orchestrator.tools` / `tools.allow` withholds (warning); with [`exonsinspect`](#exons-documents): the document parses, and every tag of an orchestrator or `exons://` step document can render |
+| Inline `.exons` documents | orchestrator: a frontmatter spec, `execution.provider`, no `requirements.resources`; a tool one of `orchestrator.tools` / `tools.allow` withholds (warning); with [`exonsinspect`](#exons-documents): the document parses, and every tag of the orchestrator's document can render |
 | `executor_config` | a `${VAR}` reference may name only the variables of the key it is written under |
 | Examples | the optional top-level `examples:` block: ids, limits, input against `input_schema` (unknown / missing / wrong kind / enum), file references (https only), expectations, checkpoints, variants, credential-shaped literals (`example_*`, `examples_*`) |
 | Display name | the optional top-level `display_name` is at most 80 characters, counted in runes (`display_name_too_long`) |

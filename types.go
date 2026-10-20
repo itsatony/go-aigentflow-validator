@@ -86,8 +86,8 @@ type Options struct {
 	// not for admission control.
 	StrictRegistries bool
 
-	// Exons judges the inline .exons documents a flow carries (a step's
-	// `query.exons` on an exons:// executor, and `orchestrator.exons`).
+	// Exons judges the inline .exons documents a flow carries (the
+	// orchestrator's `exons`; a step on exons:// is refused as executor_removed).
 	//
 	// nil uses the built-in reader, which has no .exons template engine: it
 	// reads the YAML frontmatter only (execution.provider, tools.allow,

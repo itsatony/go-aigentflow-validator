@@ -17,63 +17,6 @@ func exonsInspectorOf(opts Options) ExonsInspector {
 	return frontmatterReader{}
 }
 
-// validateInlineExonsSteps is the reference's validateInlineExonsStep
-// (v2.777.0, DC-FORGE-214), applied to every top-level step and loop sub-step:
-// an inline `query.exons` document on an exons:// executor must have no tag the
-// engine's own resolver refuses at execute (`{~exons.message~}` without role=,
-// `{~exons.include~}` without template=, and anything that does not lex or
-// parse). Before this rule the first parse was at run time.
-//
-// A document containing a Go template action is SKIPPED, as in the reference:
-// the engine renders step params before the exons plugin parses them, so the
-// text here is not the text the engine will judge.
-//
-// Only an engine-backed inspector can judge this; the built-in reader cannot.
-func validateInlineExonsSteps(flow doc, iss *issues, inspector ExonsInspector) {
-	steps := stepsOf(flow)
-	if steps == nil {
-		return
-	}
-	for _, stepID := range sortedKeys(steps) {
-		step, ok := asRecord(steps[stepID])
-		if !ok {
-			continue
-		}
-		checkInlineExonsStep(step, stepField(stepID), stepID, iss, inspector)
-		for i, sub := range loopSubStepsOf(stepID, step) {
-			checkInlineExonsStep(sub.raw, sub.basePath, subStepID(stepID, sub.raw, i, iss), iss, inspector)
-		}
-	}
-}
-
-func checkInlineExonsStep(step doc, base, stepID string, iss *issues, inspector ExonsInspector) {
-	executor, ok := iss.stringOf(step, keyExecutor, base)
-	if !ok || !strings.HasPrefix(executor, spec.Exons.ExecutorPrefix) {
-		return
-	}
-	query, ok := getRecord(step, keyQuery)
-	if !ok {
-		return
-	}
-	// The reference type-asserts `.(string)` on the query's `any` value, so
-	// only a YAML string is a document.
-	content, ok := asString(get(query, spec.Exons.DocumentParam))
-	if !ok || content == "" || strings.Contains(content, spec.TemplateActionOpen) {
-		return
-	}
-	report := inspector.InspectExons(content)
-	if !report.Engine || len(report.IntakeErrors) == 0 {
-		return
-	}
-	iss.error(Issue{
-		Field: base + "." + keyQuery + "." + spec.Exons.DocumentParam, Code: codeExonsAttributes, StepID: stepID,
-		Message: fmt.Sprintf("step '%s': exons document has tags that cannot render: %s",
-			stepID, strings.Join(report.IntakeErrors, "; ")),
-		Suggestion: "Fix each tag named: a built-in tag needs the attributes its resolver reads " +
-			"(exons.message needs role=, exons.include needs template=)",
-	})
-}
-
 // validateOrchestratorExons is the exons half of the reference's
 // validateOrchestrator (parser.go) plus the orchestrator_tool_withheld warning
 // (validateOrchestratorToolAllowWithholds, v2.760.0). The document's presence is

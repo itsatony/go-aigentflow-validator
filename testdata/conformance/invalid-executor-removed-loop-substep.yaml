@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: invalid-executor-removed-loop-substep
+version: '1.0.0'
+description: >-
+  A loop sub-step on a removed scheme is addressed as steps.<id>.loop.steps[<index>].
+start: looper
+steps:
+  looper:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: ok
+          executor: function://utils/log
+          query:
+            message: hello
+        - id: gone
+          executor: exons://agent/execute
+          query:
+            exons: not inspected
+    next:
+      default: 'null'
+output:
+  - done

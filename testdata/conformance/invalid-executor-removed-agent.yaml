@@ -1,0 +1,15 @@
+aigentflow_version: '2.0.0'
+name: invalid-executor-removed-agent
+version: '1.0.0'
+description: >-
+  A step on the removed agent:// scheme.
+start: s
+steps:
+  s:
+    executor: agent://modify/flow
+    query:
+      instruction: add a step
+    next:
+      default: 'null'
+output:
+  - done

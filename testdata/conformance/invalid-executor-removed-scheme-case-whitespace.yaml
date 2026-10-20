@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-executor-removed-scheme-case-whitespace
+version: '1.0.0'
+description: >-
+  The scheme is matched case-insensitively after trimming, so a mixed-case or padded executor is still refused.
+start: s
+steps:
+  s:
+    executor: ' Exons://agent/execute'
+    next:
+      default: t
+  t:
+    executor: ' AGENT://modify/flow'
+    next:
+      default: 'null'
+output:
+  - done

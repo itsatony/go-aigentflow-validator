@@ -28,7 +28,7 @@ import (
 //
 // A warning, never an error: the call may be correct (the key is EU-confined, a
 // run input supplies the region) and a static check cannot see that. Not
-// checked: exons:// and aiv:// steps (the provider lives in the agent), a
+// checked: aiv:// steps (the provider lives in the agent), a
 // quality_gate judge (it has no region key), a failover chain, a run-level
 // `region` input. The region-lane provider set is a hand copy of go-vaibstract's
 // RuntimeRegionProviders carried in the spec (PARITY.md).

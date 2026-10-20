@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-agentic-param-removed-false
+version: '1.0.0'
+description: >-
+  agentic: false is refused too: the key itself no longer exists, so presence is what counts.
+start: s
+steps:
+  s:
+    executor: ai://openai/chat
+    query:
+      prompt: hello
+      agentic: false
+    next:
+      default: 'null'
+output:
+  - done

@@ -1,0 +1,54 @@
+aigentflow_version: '2.0.0'
+name: valid-removed-surfaces-not-refused
+version: '1.0.0'
+description: >-
+  Nothing here uses a removed surface: aiv:// and atlas:// steps (aiv keeps its own agentic flag), plain ai:// chat with tools, tool_choice, autofix, content_parts and stream, a templated executor, an http:// step whose query happens to use a removed name, and the flow-level tool_discovery and discoverable_tools.
+start: chat
+tool_discovery: lazy
+discoverable_tools:
+  - search
+steps:
+  chat:
+    executor: ai://anthropic/chat
+    query:
+      prompt: hello
+      tool_choice: auto
+      autofix: true
+      stream: false
+      content_parts: []
+      tools:
+        - name: lookup
+          description: looks something up
+          input_schema:
+            type: object
+    next:
+      default: registry
+  registry:
+    executor: aiv://acme/helper
+    query:
+      agentic: true
+      input: hello
+    next:
+      default: atlas
+  atlas:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: Summarise the quarter.
+    next:
+      default: templated
+  templated:
+    executor: '{{ .query.executor }}'
+    query:
+      agentic: true
+    next:
+      default: webhook
+  webhook:
+    executor: http://post/hook
+    query:
+      agentic: true
+      timeout_seconds: 5
+    next:
+      default: 'null'
+output:
+  - done
