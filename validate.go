@@ -79,6 +79,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	// findings.
 	validateBasicStructure(flow, iss)
 	validateRetiredKeys(flow, iss)
+	validateRemovedFlowKeys(flow, iss)
 	validateExecutors(flow, iss)
 	validateQuerySchema(flow, iss)
 	validateResponseExpectations(flow, iss)
@@ -103,7 +104,6 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateCredentialEndpointPairing(flow, iss)
 	validateExamples(flow, iss)
 	inspector := exonsInspectorOf(opts)
-	validateInlineExonsSteps(flow, iss, inspector)
 	validateOrchestratorExons(flow, iss, inspector)
 	validateResidencyEnforcement(flow, iss, inspector)
 	// Last among the structural rules: it skips a location another rule has

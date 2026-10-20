@@ -433,16 +433,26 @@ var conformanceCases = []conformanceCase{
 		file: "valid-executor-config-env-scope.yaml", valid: true,
 		forbidErrorCodes: []string{codeExecutorConfigEnvScope},
 	},
+	// v0.17.0 (AIgentFlow v2.833.0): the agent surfaces AIgentFlow removed.
+	{file: "invalid-executor-removed-exons.yaml", valid: false,
+		wantErrorCodes: []string{codeExecutorRemoved}, forbidWarningCodes: []string{codeUnknownExecScheme}},
+	{file: "invalid-executor-removed-agent.yaml", valid: false,
+		wantErrorCodes: []string{codeExecutorRemoved}, forbidWarningCodes: []string{codeUnknownExecScheme}},
+	{file: "invalid-executor-removed-scheme-case-whitespace.yaml", valid: false,
+		wantErrorCodes: []string{codeExecutorRemoved}, forbidErrorCodes: []string{codeInvalidExecutorURL}},
+	{file: "invalid-executor-removed-loop-substep.yaml", valid: false, wantErrorCodes: []string{codeExecutorRemoved}},
+	{file: "invalid-executor-removed-exons-uploads.yaml", valid: false,
+		wantErrorCodes: []string{codeExecutorRemoved}, forbidErrorCodes: []string{codeUnknownYAMLKey}},
+	{file: "invalid-agentic-param-removed.yaml", valid: false, wantErrorCodes: []string{codeAgenticParamRemoved}},
+	{file: "invalid-agentic-param-removed-false.yaml", valid: false, wantErrorCodes: []string{codeAgenticParamRemoved}},
+	{file: "invalid-agentic-param-removed-null-value.yaml", valid: false, wantErrorCodes: []string{codeAgenticParamRemoved}},
+	{file: "invalid-agentic-param-removed-loop-substep.yaml", valid: false, wantErrorCodes: []string{codeAgenticParamRemoved}},
 	{
-		// v2.777.0 (DC-FORGE-214): tags the engine's resolver refuses.
-		file: "invalid-exons-step-attributes.yaml", valid: false,
-		wantErrorCodes:  []string{codeExonsAttributes},
-		exonsEngineOnly: true,
-	},
-	{
-		// Templated, non-exons executor, non-string: none is judged.
-		file: "valid-exons-step-attributes-skipped.yaml", valid: true,
-		forbidErrorCodes: []string{codeExonsAttributes},
+		// No false positive: aiv://, atlas://, a templated executor, a non-ai
+		// scheme, chat-only ai:// parameters and the flow-level discovery keys.
+		file: "valid-removed-surfaces-not-refused.yaml", valid: true,
+		forbidErrorCodes:   []string{codeExecutorRemoved, codeAgenticParamRemoved},
+		forbidWarningCodes: []string{codeUnknownExecScheme},
 	},
 	{
 		file: "invalid-orchestrator-exons-no-spec.yaml", valid: false,

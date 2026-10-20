@@ -1,0 +1,23 @@
+aigentflow_version: '2.0.0'
+name: invalid-agentic-param-removed-loop-substep
+version: '1.0.0'
+description: >-
+  A removed ai:// key on a loop sub-step is addressed as steps.<id>.loop.steps[<index>].
+start: looper
+steps:
+  looper:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: think
+          executor: ai://anthropic/chat
+          query:
+            prompt: hello
+            enable_signals: true
+            deny_tools:
+              - shell
+    next:
+      default: 'null'
+output:
+  - done

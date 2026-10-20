@@ -1,10 +1,9 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.831.0",
+  "specVersion": "2.833.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
-    "agent",
     "ai",
     "aiv",
     "async",
@@ -18,7 +17,6 @@
     "email",
     "eurostat",
     "eval",
-    "exons",
     "flow",
     "function",
     "gdelt",
@@ -323,10 +321,35 @@
     ]
   },
   "exons": {
-    "$comment": "Where an inline .exons document arrives at the save door. A step's document is judged only on an executor starting executorPrefix, from the string query parameter documentParam, and never when it contains templateActionOpen (the engine renders step params first). Reference: validateInlineExonsStep, validateOrchestrator (v2.767.0, v2.777.0).",
-    "executorPrefix": "exons://",
-    "documentParam": "exons",
+    "$comment": "The orchestrator's inline .exons document is still judged at the save door (orchestrator stays). A document opens with frontmatterDelimiter. Steps no longer carry inline .exons documents: the exons:// executor was removed (see removedAgentSurfaces).",
     "frontmatterDelimiter": "---"
+  },
+  "removedAgentSurfaces": {
+    "$comment": "AIgentFlow no longer runs agents of its own. executor_removed (ERROR): a step or loop sub-step whose executor scheme (text before '://', whitespace-trimmed, lower-cased) is in removedSchemes, or a top-level key in flowKeys (field = the key). agentic_param_removed (ERROR): an ai:// step or loop sub-step whose query carries ANY key of aiParams, on presence alone (null and false included); ONE finding per step, the keys sorted and joined by ', '. Only the paramScheme scheme is checked for params. A templated executor (containing templateActionOpen) is not judged. A step on a removed scheme yields ONLY executor_removed: no unknown_executor_scheme, executor-URL shape or inline-exons finding. Fields: steps.<id> and steps.<id>.loop.steps[<index>]. Not refused: aiv://, atlas://, ai:// tools / tool_choice / autofix / content_parts / stream, flow-level tool_discovery / discoverable_tools, the orchestrator block's own keys. Messages fill %s (the step id as written in the finding, then the scheme or the key list).",
+    "removedSchemes": ["exons", "agent"],
+    "paramScheme": "ai",
+    "aiParams": [
+      "agentic",
+      "deny_tools",
+      "discoverable_tools",
+      "enable_signals",
+      "guardrails",
+      "max_tool_calls",
+      "max_tool_turns",
+      "mcp_server_url",
+      "parallel_tool_calls",
+      "require_confirmation",
+      "timeout_seconds",
+      "tool_auth_token",
+      "tool_discovery"
+    ],
+    "flowKeys": ["exons_uploads"],
+    "executorRemovedCode": "executor_removed",
+    "agenticParamRemovedCode": "agentic_param_removed",
+    "schemeMessageFormat": "step %q uses %s://, which AIgentFlow no longer runs: its own agent chains were removed",
+    "paramsMessageFormat": "step %q sets %s on ai://: AIgentFlow's own agent loop (agentic mode) was removed, so these parameters no longer exist",
+    "flowKeyMessageFormat": "the flow-level key %q belonged to a removed agent surface and is no longer read",
+    "suggestion": "Rebuild the step: a tool-using agent becomes atlas://agent/run (agent: \"@org/name\", prompt, capabilities); one tool becomes atlas://capability/<ref>; a plain prompt becomes ai://<provider>/chat or a prompt-only aiv://<org>/<name>. A flow that cannot be converted (started by a webhook, a schedule, a share link, a campaign or a flow:// sub-flow, none of which has a person for atlas to act for; or one that needs an inline .exons spec, an arbitrary MCP server URL or signals) has no replacement here: start it from a person, or use a routine in atlas"
   },
   "executorConfigEnvScopes": {
     "$comment": "executor_config may expand only the environment variables of the key it is written under. A value is a reference when it starts with referencePrefix and ends with referenceSuffix around a non-empty name. Checked fields: fields, plus every string value of extra (prefixed extraFieldPrefix in the message). A key absent from scopes has an EMPTY scope and refuses every reference. scopes is the reference's executorConfigEnvScope evaluated for every key with a non-empty scope. Reference: ValidateExecutorConfigEnvScopes (v2.597.0).",

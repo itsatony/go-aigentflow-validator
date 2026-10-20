@@ -95,12 +95,22 @@ type rawSpec struct {
 		SignalTools          []string `json:"signalTools"`
 		CampaignTools        []string `json:"campaignTools"`
 	} `json:"orchestratorToolAllow"`
-	// Exons names where an inline .exons document arrives (v2.767.0, v2.777.0).
+	// Exons names how the orchestrator's inline .exons document is delimited.
 	Exons struct {
-		ExecutorPrefix       string `json:"executorPrefix"`
-		DocumentParam        string `json:"documentParam"`
 		FrontmatterDelimiter string `json:"frontmatterDelimiter"`
 	} `json:"exons"`
+	// RemovedAgentSurfaces feeds executor_removed and agentic_param_removed
+	// (AIgentFlow v2.833.0).
+	RemovedAgentSurfaces struct {
+		RemovedSchemes       []string `json:"removedSchemes"`
+		ParamScheme          string   `json:"paramScheme"`
+		AIParams             []string `json:"aiParams"`
+		FlowKeys             []string `json:"flowKeys"`
+		SchemeMessageFormat  string   `json:"schemeMessageFormat"`
+		ParamsMessageFormat  string   `json:"paramsMessageFormat"`
+		FlowKeyMessageFormat string   `json:"flowKeyMessageFormat"`
+		Suggestion           string   `json:"suggestion"`
+	} `json:"removedAgentSurfaces"`
 	// ExecutorConfigEnvScopes feeds executor_config_env_scope (v2.597.0).
 	ExecutorConfigEnvScopes struct {
 		ReferencePrefix string              `json:"referencePrefix"`
@@ -291,6 +301,11 @@ var (
 	// credential resolver may set; a step query naming one is refused.
 	serverOwnedQueryKeys set
 
+	// removedSchemes / removedAIParams are the executor schemes and ai:// query
+	// keys AIgentFlow no longer runs.
+	removedSchemes  set
+	removedAIParams set
+
 	// functionOperations are the function:// built-ins the reference registers.
 	functionOperations set
 
@@ -336,6 +351,8 @@ func init() {
 		panic(fmt.Sprintf("aifvalidate: embedded aigentflow-spec.json is not decodable: %v", err))
 	}
 	executorSchemes = newSet(spec.ExecutorSchemes)
+	removedSchemes = newSet(spec.RemovedAgentSurfaces.RemovedSchemes)
+	removedAIParams = newSet(spec.RemovedAgentSurfaces.AIParams)
 	dataTypes = newSet(spec.DataTypes)
 	errorStrategyActions = newSet(spec.ErrorStrategyActions)
 	retryOnCategories = newSet(spec.RetryOnCategories)

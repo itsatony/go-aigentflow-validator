@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.831.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.833.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -20,7 +20,43 @@ v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below), then
 v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning message (below), then
 v0.14.0, which narrows `potential_infinite_loop` (below), then
 v0.15.0, which adds the `atlas://` scheme and seven rules (below), then
-v0.16.0, which adds three rules and aligns the atlas rules with the reference (below).
+v0.16.0, which adds three rules and aligns the atlas rules with the reference (below), then
+v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` executors and the `ai://` agent-loop parameters and adds two errors for them (below).
+
+> **v0.17.0 — the agent surfaces are removed (BREAKING).** AIgentFlow v2.833.0 no longer runs
+> agents of its own: the `ai://<provider>/…` agent loop, the `exons://` scheme and the `agent://`
+> scheme are gone. Two new ERROR codes, both addressed to the step (`steps.<id>`, or
+> `steps.<id>.loop.steps[<index>]` for a loop sub-step) exactly as the atlas findings are, so a host
+> that merges several verdicts drops a finding only when code and field both match.
+> **`executor_removed`**: a step or loop sub-step whose executor scheme (the text before `://`,
+> whitespace-trimmed, case-insensitive) is `exons` or `agent`; and a top-level `exons_uploads` key
+> (field `exons_uploads`). A step on a removed scheme yields **only** this code: no
+> `unknown_executor_scheme` warning, no executor-URL-shape error. **`agentic_param_removed`**: an
+> `ai://` step or loop sub-step whose `query` carries any of `agentic`, `max_tool_turns`,
+> `parallel_tool_calls`, `mcp_server_url`, `tool_auth_token`, `tool_discovery`, `discoverable_tools`,
+> `enable_signals`, `deny_tools`, `max_tool_calls`, `require_confirmation`, `guardrails`,
+> `timeout_seconds`. A key is refused on **presence**: a null value and `agentic: false` included.
+> **One** finding per step, the keys sorted in the message. Only the `ai` scheme is judged. Not
+> refused: a templated executor (nothing can be said about what it renders to), `aiv://` (it keeps
+> its own `agentic` flag), `atlas://`, any other scheme, `tools` / `tool_choice` / `autofix` /
+> `content_parts` / `stream` on `ai://`, the flow-level `tool_discovery` / `discoverable_tools`,
+> and the `orchestrator:` block's own keys. The vocabulary lives in the spec block
+> `removedAgentSurfaces`.
+>
+> *Removals.* `exons` and `agent` leave `executorSchemes` (so a near-miss no longer suggests them),
+> the inline `.exons` rules for **steps** (`exons_attributes` on a step's `query.exons`) are gone, and
+> `spec.exons` keeps only the frontmatter delimiter. The rules that judge the **orchestrator's**
+> `.exons` document stay (the orchestrator is not removed in this release), and so does the
+> `exonsinspect` companion. The flow-level `exons_uploads` key stays in the known-key table so it
+> reports `executor_removed`, not `unknown_yaml_key`. `specVersion` is `2.833.0`.
+>
+> *Fixtures.* Deleted: `invalid-exons-step-attributes.yaml` and
+> `valid-exons-step-attributes-skipped.yaml` (both judged an `exons://` step's inline document).
+> Added, byte-identical to the JS port's: `invalid-executor-removed-{exons,agent,
+> scheme-case-whitespace,loop-substep,exons-uploads}.yaml`,
+> `invalid-agentic-param-removed{,-false,-null-value,-loop-substep}.yaml` and
+> `valid-removed-surfaces-not-refused.yaml` (the no-false-positive control). The JS port carries the
+> same two codes (0.27.0).
 
 > **v0.16.0 — three new rules, and the atlas rules brought in line with the reference.** `reserved_input_name`
 > (error): an input the flow declares under the top-level `query:` map, or as an `input_schema` field
@@ -198,7 +234,7 @@ v0.16.0, which adds three rules and aligns the atlas rules with the reference (b
 > call names its endpoint (step query `<provider>_base_url` non-empty, or
 > `executor_config.<provider>.base_url` non-empty). Field: `steps.<id>.executor`,
 > `steps.<id>.loop.steps.<sub-id>.executor` or `orchestrator.exons`; `step_id` is the top-level step
-> (none for the orchestrator). Not checked: `exons://`/`aiv://` steps, a `quality_gate` judge, a
+> (none for the orchestrator). Not checked: `aiv://` steps, a `quality_gate` judge, a
 > failover chain, a run-level `region` input. Message text follows the reference's but, as always,
 > is not the contract.
 >
@@ -786,7 +822,7 @@ grammar is a second opinion about it.
   the retired config block), `orchestrator_exons_no_provider`, `exons_resources_unhonoured` and
   `orchestrator_tool_withheld` are the reference's. What it cannot see: a document that does not
   parse for any other reason (including a spec the engine's own validation refuses, such as a
-  missing `description`), a tag that cannot render (`exons_attributes`, on steps and on the
+  missing `description`), a tag that cannot render (`exons_attributes`, on the
   orchestrator), and a frontmatter containing a tag (the engine executes it before decoding, so it
   is not read at all).
 

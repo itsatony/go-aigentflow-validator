@@ -86,36 +86,6 @@ type fakeInspector struct{ report ExonsReport }
 
 func (f fakeInspector) InspectExons(string) ExonsReport { return f.report }
 
-func TestInlineExonsSteps(t *testing.T) {
-	src := minimalFlow + `  loopy:
-    loop:
-      while: '{{ lt .loop.index 2 }}'
-      max_iterations: 2
-      steps:
-        - id: inner
-          executor: exons://agent/execute
-          query:
-            exons: 'doc'
-`
-	src = strings.Replace(src, "    executor: function://utils/log\n",
-		"    executor: exons://agent/execute\n    query:\n      exons: 'doc'\n    next:\n      default: loopy\n", 1)
-	engine := Options{Exons: fakeInspector{ExonsReport{Engine: true, IntakeErrors: []string{"line 1, column 1: bad"}}}}
-	result := ValidateFlow(src, engine)
-	got := fieldsWithCode(result.Errors, codeExonsAttributes)
-	want := []string{"steps.loopy.loop.steps[0].query.exons", "steps.only.query.exons"}
-	if !slices.Equal(got, want) {
-		t.Fatalf("fields %v, want %v", got, want)
-	}
-	if issue, _ := findByField(result.Errors, "steps.loopy.loop.steps[0].query.exons"); issue.StepID != "loopy.inner" {
-		t.Errorf("loop sub-step id %q, want loopy.inner", issue.StepID)
-	}
-	// The same report from something that is not an engine proves nothing.
-	notEngine := Options{Exons: fakeInspector{ExonsReport{IntakeErrors: []string{"x"}}}}
-	if got := fieldsWithCode(ValidateFlow(src, notEngine).Errors, codeExonsAttributes); len(got) != 0 {
-		t.Errorf("a non-engine report refused %v", got)
-	}
-}
-
 func TestOrchestratorExons(t *testing.T) {
 	t.Run("a parse error is the only refusal reported", func(t *testing.T) {
 		opts := Options{Exons: fakeInspector{ExonsReport{Engine: true, ParseError: "boom", SpecRead: true, HasSpec: true,
