@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-param-refused-capability
+version: '1.0.0'
+description: >-
+  A capability step may not set the four reserved keys.
+start: s
+steps:
+  s:
+    executor: atlas://capability/calc_evaluate
+    query:
+      args:
+        expression: 1+1
+      idempotency_key: fixed
+    next:
+      default: 'null'
+output:
+  - done

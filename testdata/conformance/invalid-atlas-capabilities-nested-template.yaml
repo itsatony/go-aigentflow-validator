@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-capabilities-nested-template
+version: '1.0.0'
+description: >-
+  A template nested anywhere inside capabilities is refused.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: hello
+      capabilities:
+        - name: calc_evaluate
+          options:
+            scope: '{{ .query.scope }}'
+    next:
+      default: 'null'
+output:
+  - done

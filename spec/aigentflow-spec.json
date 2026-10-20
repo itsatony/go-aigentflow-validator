@@ -502,12 +502,12 @@
     }
   },
   "atlasExecutor": {
-    "$comment": "atlas://<provider>/<resource>: calls into the Atlas platform. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string in query.capabilities may not contain templateActionOpen, while prompt, inputs and capability args may. A message format takes the quoted step id first.",
+    "$comment": "atlas://<provider>/<resource>: calls into the Atlas platform. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string anywhere in query.capabilities and query.model may not contain templateActionOpen, while prompt, inputs and capability args may. agent, prompt and prompt_template count as present only when they are non-empty strings after trimming whitespace. A message format takes the quoted step id first. A URL the shared executor-URL shape refuses (a dot or colon in a reference, say) is still judged here, split at the first slash after atlas://.",
     "scheme": "atlas",
     "providerAgent": "agent",
     "providerCapability": "capability",
     "agentResource": "run",
-    "capabilityRefPattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+    "capabilityRefPattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
     "operationUnknown": {
       "code": "atlas_operation_unknown",
       "messageFormat": "step %s uses %s, which is not an Atlas operation. The providers are agent (resource run) and capability (resource: a capability reference).",
@@ -515,7 +515,7 @@
     },
     "agentMissing": {
       "code": "atlas_agent_missing",
-      "messageFormat": "step %s runs an Atlas agent but query.agent is missing or empty.",
+      "messageFormat": "step %s runs an Atlas agent but query.agent is missing, empty or not a string.",
       "suggestion": "Set query.agent to the agent to run, written out as a literal such as @acme/reporter."
     },
     "agentNotLiteral": {
@@ -541,8 +541,46 @@
     "capabilityRefInvalid": {
       "code": "atlas_capability_ref_invalid",
       "messageFormat": "step %s uses atlas://capability/%s, which is not a valid capability reference.",
-      "suggestion": "A capability reference starts with a letter or digit and continues with letters, digits and _ . : - up to 128 characters in all."
+      "suggestion": "A capability reference starts with a letter or digit and continues with letters, digits, _ and - up to 128 characters in all."
+    },
+    "modelNotLiteral": {
+      "code": "atlas_model_not_literal",
+      "messageFormat": "step %s computes a value of query.model from a template. The provider, model and reasoning_effort must be fixed literals, never derived from input.",
+      "suggestion": "Write the model choice out as literals. Data may go into the prompt or the inputs instead."
+    },
+    "paramRefused": {
+      "code": "atlas_param_refused",
+      "messageFormat": "step %s sets %s under query. Atlas decides these itself, so a step may not set them.",
+      "suggestion": "Remove these keys from the query.",
+      "agentKeys": [
+        "api_key",
+        "attribution",
+        "base_url",
+        "host",
+        "idempotency_key",
+        "org_id",
+        "person",
+        "untrusted_input",
+        "untrusted_input_override",
+        "url",
+        "user_id"
+      ],
+      "capabilityKeys": [
+        "attribution",
+        "idempotency_key",
+        "untrusted_input",
+        "untrusted_input_override"
+      ]
     }
+  },
+  "reservedInputNames": {
+    "$comment": "reserved_input_name (ERROR): an input the flow declares under the top-level query: map, or as an input_schema field name, that starts with prefix. The platform keeps that namespace for values it writes itself (the acting person, the credential manifest, the untrusted-input marker); a value or default written under such a name is never delivered. Every name the platform reserves today starts with the prefix. Matching is exact and case-sensitive: one leading underscore is an ordinary name. Findings carry no step id. queryFieldFormat takes the input name; schemaFieldFormat takes the field name as written (a non-string name is skipped). Query names are reported sorted, then schema fields in file order.",
+    "prefix": "__",
+    "code": "reserved_input_name",
+    "messageFormat": "the input %s starts with two underscores. That namespace belongs to the platform (the acting person, the credential manifest, the untrusted-input marker): a flow cannot declare an input there, and a value or default written under such a name is never delivered.",
+    "suggestion": "Rename the input so it does not start with \"__\".",
+    "queryFieldFormat": "query.%s",
+    "schemaFieldFormat": "input_schema.fields.%s"
   },
   "flowDataReservedKeys": {
     "$comment": "flow_data_key_reserved (ERROR, no loop demotion): a key of the top-level data: map (the flow's pre-populated state) that names engine state. data: is seeded into the mission's .data namespace, where the engine keeps its own bookkeeping, so such a key would forge internal state. A key is reserved when it equals an entry of exact (case-sensitive) or starts with a prefix entry; the first match supplies the reason text. Field format: fieldFormat with the key. Reference: FlowDataKeyReservation / validateFlowDataKeysAreNotReserved (AIgentFlow v2.828.0). Order of exact and prefixes is the reference's lookup order.",

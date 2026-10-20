@@ -90,6 +90,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateOrchestratorCampaign(flow, iss, opts)
 	validateCredentialBindings(flow, iss)
 	validateInputSchema(flow, iss)
+	validateReservedInputNames(flow, iss)
 	validateOutputSchemas(flow, iss)
 	validateQualityGates(flow, iss)
 	validateProcessingOperations(flow, iss)

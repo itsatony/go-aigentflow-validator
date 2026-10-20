@@ -135,6 +135,8 @@ type rawSpec struct {
 	// AtlasExecutor feeds the atlas:// rules (providers, resources and the seven
 	// finding texts).
 	AtlasExecutor atlasSpec `json:"atlasExecutor"`
+	// ReservedInputNames feeds reserved_input_name.
+	ReservedInputNames reservedInputSpec `json:"reservedInputNames"`
 	// CredentialEndpointPairing feeds credential_endpoint_unpaired (AIgentFlow
 	// DC-FORGE-231 and DC-FORGE-233).
 	CredentialEndpointPairing credentialEndpointSpec `json:"credentialEndpointPairing"`
@@ -414,4 +416,20 @@ type atlasSpec struct {
 	PromptMissing          atlasRule `json:"promptMissing"`
 	PromptBoth             atlasRule `json:"promptBoth"`
 	CapabilityRefInvalid   atlasRule `json:"capabilityRefInvalid"`
+	ModelNotLiteral        atlasRule `json:"modelNotLiteral"`
+	ParamRefused           struct {
+		atlasRule
+		AgentKeys      []string `json:"agentKeys"`
+		CapabilityKeys []string `json:"capabilityKeys"`
+	} `json:"paramRefused"`
+}
+
+// reservedInputSpec is the spec's reservedInputNames block.
+type reservedInputSpec struct {
+	Prefix            string `json:"prefix"`
+	Code              string `json:"code"`
+	MessageFormat     string `json:"messageFormat"`
+	Suggestion        string `json:"suggestion"`
+	QueryFieldFormat  string `json:"queryFieldFormat"`
+	SchemaFieldFormat string `json:"schemaFieldFormat"`
 }

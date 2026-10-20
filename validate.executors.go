@@ -187,19 +187,25 @@ func checkFunctionOperation(executor, field, stepID string, iss *issues) {
 	})
 }
 
-// checkAtlasStep applies the atlas:// rules. It runs only for an untemplated,
-// parsable atlas:// URL (the scheme match is exact). The URL says which Atlas
-// operation the step performs; the query is checked against what that operation
-// needs. field is the step itself, as the findings are about the step as a whole.
+// checkAtlasStep applies the atlas:// rules. It runs only for an untemplated
+// atlas:// URL (the scheme match is exact and case-sensitive). The URL says which
+// Atlas operation the step performs; the query is checked against what that
+// operation needs. field is the step itself, as the findings are about the step
+// as a whole.
+//
+// The URL is split at the first slash after "atlas://" rather than through the
+// shared executor-URL shape, so a reference the shape refuses (a dot or colon in
+// a capability reference) is still judged by the atlas rules; the shape's own
+// invalid_executor_url finding is reported separately, as before.
 func checkAtlasStep(executor string, query any, field, stepID string, iss *issues) {
 	if strings.Contains(executor, templateOpenDelim) {
 		return
 	}
-	m := executorURLRe.FindStringSubmatch(executor)
-	if m == nil || m[1] != spec.AtlasExecutor.Scheme {
+	prefix := spec.AtlasExecutor.Scheme + "://"
+	if !strings.HasPrefix(executor, prefix) {
 		return
 	}
-	provider, resource := m[2], m[3]
+	provider, resource, _ := strings.Cut(strings.TrimPrefix(executor, prefix), "/")
 	quoted := strconv.Quote(stepID)
 	report := func(rule atlasRule, args ...any) {
 		iss.error(Issue{
@@ -210,14 +216,16 @@ func checkAtlasStep(executor string, query any, field, stepID string, iss *issue
 	}
 	q, _ := asRecord(query)
 
+	refusedKeys := spec.AtlasExecutor.ParamRefused.CapabilityKeys
 	switch {
 	case provider == spec.AtlasExecutor.ProviderCapability:
 		if !atlasCapabilityRefRe.MatchString(resource) {
 			report(spec.AtlasExecutor.CapabilityRefInvalid, resource)
 		}
 	case provider == spec.AtlasExecutor.ProviderAgent && resource == spec.AtlasExecutor.AgentResource:
+		refusedKeys = spec.AtlasExecutor.ParamRefused.AgentKeys
 		agent, isStr := getString(q, "agent")
-		if !isStr || agent == "" {
+		if !isStr || strings.TrimSpace(agent) == "" {
 			report(spec.AtlasExecutor.AgentMissing)
 		} else if strings.Contains(agent, templateOpenDelim) {
 			report(spec.AtlasExecutor.AgentNotLiteral)
@@ -229,28 +237,61 @@ func checkAtlasStep(executor string, query any, field, stepID string, iss *issue
 		} else if hasPrompt && hasTemplate {
 			report(spec.AtlasExecutor.PromptBoth)
 		}
+		if anyTemplate(get(q, "model")) {
+			report(spec.AtlasExecutor.ModelNotLiteral)
+		}
 	default:
 		report(spec.AtlasExecutor.OperationUnknown, executor)
 		return
 	}
 
 	// A templated capability entry is refused wherever the list appears on an
-	// atlas:// step.
-	caps, _ := getSlice(q, "capabilities")
-	for _, c := range caps {
-		if s, ok := asString(c); ok && strings.Contains(s, templateOpenDelim) {
-			report(spec.AtlasExecutor.CapabilitiesNotLiteral)
-			break
+	// atlas:// step, nested values included.
+	if anyTemplate(get(q, "capabilities")) {
+		report(spec.AtlasExecutor.CapabilitiesNotLiteral)
+	}
+
+	// One finding per step, listing every key the platform owns that it carries.
+	var refused []string
+	for _, key := range refusedKeys {
+		if has(q, key) {
+			refused = append(refused, key)
 		}
+	}
+	if len(refused) > 0 {
+		sort.Strings(refused)
+		report(spec.AtlasExecutor.ParamRefused.atlasRule, strings.Join(refused, ", "))
 	}
 }
 
-// atlasTextPresent reports a prompt-like value that is set: not absent, null or
-// the empty string.
+// anyTemplate reports whether a string, or any string nested in a list or map,
+// contains a template action.
+func anyTemplate(v any) bool {
+	switch t := v.(type) {
+	case string:
+		return strings.Contains(t, templateOpenDelim)
+	case []any:
+		for _, item := range t {
+			if anyTemplate(item) {
+				return true
+			}
+		}
+	case map[string]any:
+		for _, item := range t {
+			if anyTemplate(item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// atlasTextPresent reports a value that is set: not absent, null or a string
+// that is empty after trimming whitespace. A non-string value counts as present.
 func atlasTextPresent(v any) bool {
 	if v == nil {
 		return false
 	}
 	s, isStr := v.(string)
-	return !isStr || s != ""
+	return !isStr || strings.TrimSpace(s) != ""
 }

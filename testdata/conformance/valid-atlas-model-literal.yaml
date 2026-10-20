@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-model-literal
+version: '1.0.0'
+description: >-
+  A literal model object is fine, and so is a template in the prompt.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: 'Summarise {{ .query.topic }}.'
+      model:
+        provider: anthropic
+        model: claude-sonnet-4-5
+        reasoning_effort: low
+    next:
+      default: 'null'
+output:
+  - done

@@ -47,7 +47,7 @@ func TestAtlasFindingFieldAndMessage(t *testing.T) {
 	if got.Field != "steps.s" || got.StepID != "s" {
 		t.Errorf("field/step = %q / %q", got.Field, got.StepID)
 	}
-	if want := `step "s" runs an Atlas agent but query.agent is missing or empty.`; got.Message != want {
+	if want := `step "s" runs an Atlas agent but query.agent is missing, empty or not a string.`; got.Message != want {
 		t.Errorf("message = %q", got.Message)
 	}
 }

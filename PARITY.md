@@ -19,7 +19,44 @@ v0.11.0 (AIgentFlow v2.827.0), which adds a scheme, a flow key and one rule (bel
 v0.12.0 (AIgentFlow v2.828.0), which adds one rule (below), then
 v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning message (below), then
 v0.14.0, which narrows `potential_infinite_loop` (below), then
-v0.15.0, which adds the `atlas://` scheme and seven rules (below).
+v0.15.0, which adds the `atlas://` scheme and seven rules (below), then
+v0.16.0, which adds three rules and aligns the atlas rules with the reference (below).
+
+> **v0.16.0 — three new rules, and the atlas rules brought in line with the reference.** `reserved_input_name`
+> (error): an input the flow declares under the top-level `query:` map, or as an `input_schema` field
+> name, that starts with two underscores. That namespace belongs to the platform (the acting person,
+> the credential manifest, the untrusted-input marker), and a value or default written under such a
+> name is never delivered. Every name the platform reserves today starts with `__`; one leading
+> underscore (`_private`) or an inner `__` (`a__b`) is an ordinary name. Fields: `query.<name>` (names
+> sorted) and `input_schema.fields.<name>` (file order), no step id. The schema field is addressed by
+> **name**, not by index like this port's other `input_schema` findings, because the reference reports
+> it that way and a host that merges several verdicts drops a finding only when code and field both
+> match. `atlas_model_not_literal` (error): an `atlas://agent/run` step whose `query.model` holds a
+> string containing `{{` anywhere (provider, model, reasoning_effort, or any nested value). The model
+> choice is fixed in the flow, never computed from input. `atlas_param_refused` (error): **one** finding
+> per atlas step listing, sorted, the `query` keys the platform owns. An agent run refuses `api_key`,
+> `attribution`, `base_url`, `host`, `idempotency_key`, `org_id`, `person`, `untrusted_input`,
+> `untrusted_input_override`, `url`, `user_id`; a capability step refuses only `attribution`,
+> `idempotency_key`, `untrusted_input`, `untrusted_input_override` (its query is the tool's own
+> arguments, so a `url` is legitimate there). The key sets live in the spec block
+> `atlasExecutor.paramRefused`; the reserved-name prefix in the new top-level block
+> `reservedInputNames`.
+>
+> *Alignments (the reference is authoritative; the old behaviour was looser).* `agent`, `prompt` and
+> `prompt_template` are present only when they are non-empty strings **after trimming whitespace**: an
+> `agent` that is not a string (`42`) is missing, `prompt: "   "` is absent, and `prompt: ""` next to a
+> `prompt_template` is **not** `atlas_prompt_both`. The `{{` check on `capabilities` is deep (any
+> string entry or nested string) and applies to every `atlas://` step with a valid operation. The
+> capability reference pattern is now `^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$` (a dot or colon is refused).
+> An `atlas://` URL that the shared executor-URL shape refuses is no longer skipped by the atlas
+> rules: it is split at the first slash after `atlas://` and judged (a reference with a dot is
+> `atlas_capability_ref_invalid`, `atlas://agent/run/extra` is `atlas_operation_unknown`); the shape's own
+> `invalid_executor_url` finding is still reported beside it. The scheme match stays exact. The
+> `atlas_agent_missing` message now ends "missing, empty or not a string". `specVersion` is unchanged
+> (`2.831.0`). Gates: thirteen new shared fixtures (one invalid per code, the valid ones forbid every
+> atlas code, `reserved_input_name` and `unknown_executor_scheme`), byte-identical with the JavaScript port, and
+> `validate_v0160_test.go`. On the 227 bundled example flows plus the six atlas examples, both ports report zero
+> new findings and agree finding for finding (0 errors, 36 warnings).
 
 > **v0.15.0 — the `atlas://` executor scheme and seven rules.** `atlas` becomes a known scheme (no
 > `unknown_executor_scheme` warning). The URL form is `atlas://<provider>/<resource>`: provider
