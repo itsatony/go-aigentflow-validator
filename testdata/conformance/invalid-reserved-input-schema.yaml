@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: invalid-reserved-input-schema
+version: '1.0.0'
+description: >-
+  An input_schema field whose name starts with two underscores belongs to the platform.
+input_schema:
+  version: 1
+  fields:
+    - name: __flow_author
+      type: string
+      label: Author
+start: s
+steps:
+  s:
+    executor: function://utils/log
+    next:
+      default: 'null'
+output:
+  - done

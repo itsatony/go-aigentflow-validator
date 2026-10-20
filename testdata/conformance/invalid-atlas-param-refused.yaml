@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-param-refused
+version: '1.0.0'
+description: >-
+  An atlas agent step may not set the keys Atlas decides itself; one finding lists them all.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: hello
+      url: https://example.com
+      api_key: abc
+      attribution: me
+    next:
+      default: 'null'
+output:
+  - done

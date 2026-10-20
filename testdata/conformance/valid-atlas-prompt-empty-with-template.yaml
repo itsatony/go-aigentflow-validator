@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-prompt-empty-with-template
+version: '1.0.0'
+description: >-
+  An empty prompt next to a prompt_template is not 'both'.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: ''
+      prompt_template: 'hello {{ .query.name }}'
+    next:
+      default: 'null'
+output:
+  - done

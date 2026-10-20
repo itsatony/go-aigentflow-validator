@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: valid-reserved-input-names-ok
+version: '1.0.0'
+description: >-
+  Ordinary input names are fine: a plain name, a single leading underscore, and two underscores inside a name.
+query:
+  topic:
+    type: string
+  _private:
+    type: string
+  a__b:
+    type: string
+input_schema:
+  version: 1
+  fields:
+    - name: note
+      type: string
+      label: Note
+    - name: city__code
+      type: string
+      label: City code
+start: s
+steps:
+  s:
+    executor: function://utils/log
+    next:
+      default: 'null'
+output:
+  - done

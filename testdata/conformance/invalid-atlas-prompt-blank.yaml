@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-prompt-blank
+version: '1.0.0'
+description: >-
+  A prompt of only whitespace counts as absent.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: '   '
+    next:
+      default: 'null'
+output:
+  - done

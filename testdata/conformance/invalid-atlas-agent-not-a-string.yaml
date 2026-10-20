@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-agent-not-a-string
+version: '1.0.0'
+description: >-
+  An agent that is not a string counts as missing.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: 42
+      prompt: hello
+    next:
+      default: 'null'
+output:
+  - done

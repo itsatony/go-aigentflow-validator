@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: invalid-reserved-input-query
+version: '1.0.0'
+description: >-
+  An input declared under query: that starts with two underscores belongs to the platform.
+query:
+  __acting_person:
+    type: string
+    default: someone
+  topic:
+    type: string
+start: s
+steps:
+  s:
+    executor: function://utils/log
+    next:
+      default: 'null'
+output:
+  - done

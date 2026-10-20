@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-capability-url-arg
+version: '1.0.0'
+description: >-
+  A capability's own arguments may include a url or a host; only four keys are reserved on a capability step.
+start: s
+steps:
+  s:
+    executor: atlas://capability/web_fetch
+    query:
+      url: https://example.com
+      host: example.com
+    next:
+      default: 'null'
+output:
+  - done
