@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.837.0",
+  "specVersion": "2.838.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -94,48 +94,6 @@
     "maxConstraintValue": 1048576,
     "maxInputKeyCount": 256,
     "maxStringInputLength": 1048576
-  },
-  "orchestrator": {
-    "modes": ["monitor", "owner"],
-    "triggers": [
-      "step_completed",
-      "step_failed",
-      "mission_started",
-      "mission_completed",
-      "timer",
-      "request_turn",
-      "mission_recovered",
-      "human_response",
-      "human_input"
-    ],
-    "tools": [
-      "aif_step_cancel",
-      "aif_step_start",
-      "aif_step_inspect",
-      "aif_conversation_manage",
-      "aif_request_turn",
-      "aif_checkpoint_create",
-      "aif_mission_complete",
-      "aif_mission_fail",
-      "aif_ask_human",
-      "aif_flow_list",
-      "aif_mission_reflect",
-      "aif_memory_plan",
-      "aif_memory_record",
-      "aif_memory_recall",
-      "aif_memory_reflect",
-      "aif_tool_discover",
-      "aif_tool_execute",
-      "aif_trove_upload",
-      "aif_trove_download",
-      "aif_trove_list",
-      "aif_trove_delete",
-      "aif_e2b_sandbox_create",
-      "aif_e2b_sandbox_execute",
-      "aif_e2b_sandbox_files",
-      "aif_e2b_desktop_screenshot",
-      "aif_e2b_desktop_interact"
-    ]
   },
   "expressionFunctions": {
     "namePrefix": "fn_",
@@ -289,23 +247,12 @@
     "fn_uniq",
     "fn_urldecode"
   ],
-  "orchestratorToolAllow": {
-    "$comment": "An orchestrator tool is offered only if it passes BOTH orchestrator.tools (empty = every tool) AND the inline exons definition's tools.allow (absent = no narrowing). Only the lifecycle tools are exempt from tools.allow. A removed signal or campaign tool name (removedSignalSurfaces.tools, removedCampaignSurfaces.tools) is never reported as withheld: it is refused as signal_removed / campaign_removed. Reference: validateOrchestratorToolAllowWithholds (v2.760.0, signal and campaign arms removed in 2.834.0 / 2.836.0).",
-    "warningField": "orchestrator.exons",
-    "askHumanTool": "aif_ask_human",
-    "lifecycleTools": [
-      "aif_mission_complete",
-      "aif_mission_fail",
-      "aif_request_turn"
-    ]
-  },
-  "exons": {
-    "$comment": "The orchestrator's inline .exons document is still judged at the save door (orchestrator stays). A document opens with frontmatterDelimiter. Steps no longer carry inline .exons documents: the exons:// executor was removed (see removedAgentSurfaces).",
-    "frontmatterDelimiter": "---"
-  },
   "removedAgentSurfaces": {
-    "$comment": "AIgentFlow no longer runs agents of its own. executor_removed (ERROR): a step or loop sub-step whose executor scheme (text before '://', whitespace-trimmed, lower-cased) is in removedSchemes, or a top-level key in flowKeys (field = the key). agentic_param_removed (ERROR): an ai:// step or loop sub-step whose query carries ANY key of aiParams, on presence alone (null and false included); ONE finding per step, the keys sorted and joined by ', '. Only the paramScheme scheme is checked for params. A templated executor (containing templateActionOpen) is not judged. A step on a removed scheme yields ONLY executor_removed: no unknown_executor_scheme, executor-URL shape or inline-exons finding. Fields: steps.<id> and steps.<id>.loop.steps[<index>]. Not refused: aiv://, nexus:// (alias atlas://), ai:// tools / tool_choice / autofix / content_parts / stream, flow-level tool_discovery / discoverable_tools, the orchestrator block's own keys. Messages fill %s (the step id as written in the finding, then the scheme or the key list).",
-    "removedSchemes": ["exons", "agent"],
+    "$comment": "AIgentFlow no longer runs agents of its own. executor_removed (ERROR): a step or loop sub-step whose executor scheme (text before '://', whitespace-trimmed, lower-cased) is in removedSchemes, or a top-level key in flowKeys (field = the key). agentic_param_removed (ERROR): an ai:// step or loop sub-step whose query carries ANY key of aiParams, on presence alone (null and false included); ONE finding per step, the keys sorted and joined by ', '. Only the paramScheme scheme is checked for params. A templated executor (containing templateActionOpen) is not judged. A step on a removed scheme yields ONLY executor_removed: no unknown_executor_scheme, executor-URL shape or inline-exons finding. Fields: steps.<id> and steps.<id>.loop.steps[<index>]. Not refused here: aiv://, nexus:// (alias atlas://), ai:// tools / tool_choice / autofix / content_parts / stream. The flow-level tool_discovery / discoverable_tools and the orchestrator block are orchestrator_removed (removedOrchestratorSurfaces). Messages fill %s (the step id as written in the finding, then the scheme or the key list).",
+    "removedSchemes": [
+      "exons",
+      "agent"
+    ],
     "paramScheme": "ai",
     "aiParams": [
       "agentic",
@@ -322,7 +269,9 @@
       "tool_auth_token",
       "tool_discovery"
     ],
-    "flowKeys": ["exons_uploads"],
+    "flowKeys": [
+      "exons_uploads"
+    ],
     "executorRemovedCode": "executor_removed",
     "agenticParamRemovedCode": "agentic_param_removed",
     "schemeMessageFormat": "step %q uses %s://, which AIgentFlow no longer runs: its own agent chains were removed",
@@ -331,53 +280,42 @@
     "suggestion": "Rebuild the step: a tool-using agent becomes nexus://agent/run (agent: \"@org/name\", prompt, capabilities); one tool becomes nexus://capability/<ref>; a plain prompt becomes ai://<provider>/chat or a prompt-only aiv://<org>/<name>. A nexus:// step acts as the person responsible for the run: who started it, who last saved its schedule or webhook trigger, or a flow:// child's parent. What cannot be converted: a run with no person (one started by a service or key that names nobody; share links no longer exist), and a step that needs an inline .exons spec, an arbitrary MCP server URL or signals. For those, start the flow from a person, a schedule or a trigger, or use a routine in Nexus"
   },
   "removedSignalSurfaces": {
-    "$comment": "AIgentFlow 2.834.0 removed agent signals and dynamic flow modification (DFM). signal_removed (ERROR): (a) orchestrator.enable_signals: true (field orchestrator.enable_signals); (b) one of tools named in orchestrator.tools, orchestrator.deny_tools, orchestrator.require_approval_for (field = that list) or in the orchestrator .exons definition's tools.allow (field orchestrator.exons) - ONE finding per list, the removed names in list order, each once; (c) stepKey on a step or loop sub-step whose scheme is stepKeyScheme (field steps.<id> / steps.<id>.loop.steps[<index>]). flow_modification_removed (ERROR): (a) orchestrator.triggers holds a trigger of a type in triggers (ONE finding, field orchestrator.triggers); (b) flowModificationStepKey in a step's or loop sub-step's query (any scheme). Step keys are judged on map PRESENCE (null and false included). Steps skipped: templated executors, removed schemes (removedAgentSurfaces.removedSchemes) and the schemes in stepSkipSchemes (a flow:// query carries the CHILD's inputs). removed_key_ignored (WARNING, never an error): checkpoint.pre_dfm with any non-null value, and orchestrator.enable_signals: false. A YAML null on either block key is absent. Tool and trigger names match exactly and case-sensitively. The removed names left the orchestrator tool and trigger registries, but they are TOLERATED by the unknown-name checks, and enable_signals / pre_dfm stay in knownKeys, so the only finding is the new code. Order: the orchestrator block (enable_signals, then the lists, then triggers), then steps by id with loop sub-steps after their parent. Reference: aigentflow.removed.signalsurfaces.go.",
+    "$comment": "AIgentFlow 2.834.0 removed agent signals and dynamic flow modification (DFM). Since 2.838.0 the orchestrator block is refused whole (removedOrchestratorSurfaces), so nothing inside it is judged here: no finding for its enable_signals, its tool lists or its triggers. signal_removed (ERROR): stepKey on a step or loop sub-step whose scheme is stepKeyScheme (field steps.<id> / steps.<id>.loop.steps[<index>]). flow_modification_removed (ERROR): flowModificationStepKey in a step's or loop sub-step's query (any scheme). Step keys are judged on map PRESENCE (null and false included). Steps skipped: templated executors, removed schemes (removedAgentSurfaces.removedSchemes) and the schemes in stepSkipSchemes (a flow:// query carries the CHILD's inputs). Per step at most one finding of each code. removed_key_ignored (WARNING, never an error): checkpoint.pre_dfm with any non-null value (AIgentFlow wrote it into stored flows itself); pre_dfm stays in knownKeys. Order: steps by id with loop sub-steps after their parent. Reference: aigentflow.removed.signalsurfaces.go.",
     "signalRemovedCode": "signal_removed",
     "flowModificationRemovedCode": "flow_modification_removed",
     "removedKeyIgnoredCode": "removed_key_ignored",
-    "tools": [
-      "aif_signal_complete",
-      "aif_signal_need_human",
-      "aif_signal_delegate",
-      "aif_signal_need_tool",
-      "aif_signal_modify_flow"
-    ],
-    "triggers": [
-      "dfm_suggestion"
-    ],
     "stepKey": "enable_signals",
     "stepKeyScheme": "aiv",
     "flowModificationStepKey": "flow_modification_allowed",
     "stepSkipSchemes": [
       "flow"
     ],
-    "enableSignalsMessage": "the orchestrator sets enable_signals: true: AIgentFlow's agent signals were removed in 2.834.0, so the tools it asks for no longer exist",
-    "toolNamesMessageFormat": "%s names %s: AIgentFlow's agent signal tools were removed in 2.834.0",
     "stepKeyMessageFormat": "step %q sets enable_signals: AIgentFlow's agent signals were removed in 2.834.0, so the parameter no longer exists",
-    "triggersMessage": "orchestrator.triggers names dfm_suggestion: dynamic flow modification was removed in 2.834.0, so nothing raises that trigger",
     "flowModificationStepMessageFormat": "step %q sets flow_modification_allowed: dynamic flow modification was removed in 2.834.0",
     "ignoredKeyMessageFormat": "%s is ignored: it configured AIgentFlow's agent signals / dynamic flow modification, removed in 2.834.0. AIgentFlow may have written this key into the flow itself; the flow runs as if it were absent",
     "ignoredKeySuggestion": "Remove the key; nothing reads it",
-    "suggestion": "Signals and dynamic flow modification were removed in 2.834.0. aif_signal_need_human: add an async://human/<operation> step where the person must answer (inside a nexus://agent/run step, the atlas approval wait asks the person). aif_signal_delegate: run the other work as a flow:// step, or route with next: conditions. aif_signal_complete: an orchestrator ends the mission with aif_mission_complete. aif_signal_need_tool: no replacement; give the agent the capability in atlas. aif_signal_modify_flow, dfm_suggestion and flow_modification_allowed: no replacement; declare every step the flow may run and choose between them with next: conditions"
+    "suggestion": "Signals and dynamic flow modification were removed in 2.834.0. enable_signals: delete it; a person's answer is an async://human/<operation> step (inside a nexus://agent/run step, the Nexus approval wait asks the person). flow_modification_allowed: no replacement; declare every step the flow may run and choose between them with next: conditions"
   },
   "removedCampaignSurfaces": {
-    "$comment": "AIgentFlow 2.836.0 removed campaigns. campaign_removed (ERROR): (a) the flow-root key flowKey with ANY non-null value (field campaign; the block is refused whole and nothing inside it is judged: no campaign rule, retired-key or unknown-key finding); (b) one of tools in orchestrator.tools, orchestrator.deny_tools, orchestrator.require_approval_for (field = the list) or the orchestrator .exons definition's tools.allow (field orchestrator.exons) - ONE finding per list, names in list order, each once; (c) orchestrator.triggers holding a trigger of a type in triggers (ONE finding, field orchestrator.triggers, the removed types in order, each once). Steps are never judged. Names match exactly and case-sensitively, and are tolerated by the unknown-name checks. There is no removed_key_ignored warning for campaigns. Order: block, then the lists (tools, deny_tools, require_approval_for, tools.allow), then triggers. Reference: aigentflow.removed.campaignsurfaces.go.",
+    "$comment": "AIgentFlow 2.836.0 removed campaigns. campaign_removed (ERROR): the flow-root key flowKey with ANY non-null value (a mapping of any shape, {} included, or a scalar or list; field campaign). The block is refused whole and nothing inside it is judged: no campaign rule, retired-key, type or unknown-key finding. Steps are never judged. There is no removed_key_ignored warning for campaigns. (The tool-name and trigger arms went with the orchestrator block in 2.838.0.) Reference: aigentflow.removed.campaignsurfaces.go.",
     "code": "campaign_removed",
     "flowKey": "campaign",
-    "tools": [
-      "aif_campaign_spawn",
-      "aif_campaign_status",
-      "aif_campaign_results",
-      "aif_campaign_cancel"
-    ],
-    "triggers": [
-      "campaign_child_completed",
-      "campaign_child_failed"
-    ],
     "blockMessage": "the flow declares a campaign: block: campaigns were removed in 2.836.0, so nothing would spawn or track its child missions",
-    "toolNamesMessageFormat": "%s names %s: AIgentFlow's campaign tools were removed in 2.836.0",
-    "triggersMessageFormat": "orchestrator.triggers names %s: campaigns were removed in 2.836.0, so no child mission raises that trigger",
-    "suggestion": "Campaigns were removed in 2.836.0. Fan the work out inside one flow instead: a for_each step whose executor is flow://stored/<flow_id> runs the child flow once per item and hands the next step every result (.data.<step>, in item order), so a coordinator -> workers -> synthesiser campaign becomes a plan step -> a for_each over flow:// -> a synthesis step (a fixed set of different workers is next: parallel: with a rendezvous). When each worker is an agent, make the worker a nexus://agent/run step (the for_each step itself, or a step of the child flow): it runs as the person responsible for the run, and a flow:// child inherits its parent's. Delete the campaign: block, the aif_campaign_* tool names and the campaign_child_* triggers"
+    "suggestion": "Campaigns were removed in 2.836.0. Fan the work out inside one flow instead: a for_each step whose executor is flow://stored/<flow_id> runs the child flow once per item and hands the next step every result (.data.<step>, in item order), so a coordinator -> workers -> synthesiser campaign becomes a plan step -> a for_each over flow:// -> a synthesis step (a fixed set of different workers is next: parallel: with a rendezvous). When each worker is an agent, make the worker a nexus://agent/run step (the for_each step itself, or a step of the child flow): it runs as the person responsible for the run, and a flow:// child inherits its parent's. Delete the campaign: block"
+  },
+  "removedOrchestratorSurfaces": {
+    "$comment": "AIgentFlow 2.838.0 removed the orchestrator. orchestrator_removed (ERROR): (a) the flow-root key blockKey with ANY non-null value (a mapping of any shape, {} included, or a scalar or list; field orchestrator). The block is refused WHOLE and nothing inside it is judged: no exons, trigger, tool, mode, region, question-deadline, signal, campaign, type or unknown-key finding; (b) each flow-root key in discoveryKeys with any non-null value (an empty string and an empty list included; field = the key); (c) a top-level step whose next.default, or any next.conditions[].goto, is exactly nextMarker (case-sensitive): ONE finding per step, field steps.<id>, with the step id. A YAML null is absent. Loop sub-steps are not judged here (their next refuses the marker already), step query keys are never judged here (on ai:// tool_discovery / discoverable_tools are agentic_param_removed), and the step id orchestrator stays reserved. The three keys stay in knownKeys typed any, so none is an unknown key. Order: block, then discoveryKeys in order, then the steps by id. blockMessage is verbatim; flowKeyMessageFormat fills %q with the key; nextMessageFormat fills %q with the step id. Reference: aigentflow.removed.orchestratorsurfaces.go.",
+    "code": "orchestrator_removed",
+    "blockKey": "orchestrator",
+    "discoveryKeys": [
+      "tool_discovery",
+      "discoverable_tools"
+    ],
+    "nextMarker": "orchestrator",
+    "blockMessage": "the flow declares an orchestrator: block: AIgentFlow's orchestrator was removed in 2.838.0, so nothing would run its agent, its triggers or its tools",
+    "flowKeyMessageFormat": "the flow-level key %q configured the orchestrator's tool discovery, which was removed in 2.838.0, and is no longer read",
+    "nextMessageFormat": "step %q routes next to orchestrator: the orchestrator was removed in 2.838.0, so nothing would receive the hand-over",
+    "suggestion": "AIgentFlow no longer runs orchestrator agents (removed in 2.838.0): a coordinating agent is a nexus://agent/run step (the agent plans and calls its tools in Nexus, as the person responsible for the run); fan-out is a for_each over flow://stored/<flow_id> or nexus://agent/run; a human decision is an async://human/<operation> step, or the Nexus approval wait inside an agent step. Delete the orchestrator: block, route the steps that said next: orchestrator to a real step (or next: null), and delete the flow-level tool_discovery / discoverable_tools (give the agent its capabilities in Nexus)"
   },
   "executorConfigEnvScopes": {
     "$comment": "executor_config may expand only the environment variables of the key it is written under. A value is a reference when it starts with referencePrefix and ends with referenceSuffix around a non-empty name. Checked fields: fields, plus every string value of extra (prefixed extraFieldPrefix in the message). A key absent from scopes has an EMPTY scope and refuses every reference. scopes is the reference's executorConfigEnvScope evaluated for every key with a non-empty scope. Reference: ValidateExecutorConfigEnvScopes (v2.597.0).",
@@ -639,7 +577,7 @@
     "exact": {
       "org_id": "the mission's organization, set by the engine for Thalamus/Engram calls",
       "memory": "the memory scope namespace",
-      "orchestrator": "the orchestrator's state namespace",
+      "orchestrator": "the removed orchestrator's state namespace (a pre-2.838.0 mission may still carry it)",
       "campaign": "the campaign's state namespace",
       "voiceagent": "the voice agent's state namespace",
       "current_flow": "engine bookkeeping (the current flow definition)",
@@ -653,7 +591,7 @@
       { "prefix": "_", "reason": "keys starting with `_` are engine bookkeeping (current flow, loop and for_each context, taint lists such as `__untrusted_*`)" },
       { "prefix": ".", "reason": "keys starting with `.` are engine step-response slots" },
       { "prefix": "memory.", "reason": "the `memory.` namespace belongs to the engine" },
-      { "prefix": "orchestrator.", "reason": "the `orchestrator.` namespace belongs to the orchestrator" },
+      { "prefix": "orchestrator.", "reason": "the `orchestrator.` namespace belonged to the orchestrator (removed in 2.838.0); a pre-2.838.0 mission may still carry it" },
       { "prefix": "campaign.", "reason": "the `campaign.` namespace belongs to the campaign engine" },
       { "prefix": "voiceagent.", "reason": "the `voiceagent.` namespace belongs to the voice agent" }
     ],
@@ -1041,9 +979,17 @@
     }
   },
   "complianceResidency": {
-    "$comment": "compliance_residency_unenforced (WARNING, never an error; needs no catalogue). When compliance.residency is non-empty and every code (trimmed, upper-cased) is in euResidencyCodes, each top-level step and loop sub-step whose executor starts with aiProtocol+protocolSeparator, then the orchestrator (provider = its exons execution.provider), warns when its provider (literal, lower-cased; skipped when empty or containing templateActionOpen) is in regionLaneProviders and the call is not pinned. Pinned = query region (orchestrator.region) a non-empty string after trimming; OR enforce_region true (query: bool true or the strings in enforceRegionTrueStrings; orchestrator: bool true); OR the author named the endpoint: query <provider>+baseUrlParamSuffix a non-empty string after trimming, or executor_config.<provider>.base_url non-empty after trimming. The provider segment of ai://<provider>/<operation> exists only when a slash follows it. regionLaneProviders is the set of providers whose adapter routes on `region`; a provider outside it has no region lane and is never warned. Message, suggestion and site formats fill %s and %q (a Go-quoted string) in order; the message's last placeholder is the residency list as written, printed [A B]. Reference: validateResidencyEnforcement (validation.residency.go).",
+    "$comment": "compliance_residency_unenforced (WARNING, never an error; needs no catalogue). When compliance.residency is non-empty and every code (trimmed, upper-cased) is in euResidencyCodes, each top-level step and loop sub-step whose executor starts with aiProtocol+protocolSeparator warns when its provider (literal, lower-cased; skipped when empty or containing templateActionOpen) is in regionLaneProviders and the call is not pinned. Pinned = query region a non-empty string after trimming; OR enforce_region true (bool true or the strings in enforceRegionTrueStrings); OR the author named the endpoint: query <provider>+baseUrlParamSuffix a non-empty string after trimming, or executor_config.<provider>.base_url non-empty after trimming. The provider segment of ai://<provider>/<operation> exists only when a slash follows it. regionLaneProviders is the set of providers whose adapter routes on `region`; a provider outside it has no region lane and is never warned. Message, suggestion and site formats fill %s and %q (a Go-quoted string) in order; the message's last placeholder is the residency list as written, printed [A B]. Reference: validateResidencyEnforcement (validation.residency.go).",
     "code": "compliance_residency_unenforced",
-    "euResidencyCodes": ["EU", "DE", "FR", "IE", "NL", "IT", "ES"],
+    "euResidencyCodes": [
+      "EU",
+      "DE",
+      "FR",
+      "IE",
+      "NL",
+      "IT",
+      "ES"
+    ],
     "regionLaneProviders": [
       "bedrock",
       "google",
@@ -1059,15 +1005,17 @@
     "regionParam": "region",
     "enforceRegionParam": "enforce_region",
     "baseUrlParamSuffix": "_base_url",
-    "enforceRegionTrueStrings": ["true", "1", "yes"],
+    "enforceRegionTrueStrings": [
+      "true",
+      "1",
+      "yes"
+    ],
     "stepFieldFormat": "steps.%s.executor",
     "loopStepFieldFormat": "steps.%s.loop.steps.%s.executor",
-    "orchestratorField": "orchestrator.exons",
     "siteStepFormat": "step %q",
     "siteLoopStepFormat": "loop sub-step %q of step %q",
-    "siteOrchestrator": "the orchestrator",
     "messageFormat": "%s calls provider %q, whose default endpoint commits to no jurisdiction, but sets neither region nor enforce_region, so nothing pins it to the declared residency %v. compliance.residency is a catalogue eligibility check, not endpoint evidence",
-    "suggestion": "Add `region: eu` and `enforce_region: true` to the call (an orchestrator: the same two keys on the orchestrator block). Prove it afterwards: the step record's diagnostics.region is stamped from the host actually dialled."
+    "suggestion": "Add `region: eu` and `enforce_region: true` to the call. Prove it afterwards: the step record's diagnostics.region is stamped from the host actually dialled."
   },
   "examples": {
     "$comment": "The examples: block. Derived from the reference's constants, never hand-typed: limits, vocabularies, the credential-shaped-literal pattern set and each code's severity. example_ref_blocked_host is listed for completeness but is raised by the reference implementation only; the ports never raise it. See PARITY.md, 'The examples block'.",
@@ -1370,7 +1318,7 @@
         "currency": "scalar",
         "data": "map<any>",
         "description": "scalar",
-        "discoverable_tools": "list<scalar>",
+        "discoverable_tools": "any",
         "display_name": "scalar",
         "error_strategy": "ErrorStrategyDefinition",
         "examples": "list<ExampleDefinition>",
@@ -1383,7 +1331,7 @@
         "max_duration": "scalar",
         "mock_scenarios": "map<map<MockStepDefinition>>",
         "name": "scalar",
-        "orchestrator": "OrchestratorDefinition",
+        "orchestrator": "any",
         "output": "list<scalar>",
         "query": "map<QueryDefinition>",
         "rate_limit": "FlowRateLimitConfig",
@@ -1392,7 +1340,7 @@
         "strict_templates": "scalar",
         "tags": "list<scalar>",
         "template": "FlowTemplateMetadata",
-        "tool_discovery": "scalar",
+        "tool_discovery": "any",
         "version": "scalar",
         "visibility": "scalar"
       },
@@ -1498,36 +1446,6 @@
         "conditions": "list<ConditionDefinition>",
         "default": "scalar",
         "parallel": "ParallelDefinition"
-      },
-      "OrchestratorDefinition": {
-        "agentic": "scalar",
-        "context_budget_tokens": "scalar",
-        "context_strategy": "scalar",
-        "conversation": "scalar",
-        "deny_tools": "list<scalar>",
-        "discoverable_tools": "list<scalar>",
-        "enable_signals": "scalar",
-        "enforce_region": "scalar",
-        "engram_scope": "scalar",
-        "exons": "scalar",
-        "human_question_timeout": "scalar",
-        "human_question_timeout_response": "scalar",
-        "max_tool_calls": "scalar",
-        "max_tool_turns": "scalar",
-        "max_turns": "scalar",
-        "mode": "scalar",
-        "region": "scalar",
-        "require_approval_for": "list<scalar>",
-        "timeout_seconds": "scalar",
-        "tool_discovery": "scalar",
-        "tools": "list<scalar>",
-        "triggers": "list<OrchestratorTriggerDef>"
-      },
-      "OrchestratorTriggerDef": {
-        "condition": "scalar",
-        "interval": "scalar",
-        "type": "scalar",
-        "watch": "scalar"
       },
       "ParallelDefinition": {
         "rendezvous": "scalar",

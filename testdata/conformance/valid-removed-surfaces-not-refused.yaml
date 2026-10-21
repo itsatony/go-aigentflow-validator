@@ -2,11 +2,8 @@ aigentflow_version: '2.0.0'
 name: valid-removed-surfaces-not-refused
 version: '1.0.0'
 description: >-
-  Nothing here uses a removed surface: aiv:// and atlas:// steps (aiv keeps its own agentic flag), plain ai:// chat with tools, tool_choice, autofix, content_parts and stream, a templated executor, an http:// step whose query happens to use a removed name, and the flow-level tool_discovery and discoverable_tools.
+  Nothing here uses a removed surface: aiv:// and atlas:// steps (aiv keeps its own agentic flag), plain ai:// chat with tools, tool_choice, autofix, content_parts and stream, a templated executor, and an http:// step whose query happens to use a removed name. (The flow-level tool_discovery and discoverable_tools are orchestrator_removed since 2.838.0.)
 start: chat
-tool_discovery: lazy
-discoverable_tools:
-  - search
 steps:
   chat:
     executor: ai://anthropic/chat

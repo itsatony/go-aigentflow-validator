@@ -1,10 +1,10 @@
 aigentflow_version: '2.0.0'
-name: orchestrator-region-enforced
+name: invalid-orchestrator-removed-enable-signals-false
 version: '1.0.0'
-description: >
-  AIF v2.820.0 (#217). The orchestrator block names the provider region its model
-  runs in and enforces it. region alone is a pin and is valid too (see the
-  unit tests); the pair is the proof-bearing form.
+description: >-
+  orchestrator.enable_signals false used to be a removed_key_ignored warning.
+  The block is refused whole since 2.838.0, so the only finding is the
+  orchestrator_removed error: no warning for a key inside it.
 start: work
 steps:
   work:
@@ -15,9 +15,7 @@ steps:
       default: 'null'
 orchestrator:
   mode: monitor
-  agentic: true
-  region: eu
-  enforce_region: true
+  enable_signals: false
   exons: |
     ---
     name: monitor
@@ -28,3 +26,5 @@ orchestrator:
       model: claude-sonnet-4-6
     ---
     {~exons.message role="system"~}observe{~/exons.message~}
+output:
+  - message

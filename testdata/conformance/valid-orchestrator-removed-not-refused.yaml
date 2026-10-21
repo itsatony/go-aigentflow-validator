@@ -1,0 +1,34 @@
+aigentflow_version: '2.0.0'
+name: valid-orchestrator-removed-not-refused
+version: '1.0.0'
+description: >-
+  The no-false-positive control for orchestrator_removed. A YAML null on the
+  three flow keys is absent; a step query key named tool_discovery or
+  discoverable_tools on a non-ai executor is not the removed flow key (and its
+  old vocabulary is not judged); a flow:// child input named orchestrator is the
+  child's input; a data: key orchestrator_hint is neither the removed block nor
+  an engine namespace; a step called Orchestrator (case differs) is legal; and
+  next 'null' ends the flow.
+start: Orchestrator
+orchestrator:
+tool_discovery: null
+discoverable_tools: ~
+data:
+  orchestrator_hint: 'keep'
+steps:
+  Orchestrator:
+    executor: mock://api/plan
+    query:
+      tool_discovery: of
+      discoverable_tools:
+        - search
+    next:
+      default: child
+  child:
+    executor: flow://stored/flow_child
+    query:
+      orchestrator: 'the child flow decides what this input means'
+    next:
+      default: 'null'
+output:
+  - ok

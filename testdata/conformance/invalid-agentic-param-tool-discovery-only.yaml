@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: invalid-agentic-param-tool-discovery-only
+version: '1.0.0'
+description: >-
+  On an ai:// step, tool_discovery and discoverable_tools are removed agent-loop
+  parameters: agentic_param_removed (since 2.833.0), never orchestrator_removed,
+  which judges only the flow-level keys.
+start: ask
+steps:
+  ask:
+    executor: ai://anthropic/chat
+    query:
+      model: claude-sonnet-4-6
+      prompt: 'hi'
+      tool_discovery: lazy
+      discoverable_tools:
+        - search
+    next:
+      default: 'null'
+output:
+  - ok

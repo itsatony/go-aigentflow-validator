@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-next-default
+version: '1.0.0'
+description: >-
+  A step whose next.default is orchestrator names the removed hand-over and is
+  orchestrator_removed at steps.<id>, with no orchestrator block in the flow. It
+  is not an unknown step (the id orchestrator stays reserved).
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: orchestrator
+output:
+  - message

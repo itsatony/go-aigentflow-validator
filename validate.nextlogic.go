@@ -2,19 +2,18 @@ package aifvalidate
 
 import "fmt"
 
-// validateNextLogic checks the `next.parallel` block and the orchestrator-next
-// rule.
+// validateNextLogic checks the `next.parallel` block.
 //
 // Default/condition reference existence lives in validateConnectivity (it pairs
-// with reachability). This module covers the parser-only additions:
-// validateNextLogic's parallel block + validateOrchestratorNext.
+// with reachability). This module covers the parser-only addition:
+// validateNextLogic's parallel block. (`next: orchestrator` names the removed
+// hand-over and is refused as orchestrator_removed; see
+// validateRemovedOrchestrator.)
 func validateNextLogic(flow doc, iss *issues) {
 	steps := stepsOf(flow)
 	if steps == nil {
 		return
 	}
-	_, hasOrchestrator := getRecord(flow, keyOrchestrator)
-
 	for _, stepID := range sortedKeys(steps) {
 		step, ok := asRecord(steps[stepID])
 		if !ok {
@@ -27,15 +26,6 @@ func validateNextLogic(flow doc, iss *issues) {
 
 		if par, hasPar := getRecord(next, keyParallel); hasPar {
 			validateParallel(par, steps, stepID, iss)
-		}
-
-		// Routing to "orchestrator" requires the flow to declare one.
-		if !hasOrchestrator && routesToOrchestrator(next) {
-			iss.error(Issue{
-				Field: stepField(stepID, keyNext), Code: codeOrchNextRequiresOrch, StepID: stepID,
-				Message: fmt.Sprintf(
-					"Step '%s' routes to 'orchestrator' but the flow has no orchestrator block", stepID),
-			})
 		}
 	}
 }
@@ -77,28 +67,4 @@ func validateParallel(par, steps doc, stepID string, iss *issues) {
 			Message: fmt.Sprintf("Referenced parallel step '%v' does not exist", raw),
 		})
 	}
-}
-
-// routesToOrchestrator reports whether a next block targets the orchestrator via
-// its default or any conditional goto.
-func routesToOrchestrator(next doc) bool {
-	if target, ok := getString(next, keyDefault); ok && target == nextMarkerOrch {
-		return true
-	}
-	conds, ok := getSlice(next, keyConditions)
-	if !ok {
-		return false
-	}
-	for _, raw := range conds {
-		cond, isMap := asRecord(raw)
-		if !isMap {
-			continue
-		}
-		// A condition's target key is `goto` (never `goto_step`): reading the Go
-		// field name here missed every conditional yield to the orchestrator.
-		if target, ok := getString(cond, keyGoto); ok && target == nextMarkerOrch {
-			return true
-		}
-	}
-	return false
 }

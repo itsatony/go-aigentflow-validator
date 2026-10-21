@@ -6,7 +6,7 @@ description: >-
   other side. Under an EU-only residency, a provider with no region lane
   (anthropic native, scaleway, vaiembed) cannot be pinned by region or
   enforce_region, so the rule is silent on it; so is a step that is not an ai://
-  call, one whose provider is templated, and an orchestrator on such a provider.
+  call, and one whose provider is templated.
 compliance:
   residency: ['EU']
 start: native
@@ -45,16 +45,3 @@ steps:
       message: 'hi'
     next:
       default: 'null'
-orchestrator:
-  mode: monitor
-  agentic: true
-  exons: |
-    ---
-    name: monitor
-    description: observe only
-    type: agent
-    execution:
-      provider: anthropic
-      model: claude-sonnet-4-6
-    ---
-    {~exons.message role="system"~}observe{~/exons.message~}

@@ -1,0 +1,30 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-next-condition
+version: '1.0.0'
+description: >-
+  A condition whose goto is orchestrator is orchestrator_removed at the step,
+  once per step however many of its targets name it.
+start: route
+steps:
+  route:
+    executor: function://utils/log
+    query:
+      message: 'routing'
+    next:
+      conditions:
+        - if: '{{ eq .query.mode "hand-over" }}'
+          goto: orchestrator
+        - if: '{{ eq .query.mode "again" }}'
+          goto: orchestrator
+      default: done
+  done:
+    executor: function://utils/log
+    query:
+      message: 'done'
+    next:
+      default: 'null'
+query:
+  mode:
+    type: string
+output:
+  - message

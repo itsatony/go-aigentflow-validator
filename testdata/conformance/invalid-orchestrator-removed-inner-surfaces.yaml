@@ -1,0 +1,44 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-inner-surfaces
+version: '1.0.0'
+description: >-
+  Nothing inside a refused orchestrator: block is judged. This one would have
+  drawn a dozen findings before 2.838.0: no exons spec, a mode that does not
+  exist, owner mode without a yield edge, enforce_region without a region, a
+  negative question deadline, a timer without an interval, an unknown trigger,
+  the human_input trigger, signal and campaign tool names, the dfm_suggestion and
+  campaign_child_* triggers, enable_signals true, a bad tool_discovery mode and a
+  key the old decoder refused. It is ONE orchestrator_removed finding now.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: owner
+  agentic: false
+  enforce_region: true
+  human_question_timeout: -5m
+  enable_signals: true
+  tool_discovery: of
+  not_a_real_key: 1
+  triggers:
+    - type: timer
+    - type: no_such_trigger
+    - type: human_input
+    - type: dfm_suggestion
+    - type: campaign_child_completed
+  tools:
+    - aif_ask_human
+    - aif_signal_complete
+    - aif_campaign_spawn
+    - no_such_tool
+  deny_tools:
+    - aif_signal_need_human
+  require_approval_for:
+    - aif_campaign_cancel
+output:
+  - message

@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"slices"
 )
 
 // specJSON is the vendored enum surface mirrored from the AIgentFlow Go
@@ -70,11 +69,6 @@ type rawSpec struct {
 		MaxInputKeyCount     int      `json:"maxInputKeyCount"`
 		MaxStringInputLength int      `json:"maxStringInputLength"`
 	} `json:"inputSchema"`
-	Orchestrator struct {
-		Triggers []string `json:"triggers"`
-		Tools    []string `json:"tools"`
-		Modes    []string `json:"modes"`
-	} `json:"orchestrator"`
 	ExpressionFunctions struct {
 		NamePrefix string   `json:"namePrefix"`
 		Catalog    []string `json:"catalog"`
@@ -87,16 +81,6 @@ type rawSpec struct {
 		ClosedConfigKeys map[string][]string `json:"closedConfigKeys"`
 	} `json:"processingOperations"`
 	TemplateFunctions []string `json:"templateFunctions"`
-	// OrchestratorToolAllow feeds orchestrator_tool_withheld (v2.760.0).
-	OrchestratorToolAllow struct {
-		WarningField   string   `json:"warningField"`
-		AskHumanTool   string   `json:"askHumanTool"`
-		LifecycleTools []string `json:"lifecycleTools"`
-	} `json:"orchestratorToolAllow"`
-	// Exons names how the orchestrator's inline .exons document is delimited.
-	Exons struct {
-		FrontmatterDelimiter string `json:"frontmatterDelimiter"`
-	} `json:"exons"`
 	// RemovedAgentSurfaces feeds executor_removed and agentic_param_removed
 	// (AIgentFlow v2.833.0).
 	RemovedAgentSurfaces struct {
@@ -110,38 +94,40 @@ type rawSpec struct {
 		Suggestion           string   `json:"suggestion"`
 	} `json:"removedAgentSurfaces"`
 	// RemovedSignalSurfaces feeds signal_removed, flow_modification_removed and
-	// removed_key_ignored (AIgentFlow v2.834.0, AGENTCUT B1).
+	// removed_key_ignored (AIgentFlow v2.834.0).
 	RemovedSignalSurfaces struct {
 		SignalRemovedCode                 string   `json:"signalRemovedCode"`
 		FlowModificationRemovedCode       string   `json:"flowModificationRemovedCode"`
 		RemovedKeyIgnoredCode             string   `json:"removedKeyIgnoredCode"`
-		Tools                             []string `json:"tools"`
-		Triggers                          []string `json:"triggers"`
 		StepKey                           string   `json:"stepKey"`
 		StepKeyScheme                     string   `json:"stepKeyScheme"`
 		FlowModificationStepKey           string   `json:"flowModificationStepKey"`
 		StepSkipSchemes                   []string `json:"stepSkipSchemes"`
-		EnableSignalsMessage              string   `json:"enableSignalsMessage"`
-		ToolNamesMessageFormat            string   `json:"toolNamesMessageFormat"`
 		StepKeyMessageFormat              string   `json:"stepKeyMessageFormat"`
-		TriggersMessage                   string   `json:"triggersMessage"`
 		FlowModificationStepMessageFormat string   `json:"flowModificationStepMessageFormat"`
 		IgnoredKeyMessageFormat           string   `json:"ignoredKeyMessageFormat"`
 		IgnoredKeySuggestion              string   `json:"ignoredKeySuggestion"`
 		Suggestion                        string   `json:"suggestion"`
 	} `json:"removedSignalSurfaces"`
-	// RemovedCampaignSurfaces feeds campaign_removed (AIgentFlow v2.836.0,
-	// AGENTCUT B2).
+	// RemovedCampaignSurfaces feeds campaign_removed (AIgentFlow v2.836.0).
 	RemovedCampaignSurfaces struct {
-		Code                   string   `json:"code"`
-		FlowKey                string   `json:"flowKey"`
-		Tools                  []string `json:"tools"`
-		Triggers               []string `json:"triggers"`
-		BlockMessage           string   `json:"blockMessage"`
-		ToolNamesMessageFormat string   `json:"toolNamesMessageFormat"`
-		TriggersMessageFormat  string   `json:"triggersMessageFormat"`
-		Suggestion             string   `json:"suggestion"`
+		Code         string `json:"code"`
+		FlowKey      string `json:"flowKey"`
+		BlockMessage string `json:"blockMessage"`
+		Suggestion   string `json:"suggestion"`
 	} `json:"removedCampaignSurfaces"`
+	// RemovedOrchestratorSurfaces feeds orchestrator_removed (AIgentFlow
+	// v2.838.0).
+	RemovedOrchestratorSurfaces struct {
+		Code                 string   `json:"code"`
+		BlockKey             string   `json:"blockKey"`
+		DiscoveryKeys        []string `json:"discoveryKeys"`
+		NextMarker           string   `json:"nextMarker"`
+		BlockMessage         string   `json:"blockMessage"`
+		FlowKeyMessageFormat string   `json:"flowKeyMessageFormat"`
+		NextMessageFormat    string   `json:"nextMessageFormat"`
+		Suggestion           string   `json:"suggestion"`
+	} `json:"removedOrchestratorSurfaces"`
 	// ExecutorConfigEnvScopes feeds executor_config_env_scope (v2.597.0).
 	ExecutorConfigEnvScopes struct {
 		ReferencePrefix string              `json:"referencePrefix"`
@@ -204,10 +190,8 @@ type residencyEnforcementSpec struct {
 	BaseURLParamSuffix         string   `json:"baseUrlParamSuffix"`
 	StepFieldFormat            string   `json:"stepFieldFormat"`
 	LoopStepFieldFormat        string   `json:"loopStepFieldFormat"`
-	OrchestratorField          string   `json:"orchestratorField"`
 	SiteStepFormat             string   `json:"siteStepFormat"`
 	SiteLoopStepFormat         string   `json:"siteLoopStepFormat"`
-	SiteOrchestrator           string   `json:"siteOrchestrator"`
 	MessageFormat              string   `json:"messageFormat"`
 	Suggestion                 string   `json:"suggestion"`
 }
@@ -308,9 +292,6 @@ var (
 	nextMarkers          set
 	reachabilityMarkers  set
 	forEachResolutions   set
-	orchestratorTriggers set
-	orchestratorTools    set
-	orchestratorModes    set
 	qualityGateOnFail    set
 	qualityGateRejected  set
 	inputSchemaTypes     set
@@ -337,14 +318,9 @@ var (
 	removedSchemes  set
 	removedAIParams set
 
-	// removedOrchestratorTools / removedOrchestratorTriggers are the signal and
-	// campaign names AIgentFlow removed (v2.834.0, v2.836.0). They left the
-	// registries but are TOLERATED by the unknown-name checks: the only finding
-	// for one is signal_removed / campaign_removed. stepSkipSchemes are the
-	// schemes whose query is never judged for the removed step keys.
-	removedOrchestratorTools    set
-	removedOrchestratorTriggers set
-	removedStepSkipSchemes      set
+	// removedStepSkipSchemes are the schemes whose query is never judged for
+	// the removed signal / DFM step keys.
+	removedStepSkipSchemes set
 
 	// atlasSchemes are the canonical executor scheme of the agent runtime
 	// (nexus) and its aliases (atlas): one set of rules for every spelling.
@@ -397,10 +373,6 @@ func init() {
 	executorSchemes = newSet(spec.ExecutorSchemes)
 	removedSchemes = newSet(spec.RemovedAgentSurfaces.RemovedSchemes)
 	removedAIParams = newSet(spec.RemovedAgentSurfaces.AIParams)
-	removedOrchestratorTools = newSet(append(slices.Clone(spec.RemovedSignalSurfaces.Tools),
-		spec.RemovedCampaignSurfaces.Tools...))
-	removedOrchestratorTriggers = newSet(append(slices.Clone(spec.RemovedSignalSurfaces.Triggers),
-		spec.RemovedCampaignSurfaces.Triggers...))
 	removedStepSkipSchemes = newSet(spec.RemovedSignalSurfaces.StepSkipSchemes)
 	atlasSchemes = newSet(append([]string{spec.AtlasExecutor.Scheme}, spec.AtlasExecutor.Aliases...))
 	dataTypes = newSet(spec.DataTypes)
@@ -409,9 +381,6 @@ func init() {
 	nextMarkers = newSet(spec.NextMarkers)
 	reachabilityMarkers = newSet(spec.ReachabilityMarkers)
 	forEachResolutions = newSet(spec.ForEachResolutions)
-	orchestratorTriggers = newSet(spec.Orchestrator.Triggers)
-	orchestratorTools = newSet(spec.Orchestrator.Tools)
-	orchestratorModes = newSet(spec.Orchestrator.Modes)
 	qualityGateOnFail = newSet(spec.QualityGate.OnFailActions)
 	qualityGateRejected = newSet(spec.QualityGate.OnFailRejected)
 	inputSchemaTypes = newSet(spec.InputSchema.Types)

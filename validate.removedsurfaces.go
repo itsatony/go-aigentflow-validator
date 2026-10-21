@@ -66,7 +66,8 @@ func checkRemovedSurfaces(executor string, query any, field, stepID, label strin
 func validateRemovedFlowKeys(flow doc, iss *issues) {
 	cfg := spec.RemovedAgentSurfaces
 	for _, key := range cfg.FlowKeys {
-		if has(flow, key) {
+		// A typed block in the reference, so a YAML null decodes as absent.
+		if present(flow, key) {
 			iss.error(Issue{
 				Field: key, Code: codeExecutorRemoved,
 				Message:    fmt.Sprintf(cfg.FlowKeyMessageFormat, key),

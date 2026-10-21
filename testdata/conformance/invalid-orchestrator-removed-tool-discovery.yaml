@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-tool-discovery
+version: '1.0.0'
+description: >-
+  The flow-level tool_discovery configured the orchestrator's tool discovery and
+  is orchestrator_removed (field tool_discovery) with any non-null value, the
+  empty string included. Its old vocabulary is not judged any more.
+start: work
+tool_discovery: ''
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+output:
+  - message

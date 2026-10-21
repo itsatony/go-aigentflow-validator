@@ -64,7 +64,7 @@ type Result struct {
 	Errors []Issue `json:"errors"`
 	// Warnings are advisory findings. A consumer that treats these as blocking
 	// will reject legitimate flows, because the vendored allow-lists (executor
-	// schemes, template functions, orchestrator tools) can lag the live
+	// schemes, template functions) can lag the live
 	// AIgentFlow registries.
 	Warnings []Issue `json:"warnings"`
 	// Summary is the roll-up.
@@ -78,7 +78,7 @@ type Result struct {
 // Options tunes validation.
 type Options struct {
 	// StrictRegistries promotes "unrecognised name" findings — an unknown
-	// orchestrator tool, an unknown template function — from warning to error.
+	// executor scheme, an unknown template function — from warning to error.
 	//
 	// OFF by default, deliberately: the vendored allow-lists can lag the live
 	// AIgentFlow registries, and on a publish gate a false-positive error is
@@ -86,29 +86,20 @@ type Options struct {
 	// not for admission control.
 	StrictRegistries bool
 
-	// Exons judges the inline .exons documents a flow carries (the
-	// orchestrator's `exons`; a step on exons:// is refused as executor_removed).
-	//
-	// nil uses the built-in reader, which has no .exons template engine: it
-	// reads the YAML frontmatter only (execution.provider, tools.allow,
-	// requirements.resources) and cannot tell whether the document PARSES or
-	// whether its tags can RENDER. Those two refusals (exons_attributes and
-	// orchestrator_exons_parse_failed) then never fire, so the verdict is
-	// looser than the reference's for a document its engine refuses.
-	//
-	// For the reference's exact verdict, pass the go-exons-backed inspector
-	// from the companion module:
-	//
-	//	import "github.com/itsatony/go-aigentflow-validator/exonsinspect"
-	//	opts := aifvalidate.Options{Exons: exonsinspect.New()}
-	//
-	// It lives in its own module so this one keeps a single dependency and
-	// builds for GOOS=js GOARCH=wasm. See PARITY.md, divergence #16.
+	// Exons is retained so existing callers keep compiling; NO rule reads it
+	// since v0.19.0. The last inline .exons document a flow could carry was the
+	// orchestrator's, and AIgentFlow v2.838.0 removed the orchestrator (its block
+	// is refused whole as orchestrator_removed, nothing inside it is judged).
+	// A step on exons:// is refused as executor_removed since v0.17.0. Passing
+	// an inspector (for example exonsinspect.New()) is harmless and changes no
+	// verdict.
 	Exons ExonsInspector
 }
 
 // ExonsInspector judges one .exons document. Implementations must be safe for
-// concurrent use and must not panic on malformed input.
+// concurrent use and must not panic on malformed input. No rule of this package
+// consults one since v0.19.0 (see Options.Exons); the type is kept for the
+// exonsinspect companion and for callers that already construct one.
 type ExonsInspector interface {
 	InspectExons(source string) ExonsReport
 }

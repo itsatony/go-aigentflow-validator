@@ -139,33 +139,12 @@ func TestResponseExpectationUnreadEmptyEvaluation(t *testing.T) {
 	assertWarningNotError(t, ValidateFlow(src, Options{}), codeRespExpUnread)
 }
 
-func TestHumanQuestionTimeout(t *testing.T) {
-	orch := func(v string) string {
-		return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  human_question_timeout: " + v + "\n"
-	}
-	for _, v := range []string{"-5m", "0s", "30", "soon", "[1]"} {
-		assertError(t, ValidateFlow(orch(v), Options{}), codeOrchHumanQTimeoutInvalid, "orchestrator.human_question_timeout")
-	}
-	for _, v := range []string{"30m", "\"\"", "null", ""} {
-		assertValid(t, ValidateFlow(orch(v), Options{}))
-	}
-}
-
-func TestOrchestratorYieldViaConditionGoto(t *testing.T) {
-	// A conditional yield counts as the owner-mode yield edge. v0.2.0 read the
-	// condition's `goto_step`, so this valid flow was refused.
-	src := withStep("    executor: function://utils/log\n    next:\n      conditions:\n"+
-		"        - if: \"{{ true }}\"\n          goto: orchestrator\n") +
-		"orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  mode: owner\n"
-	assertValid(t, ValidateFlow(src, Options{}))
-}
-
 // The campaign rules were removed with campaigns (AIgentFlow v2.836.0): every
 // body the old rules judged is now ONE campaign_removed at `campaign`, and none
 // of the old codes (or invalid_type inside the block) fires.
 func TestCampaignRulesAreGone(t *testing.T) {
 	camp := func(body string) string {
-		return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\ncampaign:\n" + body
+		return minimalFlow + "campaign:\n" + body
 	}
 	oldCodes := []string{"campaign_invalid_max_credits_per_child", "campaign_no_child_flows", "campaign_child_flow_no_id",
 		"campaign_requires_orchestrator", "campaign_handoff_step_unknown", codeInvalidType, codeUnknownYAMLKey}
@@ -196,18 +175,6 @@ func TestSaveDoorExtras(t *testing.T) {
 		assertError(t, ValidateFlow(src, Options{}), codeReservedStepIDOrch, "steps.orchestrator")
 		src = strings.ReplaceAll(minimalFlow, "only", "orchestrate")
 		assertValid(t, ValidateFlow(src, Options{}))
-	})
-	t.Run("tool_discovery vocabulary", func(t *testing.T) {
-		assertError(t, ValidateFlow(minimalFlow+"tool_discovery: of\n", Options{}), codeToolDiscoveryInvalid, keyToolDiscovery)
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\n  tool_discovery: nope\n"
-		assertError(t, ValidateFlow(src, Options{}), codeToolDiscoveryInvalid, "orchestrator.tool_discovery")
-		src = withStep("    executor: function://utils/log\n    query:\n      tool_discovery: eagr\n")
-		assertError(t, ValidateFlow(src, Options{}), codeToolDiscoveryInvalid, "steps.only.query.tool_discovery")
-		for _, ok := range []string{"eager", "lazy", "off", "\"\"", "\"{{ .query.mode }}\""} {
-			assertValid(t, ValidateFlow(minimalFlow+"tool_discovery: "+ok+"\n", Options{}))
-		}
-		// On a step the surface is a free-form query key: only a string is judged.
-		assertValid(t, ValidateFlow(withStep("    executor: function://utils/log\n    query:\n      tool_discovery: 5\n"), Options{}))
 	})
 	t.Run("mock scenario delay", func(t *testing.T) {
 		mock := func(v string) string {

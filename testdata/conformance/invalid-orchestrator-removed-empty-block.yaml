@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-empty-block
+version: '1.0.0'
+description: >-
+  An empty orchestrator: {} block is orchestrator_removed: it is judged on
+  presence, not on what it holds (the old rule asked for an exons spec).
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator: {}
+output:
+  - message

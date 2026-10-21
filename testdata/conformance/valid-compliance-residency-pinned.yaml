@@ -6,8 +6,7 @@ description: >-
   below is on a region-lane provider under an EU-only residency and every one is
   pinned in a different accepted way: region alone, enforce_region alone (a bool
   and the string yes), the author's own base_url on the step, an executor_config
-  base_url, a loop sub-step, and an orchestrator with a region. No warning of
-  that code may appear.
+  base_url, and a loop sub-step. No warning of that code may appear.
 compliance:
   residency: ['eu', ' DE ']
 executor_config:
@@ -74,17 +73,3 @@ steps:
                 counter: '{{ add (atoi .loop.vars.counter) 1 }}'
     next:
       default: 'null'
-orchestrator:
-  mode: monitor
-  agentic: true
-  region: eu
-  exons: |
-    ---
-    name: monitor
-    description: observe only
-    type: agent
-    execution:
-      provider: openai
-      model: gpt-5
-    ---
-    {~exons.message role="system"~}observe{~/exons.message~}

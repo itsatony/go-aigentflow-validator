@@ -1,14 +1,17 @@
 // Package exonsinspect is the go-exons-backed aifvalidate.ExonsInspector: it
 // judges an inline .exons document with the same engine, the same engine
-// options and the same two calls as the AIgentFlow reference, so the verdicts
-// aifvalidate derives from it are the reference's.
+// options and the same two calls as the AIgentFlow reference.
 //
-//	opts := aifvalidate.Options{Exons: exonsinspect.New()}
-//	result := aifvalidate.ValidateFlow(src, opts)
+//	report := exonsinspect.New().InspectExons(source)
+//
+// Since aifvalidate v0.19.0 (AIgentFlow v2.838.0) no aifvalidate rule consults
+// an inspector: the orchestrator's inline .exons document was the last one a
+// flow could carry, and the orchestrator block is now refused whole. Passing
+// Options{Exons: exonsinspect.New()} still compiles and changes no verdict; the
+// inspector remains usable on its own.
 //
 // It is a separate module so that aifvalidate itself keeps a single dependency
-// and builds for GOOS=js GOARCH=wasm. Without it aifvalidate reads only an
-// .exons document's frontmatter; see its PARITY.md, divergence #16.
+// and builds for GOOS=js GOARCH=wasm.
 //
 // The go-exons version this module requires is the one the tracked AIgentFlow
 // release pins. An engine upgrade can change what parses and what renders, so

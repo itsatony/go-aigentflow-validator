@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.837.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.838.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -22,7 +22,70 @@ v0.14.0, which narrows `potential_infinite_loop` (below), then
 v0.15.0, which adds the `atlas://` scheme and seven rules (below), then
 v0.16.0, which adds three rules and aligns the atlas rules with the reference (below), then
 v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` executors and the `ai://` agent-loop parameters and adds two errors for them (below), then
-v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical agent-runtime scheme with `atlas://` as its alias, **removes** signals, dynamic flow modification and campaigns with four new codes, and drops share links from the removal advice (below).
+v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical agent-runtime scheme with `atlas://` as its alias, **removes** signals, dynamic flow modification and campaigns with four new codes, and drops share links from the removal advice (below), then
+v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new code (below).
+
+> **v0.19.0 — the orchestrator is removed (BREAKING).** `specVersion` is `2.838.0`. Contract:
+> the reference's validator contract for the orchestrator removal, which amends the v0.18.0 ones.
+>
+> **`orchestrator_removed`** (ERROR, a new code): (a) a top-level `orchestrator` key with ANY
+> non-null value (a mapping of any shape, `{}` included, or a scalar or list; field
+> `orchestrator`); (b) a top-level `tool_discovery` or `discoverable_tools` with any non-null value
+> (`''` and `[]` included; field = the key); (c) a top-level step whose `next.default`, or any
+> `next.conditions[].goto`, is exactly `orchestrator` (one finding per step, field `steps.<id>`, with
+> the step id; with or without a block). A YAML null is absent. The three keys stay in `knownKeys`,
+> typed `any`, so none is an unknown key. Loop sub-steps keep `loop_substep_next_sentinel`; the step
+> id `orchestrator` stays reserved (`reserved_step_id_orchestrator`); step query keys are never
+> judged by this code (`tool_discovery` on `ai://` stays `agentic_param_removed`).
+>
+> *The block is refused WHOLE.* Nothing inside it is judged, so every orchestrator rule is deleted:
+> `orchestrator_exons_required`, `orchestrator_exons_parse_failed`, `orchestrator_exons_no_provider`,
+> `exons_resources_unhonoured`, `exons_attributes`, `orchestrator_mode_invalid`,
+> `orchestrator_owner_needs_yield`, `orchestrator_trigger_unknown`, `orchestrator_timer_no_interval`,
+> `orchestrator_timer_bad_interval`, `orchestrator_tool_unknown`, `orchestrator_tool_withheld`,
+> `orchestrator_not_agentic`, `orchestrator_human_question_timeout_invalid`,
+> `orchestrator_enforce_region_needs_region`, `orchestrator_next_requires_orchestrator` and
+> `tool_discovery_invalid` (its flow-root surface is `orchestrator_removed`, the orchestrator's went
+> with the block, and the step-query surface was never read after v2.833.0). The v0.18.0 arms that
+> looked into the block go too: `signal_removed` for `enable_signals: true` and for signal tool
+> names, `flow_modification_removed` for the `dfm_suggestion` trigger, `campaign_removed` for
+> campaign tool names and triggers, and the `removed_key_ignored` warning for
+> `enable_signals: false`. Kept: `signal_removed` / `flow_modification_removed` on steps, the
+> `checkpoint.pre_dfm` warning and the `campaign` block (a flow with both blocks gets one finding
+> for each). `compliance_residency_unenforced` no longer has an orchestrator site.
+>
+> *`.exons`.* No rule consults `Options.Exons` any more (the orchestrator's document was the last
+> inline `.exons` document a flow could carry); the option and the `ExonsInspector` type are kept
+> so callers compile, and the built-in frontmatter reader is deleted. `exonsinspect` is unchanged
+> apart from its tests (no new tag). Divergences #13 and #16 are closed.
+>
+> *Advice.* The signal and campaign suggestions are AIgentFlow's current texts (they name only what
+> is still refused), the orchestrator advice is `SUGGESTION_REMOVED_ORCHESTRATOR_ADVICE`, and the
+> residency suggestion no longer mentions the orchestrator. Also: `exons_uploads: null` is absent
+> (the reference's typed block decodes a null as nothing), and the retired `budget:` advice is the
+> reference's current text.
+>
+> *Spec.* Removed: `orchestrator`, `orchestratorToolAllow`, `exons`, the tool/trigger lists and
+> their messages in `removedSignalSurfaces` / `removedCampaignSurfaces`,
+> `complianceResidency.orchestratorField` / `siteOrchestrator`, and the knownKeys types
+> `OrchestratorDefinition` / `OrchestratorTriggerDef`. Added: `removedOrchestratorSurfaces`.
+>
+> *Fixtures*, byte-identical to the JS port's (0.29.0). Added:
+> `invalid-orchestrator-removed-{block,empty-block,scalar,inner-surfaces,enable-signals-false,
+> tool-discovery,discoverable-tools,next-default,next-with-block,next-condition}`,
+> `valid-orchestrator-removed-not-refused`, `invalid-agentic-param-tool-discovery-only`. Edited (the
+> orchestrator part removed): `valid-compliance-residency-{pinned,silent-providers}`,
+> `warn-compliance-residency-unenforced`, `valid-duration-numeric-zero`,
+> `invalid-campaign-removed-block`, `valid-removed-surfaces-not-refused`,
+> `invalid-reserved-step-id-orchestrator` (description). Deleted (they judged the inside of the
+> block): `invalid-orchestrator-{enforce-region-no-region,exons-attributes,exons-no-provider,
+> exons-no-spec,exons-resources,exons-spec-invalid,exons-unclosed-frontmatter,human-question-timeout,
+> owner-no-yield}`, `valid-orchestrator-{exons-resources-empty,human-question-timeout,monitor,
+> region,region-enforced,tool-allow-absent,tool-allow-consistent}`,
+> `warn-orchestrator-tool-withheld-{ask-human,named}`, `{invalid,valid}-tool-discovery-vocabulary`,
+> `invalid-campaign-removed-{tool-lists,triggers}`, `invalid-flow-modification-removed-trigger`,
+> `invalid-signal-removed-{enable-signals,tool-lists}`,
+> `warn-removed-key-ignored-enable-signals-false`.
 
 > **v0.18.0 — `nexus://` with `atlas://` as its alias; signals, DFM and campaigns removed
 > (BREAKING).** `specVersion` is `2.837.0`. Contracts: AIgentFlow's traps doc, sections "An executor
@@ -830,9 +893,10 @@ The reference's unmarshaller refuses an entry that is not a one-key map. This li
 unmarshal, so such an entry produces neither `unknown_processing_operation` nor
 `unknown_processing_config_key`.
 
-### 13. `human_question_timeout`: the refusal is ported, the log line is not (shared with JS, #12 there)
+### 13. `human_question_timeout`: the refusal is ported, the log line is not (shared with JS, #12 there) — CLOSED in v0.19.0
 
-The reference also logs (not a validation warning) when the timeout exceeds its orchestrator
+The orchestrator, and its `human_question_timeout`, were removed in AIgentFlow v2.838.0; the block
+is refused whole and nothing in it is judged. Historical text: the reference also logs (not a validation warning) when the timeout exceeds its orchestrator
 mission clock. That threshold is a deployment constant this package cannot observe.
 
 ### 14. Warnings the reference does not emit
@@ -872,7 +936,11 @@ because no number's text carries a unit.
 gives: write a unit. A campaign `flow_id` / `flow_name` also uses the parsed value, where it cannot
 change a verdict (no number spelling is empty or a template).
 
-### 16. `.exons` documents: the engine's judgement needs the engine (v0.6.0)
+### 16. `.exons` documents: the engine's judgement needs the engine (v0.6.0) — CLOSED in v0.19.0
+
+Since v0.19.0 no rule judges an `.exons` document (the orchestrator's was the last one a flow could
+carry), so there is nothing left for the engine to decide and the verdict is the same with and
+without `exonsinspect` (pinned by its `TestTheEngineChangesNoVerdict`). Historical text:
 
 The reference judges an inline `.exons` document with go-exons: whether it parses (grammar,
 frontmatter decode and the spec's own validation), and whether every tag can render. This module

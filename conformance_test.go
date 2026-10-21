@@ -167,33 +167,6 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeMissingField, codeStepNotFound},
 	},
 	{
-		// DC-COND-1: a monitor-mode orchestrator over a self-terminating DAG is valid.
-		file: "valid-orchestrator-monitor.yaml", valid: true,
-	},
-	{
-		// v2.695.0 (DC-FORGE-125): a NEGATIVE duration is well-formed Go and still refused.
-		file: "invalid-orchestrator-human-question-timeout.yaml", valid: false,
-		wantErrorCodes: []string{codeOrchHumanQTimeoutInvalid},
-	},
-	{
-		file: "valid-orchestrator-human-question-timeout.yaml", valid: true,
-	},
-	{
-		// v2.820.0 (#217): the region pin and its enforcement, together.
-		file: "valid-orchestrator-region-enforced.yaml", valid: true,
-		forbidErrorCodes: []string{codeOrchEnforceRegionNeeds},
-	},
-	{
-		// v2.820.0 (#217): enforce_region without a region fails every turn closed.
-		file: "invalid-orchestrator-enforce-region-no-region.yaml", valid: false,
-		wantErrorCodes: []string{codeOrchEnforceRegionNeeds},
-	},
-	{
-		file:           "invalid-orchestrator-owner-no-yield.yaml",
-		valid:          false,
-		wantErrorCodes: []string{codeOrchOwnerNeedsYield},
-	},
-	{
 		// v2.642.0 (DC-FORGE-72): the expression-function catalog.
 		file: "invalid-expression-function-package.yaml", valid: false,
 		wantErrorCodes: []string{codeExprFnPackageUnsupported},
@@ -273,15 +246,6 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeReservedStepIDOrch},
 	},
 	{
-		// All three surfaces: the flow root, the orchestrator and a step query.
-		file: "invalid-tool-discovery-vocabulary.yaml", valid: false,
-		wantErrorCodes: []string{codeToolDiscoveryInvalid},
-	},
-	{
-		file: "valid-tool-discovery-vocabulary.yaml", valid: true,
-		forbidErrorCodes: []string{codeToolDiscoveryInvalid},
-	},
-	{
 		file: "invalid-mock-scenario-delay.yaml", valid: false,
 		wantErrorCodes: []string{codeMockDelayInvalid},
 	},
@@ -335,10 +299,9 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeMockDelayInvalid, codeInvalidDuration},
 	},
 	{
-		// 0, +0, -0 save — and a timer interval of 0.
+		// 0, +0, -0 save.
 		file: "valid-duration-numeric-zero.yaml", valid: true,
-		forbidErrorCodes: []string{codeMockDelayInvalid, codeInvalidDuration,
-			codeOrchTimerNoInterval, codeOrchTimerBadInterv},
+		forbidErrorCodes: []string{codeMockDelayInvalid, codeInvalidDuration},
 	},
 	// v0.5.1: a step REFERENCE written as a number is the step id of its source
 	// text, because the reference decodes every reference into a Go `string`.
@@ -419,60 +382,10 @@ var conformanceCases = []conformanceCase{
 	{file: "invalid-agentic-param-removed-loop-substep.yaml", valid: false, wantErrorCodes: []string{codeAgenticParamRemoved}},
 	{
 		// No false positive: aiv://, atlas://, a templated executor, a non-ai
-		// scheme, chat-only ai:// parameters and the flow-level discovery keys.
+		// scheme and chat-only ai:// parameters.
 		file: "valid-removed-surfaces-not-refused.yaml", valid: true,
 		forbidErrorCodes:   []string{codeExecutorRemoved, codeAgenticParamRemoved},
 		forbidWarningCodes: []string{codeUnknownExecScheme},
-	},
-	{
-		file: "invalid-orchestrator-exons-no-spec.yaml", valid: false,
-		wantErrorCodes: []string{codeOrchExonsParseFailed},
-	},
-	{
-		file: "invalid-orchestrator-exons-unclosed-frontmatter.yaml", valid: false,
-		wantErrorCodes: []string{codeOrchExonsParseFailed},
-	},
-	{
-		file: "invalid-orchestrator-exons-no-provider.yaml", valid: false,
-		wantErrorCodes: []string{codeOrchExonsNoProvider},
-	},
-	{
-		// v2.767.0 (DC-FORGE-205): every declared resource is refused.
-		file: "invalid-orchestrator-exons-resources.yaml", valid: false,
-		wantErrorCodes: []string{codeExonsResourcesRefused},
-	},
-	{
-		file: "valid-orchestrator-exons-resources-empty.yaml", valid: true,
-		forbidErrorCodes: []string{codeExonsResourcesRefused},
-	},
-	{
-		file: "invalid-orchestrator-exons-attributes.yaml", valid: false,
-		wantErrorCodes:  []string{codeExonsAttributes},
-		exonsEngineOnly: true,
-	},
-	{
-		// The engine's parse validates the decoded spec.
-		file: "invalid-orchestrator-exons-spec-invalid.yaml", valid: false,
-		wantErrorCodes:  []string{codeOrchExonsParseFailed},
-		exonsEngineOnly: true,
-	},
-	{
-		// v2.760.0 (DC-FORGE-190): the four withholds, each its own fixture.
-		file: "warn-orchestrator-tool-withheld-ask-human.yaml", valid: true,
-		wantWarningCodes: []string{codeOrchToolWithheld},
-	},
-	{
-		file: "warn-orchestrator-tool-withheld-named.yaml", valid: true,
-		wantWarningCodes: []string{codeOrchToolWithheld},
-	},
-	{
-		// The counter-fixtures: a false positive here goes red.
-		file: "valid-orchestrator-tool-allow-consistent.yaml", valid: true,
-		forbidWarningCodes: []string{codeOrchToolWithheld},
-	},
-	{
-		file: "valid-orchestrator-tool-allow-absent.yaml", valid: true,
-		forbidWarningCodes: []string{codeOrchToolWithheld},
 	},
 	{
 		// v2.760.0 (DC-FORGE-189): `end` is a step, so this is a cycle.
@@ -620,7 +533,6 @@ var conformanceCases = []conformanceCase{
 	{file: "invalid-display-name-81.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "valid-untrusted-inputs.yaml", valid: true, forbidErrorCodes: []string{codeUnknownYAMLKey}},
 	{file: "invalid-untrusted-misspelt.yaml", valid: false, wantErrorCodes: []string{codeUnknownYAMLKey}},
-	{file: "valid-orchestrator-region.yaml", valid: true, forbidErrorCodes: []string{codeOrchEnforceRegionNeeds}},
 	{file: "valid-display-name-80-runes.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "valid-display-name-80-runes-multibyte.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "invalid-display-name-81-runes.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
@@ -655,23 +567,8 @@ var conformanceCases = []conformanceCase{
 	},
 	// v0.18.0 — AIgentFlow v2.834.0 (AGENTCUT B1): signals and DFM removed.
 	{
-		file: "invalid-signal-removed-enable-signals.yaml", valid: false,
-		wantErrorCodes:   []string{codeSignalRemoved},
-		forbidErrorCodes: []string{codeUnknownYAMLKey},
-	},
-	{
-		file: "invalid-signal-removed-tool-lists.yaml", valid: false,
-		wantErrorCodes:     []string{codeSignalRemoved},
-		forbidWarningCodes: []string{codeOrchToolUnknown, codeOrchToolWithheld},
-	},
-	{
 		file: "invalid-signal-removed-aiv-step.yaml", valid: false,
 		wantErrorCodes: []string{codeSignalRemoved},
-	},
-	{
-		file: "invalid-flow-modification-removed-trigger.yaml", valid: false,
-		wantErrorCodes:   []string{codeFlowModificationRemoved},
-		forbidErrorCodes: []string{codeOrchTriggerUnknown},
 	},
 	{
 		file: "invalid-flow-modification-removed-step.yaml", valid: false,
@@ -683,11 +580,6 @@ var conformanceCases = []conformanceCase{
 		forbidWarningCodes: []string{codeUnknownYAMLKey},
 	},
 	{
-		file: "warn-removed-key-ignored-enable-signals-false.yaml", valid: true,
-		wantWarningCodes: []string{codeRemovedKeyIgnored},
-		forbidErrorCodes: []string{codeSignalRemoved},
-	},
-	{
 		// The no-false-positive control.
 		file: "valid-signal-surfaces-not-refused.yaml", valid: true,
 		forbidErrorCodes:   []string{codeSignalRemoved, codeFlowModificationRemoved},
@@ -697,7 +589,7 @@ var conformanceCases = []conformanceCase{
 	{
 		file: "invalid-campaign-removed-block.yaml", valid: false,
 		wantErrorCodes:   []string{codeCampaignRemoved},
-		forbidErrorCodes: []string{codeInvalidType, codeStepNotFound},
+		forbidErrorCodes: []string{codeInvalidType, codeStepNotFound, codeOrchestratorRemoved},
 	},
 	{
 		file: "invalid-campaign-removed-empty-block.yaml", valid: false,
@@ -709,20 +601,87 @@ var conformanceCases = []conformanceCase{
 		forbidErrorCodes: []string{codeUnknownYAMLKey},
 	},
 	{
-		file: "invalid-campaign-removed-tool-lists.yaml", valid: false,
-		wantErrorCodes:     []string{codeCampaignRemoved},
-		forbidWarningCodes: []string{codeOrchToolUnknown, codeOrchToolWithheld},
-	},
-	{
-		file: "invalid-campaign-removed-triggers.yaml", valid: false,
-		wantErrorCodes:   []string{codeCampaignRemoved},
-		forbidErrorCodes: []string{codeOrchTriggerUnknown},
-	},
-	{
 		// The no-false-positive control.
 		file: "valid-campaign-surfaces-not-refused.yaml", valid: true,
 		forbidErrorCodes: []string{codeCampaignRemoved},
 	},
+	// v0.19.0 — AIgentFlow v2.838.0: the orchestrator removed. The block is
+	// refused whole and nothing inside it is judged.
+	{
+		file: "invalid-orchestrator-removed-block.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchestratorRemoved},
+	},
+	{
+		file: "invalid-orchestrator-removed-empty-block.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchestratorRemoved},
+	},
+	{
+		file: "invalid-orchestrator-removed-scalar.yaml", valid: false,
+		wantErrorCodes:   []string{codeOrchestratorRemoved},
+		forbidErrorCodes: []string{codeInvalidType},
+	},
+	{
+		file: "invalid-orchestrator-removed-inner-surfaces.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchestratorRemoved},
+		forbidErrorCodes: append([]string{codeSignalRemoved, codeCampaignRemoved, codeFlowModificationRemoved,
+			codeUnknownYAMLKey, codeInvalidType, codeInvalidDuration}, retiredOrchestratorRuleCodes...),
+		forbidWarningCodes: append([]string{codeRemovedKeyIgnored, codeUnknownYAMLKey}, retiredOrchestratorRuleCodes...),
+	},
+	{
+		file: "invalid-orchestrator-removed-enable-signals-false.yaml", valid: false,
+		wantErrorCodes:     []string{codeOrchestratorRemoved},
+		forbidErrorCodes:   []string{codeSignalRemoved},
+		forbidWarningCodes: []string{codeRemovedKeyIgnored},
+	},
+	{
+		file: "invalid-orchestrator-removed-tool-discovery.yaml", valid: false,
+		wantErrorCodes:   []string{codeOrchestratorRemoved},
+		forbidErrorCodes: []string{"tool_discovery_invalid"},
+	},
+	{
+		file: "invalid-orchestrator-removed-discoverable-tools.yaml", valid: false,
+		wantErrorCodes: []string{codeOrchestratorRemoved},
+	},
+	{
+		file: "invalid-orchestrator-removed-next-default.yaml", valid: false,
+		wantErrorCodes:   []string{codeOrchestratorRemoved},
+		forbidErrorCodes: []string{codeStepNotFound, "orchestrator_next_requires_orchestrator"},
+	},
+	{
+		file: "invalid-orchestrator-removed-next-with-block.yaml", valid: false,
+		wantErrorCodes:   []string{codeOrchestratorRemoved},
+		forbidErrorCodes: []string{codeStepNotFound, "orchestrator_owner_needs_yield"},
+	},
+	{
+		file: "invalid-orchestrator-removed-next-condition.yaml", valid: false,
+		wantErrorCodes:   []string{codeOrchestratorRemoved},
+		forbidErrorCodes: []string{codeStepNotFound},
+	},
+	{
+		// The no-false-positive control.
+		file: "valid-orchestrator-removed-not-refused.yaml", valid: true,
+		forbidErrorCodes:   []string{codeOrchestratorRemoved, codeAgenticParamRemoved, "tool_discovery_invalid"},
+		forbidWarningCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		// On ai:// the step keys are agent-loop parameters, never the flow key.
+		file: "invalid-agentic-param-tool-discovery-only.yaml", valid: false,
+		wantErrorCodes:   []string{codeAgenticParamRemoved},
+		forbidErrorCodes: []string{codeOrchestratorRemoved, "tool_discovery_invalid"},
+	},
+}
+
+// retiredOrchestratorRuleCodes are the codes of the orchestrator rules that
+// left with the orchestrator (AIgentFlow v2.838.0). Named as literals because
+// the rules, and their constants, are gone: a fixture that forbids them goes
+// red if any of them ever judges a refused block again.
+var retiredOrchestratorRuleCodes = []string{
+	"orchestrator_exons_required", "orchestrator_mode_invalid", "orchestrator_owner_needs_yield",
+	"orchestrator_trigger_unknown", "orchestrator_timer_no_interval", "orchestrator_timer_bad_interval",
+	"orchestrator_tool_unknown", "orchestrator_not_agentic", "orchestrator_human_question_timeout_invalid",
+	"orchestrator_enforce_region_needs_region", "orchestrator_exons_parse_failed",
+	"orchestrator_exons_no_provider", "exons_resources_unhonoured", "exons_attributes",
+	"orchestrator_tool_withheld", "tool_discovery_invalid", "orchestrator_next_requires_orchestrator",
 }
 
 func TestConformance(t *testing.T) {

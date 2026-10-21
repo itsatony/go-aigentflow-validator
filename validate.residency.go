@@ -15,10 +15,8 @@ import (
 //
 //	if compliance.residency is non-empty and every code (trimmed, upper-cased)
 //	is EU or an EU member state
-//	  for each top-level step / loop sub-step whose executor starts "ai://", and
-//	  the orchestrator:
+//	  for each top-level step / loop sub-step whose executor starts "ai://":
 //	    provider := the literal ai://<provider>/<op> segment
-//	                (orchestrator: its exons frontmatter execution.provider)
 //	    skip when provider is empty/templated or not a region-lane provider
 //	    pinned := region is a non-empty string
 //	           OR enforce_region is true (bool, or "true"/"1"/"yes" on a step)
@@ -31,8 +29,9 @@ import (
 // checked: aiv:// steps (the provider lives in the agent), a
 // quality_gate judge (it has no region key), a failover chain, a run-level
 // `region` input. The region-lane provider set is a hand copy of go-vaibstract's
-// RuntimeRegionProviders carried in the spec (PARITY.md).
-func validateResidencyEnforcement(flow doc, iss *issues, inspector ExonsInspector) {
+// RuntimeRegionProviders carried in the spec (PARITY.md). (The orchestrator was
+// a third site until AIgentFlow removed it in v2.838.0.)
+func validateResidencyEnforcement(flow doc, iss *issues) {
 	cfg := spec.ResidencyEnforcement
 	if !euOnlyResidency(flow, cfg.EUCodes) {
 		return
@@ -66,25 +65,6 @@ func validateResidencyEnforcement(flow doc, iss *issues, inspector ExonsInspecto
 				fmt.Sprintf(cfg.SiteLoopStepFormat, subID, stepID), provider)
 		}
 	}
-
-	orch, ok := getRecord(flow, keyOrchestrator)
-	if !ok {
-		return
-	}
-	provider := orchestratorProvider(orch, inspector)
-	if !residencyRegionLane(provider, cfg) {
-		return
-	}
-	if region, isStr := getString(orch, keyRegion); isStr && strings.TrimSpace(region) != "" {
-		return
-	}
-	if enforce, _ := asBool(get(orch, keyEnforceRegion)); enforce {
-		return
-	}
-	if flowDirectsEndpoint(flow, provider, cfg) {
-		return
-	}
-	warn(cfg.OrchestratorField, "", cfg.SiteOrchestrator, provider)
 }
 
 // euOnlyResidency reports whether compliance.residency is non-empty and every
@@ -183,18 +163,4 @@ func flowDirectsEndpoint(flow doc, provider string, _ residencyEnforcementSpec) 
 	}
 	base, ok := getString(inst, "base_url")
 	return ok && strings.TrimSpace(base) != ""
-}
-
-// orchestratorProvider reads the orchestrator's exons frontmatter
-// `execution.provider`; "" when the document cannot be read statically.
-func orchestratorProvider(orch doc, inspector ExonsInspector) string {
-	source, ok := getString(orch, keyExons)
-	if !ok || source == "" {
-		return ""
-	}
-	report := inspector.InspectExons(source)
-	if report.ParseError != "" || !report.SpecRead || !report.HasSpec {
-		return ""
-	}
-	return report.Provider
 }

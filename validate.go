@@ -88,7 +88,6 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateNextLogic(flow, iss)
 	validateExpressionFunctions(flow, iss)
 	validateLoopForEachThrottle(flow, iss)
-	validateOrchestratorCampaign(flow, iss, opts)
 	validateCredentialBindings(flow, iss)
 	validateInputSchema(flow, iss)
 	validateReservedInputNames(flow, iss)
@@ -103,10 +102,8 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateFlowDataKeys(flow, iss)
 	validateCredentialEndpointPairing(flow, iss)
 	validateExamples(flow, iss)
-	inspector := exonsInspectorOf(opts)
-	validateOrchestratorExons(flow, iss, inspector)
-	validateRemovedOrchestratorSurfaces(flow, iss, inspector)
-	validateResidencyEnforcement(flow, iss, inspector)
+	validateRemovedOrchestratorSurfaces(flow, iss)
+	validateResidencyEnforcement(flow, iss)
 	// Last among the structural rules: it skips a location another rule has
 	// already reported with more specific advice.
 	validateUnknownKeys(flow, iss)

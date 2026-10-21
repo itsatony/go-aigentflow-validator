@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-discoverable-tools
+version: '1.0.0'
+description: >-
+  The flow-level discoverable_tools is orchestrator_removed (field
+  discoverable_tools) with any non-null value, the empty list included.
+start: work
+discoverable_tools: []
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+output:
+  - message
