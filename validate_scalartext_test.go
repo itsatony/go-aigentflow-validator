@@ -101,6 +101,7 @@ func TestStringTypedFieldsReadNumbersAsText(t *testing.T) {
 		{name: "for_each resolution", src: step("    for_each:\n      items: '{{ .query.xs }}'\n      resolution: 1\n"),
 			wantError: codeForEachResolution, field: "steps.a.for_each.resolution"},
 		{name: "for_each items", src: step("    for_each:\n      items: 5\n"),
+			wantError: codeForEachItemsUnresolvable, field: "steps.a.for_each.items",
 			forbid: []string{codeForEachItemsRequired}},
 		{name: "loop sub-step ids and next target",
 			src: head + "steps:\n  a:\n    loop:\n      while: '{{ true }}'\n      max_iterations: 3\n      steps:\n" +

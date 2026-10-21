@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.838.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.841.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -23,7 +23,40 @@ v0.15.0, which adds the `atlas://` scheme and seven rules (below), then
 v0.16.0, which adds three rules and aligns the atlas rules with the reference (below), then
 v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` executors and the `ai://` agent-loop parameters and adds two errors for them (below), then
 v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical agent-runtime scheme with `atlas://` as its alias, **removes** signals, dynamic flow modification and campaigns with four new codes, and drops share links from the removal advice (below), then
-v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new code (below).
+v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new code, then
+v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.items` that can never be a list (below).
+
+> **v0.20.0 — `for_each.items` shape (new ERROR).** `specVersion` is `2.841.0`. Contract: the
+> reference's save-door rule "for_each items shape" (pure function of the document; AIgentFlow
+> refuses the flow at save and tolerates it when LOADING an old stored flow). Spec block:
+> `forEachItemsShape`.
+>
+> **`for_each_items_unresolvable`** (ERROR, a new code): field `steps.<stepID>.for_each.items`
+> (the addressing of `for_each_items_required`), `StepID` set, top-level steps with a `for_each`
+> block only (the scope of `validateForEach`; loop sub-steps are not judged). It fires when
+> `for_each.items` is a NON-EMPTY string whose text, trimmed of surrounding whitespace, contains NO
+> `{{` AND is not a JSON ARRAY, where "is a JSON array" means: the trimmed text parses as valid JSON
+> and the decoded top-level value is an array. An empty or missing `items` stays
+> `for_each_items_required` alone; a non-string `items` (a mapping, a list) gets no finding. A
+> number or boolean scalar is read as its source text, as everywhere in this library for a Go
+> `string` field (`items: 5` is the text `5` and fires).
+>
+> | `items` text | verdict |
+> |---|---|
+> | `.data.seed.list`, `a, b, c`, `{"a": 1}`, `null`, `42`, `"str"`, `[1,` (invalid JSON) | `for_each_items_unresolvable` |
+> | any text containing `{{` (a template: nothing can be said statically) | no finding |
+> | `["a","b"]`, `[]`, ` [1,2] ` (surrounding whitespace) | no finding |
+>
+> Message (the JS port copies it verbatim; `<value>` is the text, truncated to its first 60 runes
+> with `…` appended when longer, placed inside literal double quotes, not escaped):
+> `for_each.items "<value>" is neither a template ({{ … }}) nor a JSON array, so it can never resolve to a list; write {{ .data.<step>.<field> }} to read a value, or a JSON array literal such as '["a","b"]'`
+> Suggestion: `Wrap the path in braces: {{ .data.<step>.<field> }}`.
+>
+> Shared conformance fixtures: `invalid-for-each-items-bare-path.yaml`,
+> `invalid-for-each-items-null-literal.yaml`, `invalid-for-each-items-object-literal.yaml` and
+> `invalid-for-each-items-plain-text.yaml` (each exactly the one new error), and
+> `valid-for-each-items-forms.yaml` (a template, a `fromJson` template, `'["a", "b"]'` and `"[]"`:
+> no error; the false-positive side).
 
 > **v0.19.0 — the orchestrator is removed (BREAKING).** `specVersion` is `2.838.0`. Contract:
 > the reference's validator contract for the orchestrator removal, which amends the v0.18.0 ones.

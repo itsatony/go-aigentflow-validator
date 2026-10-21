@@ -117,7 +117,7 @@ version rejected them has no way to understand it.
 | Credential endpoints | an endpoint a server-supplied credential will never be sent to: an `ai://` `<provider>_base_url` (or a literal `executor_config.<provider>.base_url`) with no key of the flow's own, a family secret that is a server `${AIGENTFLOW_…}` variable beside a literal non-default endpoint (warning, `credential_endpoint_unpaired`) |
 | Templates | Go `text/template` syntax across `query`, `pre_processing`, `post_processing`, `conditions[].if` |
 | `expression_functions` | exactly one of `package` / `function`; `package:` refused; `function:` must be in the fixed catalog; a template calling an `fn_` name must declare it |
-| Other save-door rules | mock-scenario `delay` durations, empty `output:` entries |
+| Other save-door rules | mock-scenario `delay` durations, empty `output:` entries, a `for_each.items` that is neither a template nor a JSON array (`for_each_items_unresolvable`, v2.841.0) |
 
 ## What it does not check
 

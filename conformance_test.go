@@ -605,6 +605,30 @@ var conformanceCases = []conformanceCase{
 		file: "valid-campaign-surfaces-not-refused.yaml", valid: true,
 		forbidErrorCodes: []string{codeCampaignRemoved},
 	},
+	// v0.20.0 — AIgentFlow v2.841.0: for_each.items shape. A string with no
+	// template that is not a JSON array can never resolve to a list.
+	{
+		file: "invalid-for-each-items-bare-path.yaml", valid: false,
+		wantErrorCodes: []string{codeForEachItemsUnresolvable},
+	},
+	{
+		file: "invalid-for-each-items-null-literal.yaml", valid: false,
+		wantErrorCodes: []string{codeForEachItemsUnresolvable},
+	},
+	{
+		file: "invalid-for-each-items-object-literal.yaml", valid: false,
+		wantErrorCodes: []string{codeForEachItemsUnresolvable},
+	},
+	{
+		file: "invalid-for-each-items-plain-text.yaml", valid: false,
+		wantErrorCodes: []string{codeForEachItemsUnresolvable},
+	},
+	{
+		// The no-false-positive control: a template, a fromJson template and
+		// JSON array literals ([] included) are all fine.
+		file: "valid-for-each-items-forms.yaml", valid: true,
+		forbidErrorCodes: []string{codeForEachItemsUnresolvable, codeForEachItemsRequired},
+	},
 	// v0.19.0 — AIgentFlow v2.838.0: the orchestrator removed. The block is
 	// refused whole and nothing inside it is judged.
 	{
