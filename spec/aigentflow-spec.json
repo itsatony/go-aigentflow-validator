@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.838.0",
+  "specVersion": "2.841.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -316,6 +316,15 @@
     "flowKeyMessageFormat": "the flow-level key %q configured the orchestrator's tool discovery, which was removed in 2.838.0, and is no longer read",
     "nextMessageFormat": "step %q routes next to orchestrator: the orchestrator was removed in 2.838.0, so nothing would receive the hand-over",
     "suggestion": "AIgentFlow no longer runs orchestrator agents (removed in 2.838.0): a coordinating agent is a nexus://agent/run step (the agent plans and calls its tools in Nexus, as the person responsible for the run); fan-out is a for_each over flow://stored/<flow_id> or nexus://agent/run; a human decision is an async://human/<operation> step, or the Nexus approval wait inside an agent step. Delete the orchestrator: block, route the steps that said next: orchestrator to a real step (or next: null), and delete the flow-level tool_discovery / discoverable_tools (give the agent its capabilities in Nexus)"
+  },
+  "forEachItemsShape": {
+    "$comment": "AIgentFlow 2.841.0 save-door rule. for_each_items_unresolvable (ERROR): a top-level step's for_each.items that is a NON-EMPTY string whose text, trimmed of surrounding whitespace, contains no templateMarker AND is not a JSON array (the trimmed text parses as valid JSON and the decoded top-level value is an array). Fires on a bare path (.data.seed.list), a word list (a, b, c), a JSON object / null / number / string, and invalid JSON ([1,). Does not fire on any text containing templateMarker (nothing can be said statically), nor on [\"a\",\"b\"], [] or ' [1,2] '. An empty or missing items stays for_each_items_required; a non-string items gets no finding here. Field steps.<id>.for_each.items, StepID set; loop sub-steps are not judged. The reference refuses the flow at save and tolerates it when LOADING an old stored flow. messageFormat fills %s with the value, truncated to maxRunes runes with ellipsis appended when longer, inside literal double quotes (no escaping). Reference: ValidateFlow, for_each items shape.",
+    "code": "for_each_items_unresolvable",
+    "templateMarker": "{{",
+    "maxRunes": 60,
+    "ellipsis": "…",
+    "messageFormat": "for_each.items \"%s\" is neither a template ({{ … }}) nor a JSON array, so it can never resolve to a list; write {{ .data.<step>.<field> }} to read a value, or a JSON array literal such as '[\"a\",\"b\"]'",
+    "suggestion": "Wrap the path in braces: {{ .data.<step>.<field> }}"
   },
   "executorConfigEnvScopes": {
     "$comment": "executor_config may expand only the environment variables of the key it is written under. A value is a reference when it starts with referencePrefix and ends with referenceSuffix around a non-empty name. Checked fields: fields, plus every string value of extra (prefixed extraFieldPrefix in the message). A key absent from scopes has an EMPTY scope and refuses every reference. scopes is the reference's executorConfigEnvScope evaluated for every key with a non-empty scope. Reference: ValidateExecutorConfigEnvScopes (v2.597.0).",

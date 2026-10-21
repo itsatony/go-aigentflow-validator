@@ -128,6 +128,15 @@ type rawSpec struct {
 		NextMessageFormat    string   `json:"nextMessageFormat"`
 		Suggestion           string   `json:"suggestion"`
 	} `json:"removedOrchestratorSurfaces"`
+	// ForEachItemsShape feeds for_each_items_unresolvable (AIgentFlow v2.841.0).
+	ForEachItemsShape struct {
+		Code           string `json:"code"`
+		TemplateMarker string `json:"templateMarker"`
+		MaxRunes       int    `json:"maxRunes"`
+		Ellipsis       string `json:"ellipsis"`
+		MessageFormat  string `json:"messageFormat"`
+		Suggestion     string `json:"suggestion"`
+	} `json:"forEachItemsShape"`
 	// ExecutorConfigEnvScopes feeds executor_config_env_scope (v2.597.0).
 	ExecutorConfigEnvScopes struct {
 		ReferencePrefix string              `json:"referencePrefix"`

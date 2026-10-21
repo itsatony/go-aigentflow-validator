@@ -1,0 +1,21 @@
+aigentflow_version: "2.0.0"
+name: "for-each items shape"
+version: "1.0.0"
+start: "seed"
+steps:
+  seed:
+    executor: "function://data/create"
+    query:
+      type: "object"
+      list: "x"
+    next:
+      default: "fan"
+  fan:
+    executor: "function://utils/log"
+    for_each:
+      items: ".data.seed.list"
+      as: "item"
+    query:
+      message: "{{ .each.item }}"
+    next:
+      default: "null"

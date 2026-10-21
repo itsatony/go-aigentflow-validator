@@ -1,7 +1,9 @@
 package aifvalidate
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -17,6 +19,7 @@ import (
 func validateSaveDoorExtras(flow doc, iss *issues) {
 	validateMockScenarioDelays(flow, iss)
 	validateOutputParameters(flow, iss)
+	validateForEachItemsShape(flow, iss)
 }
 
 // validateMockScenarioDelays refuses a mock step `delay:` that is not a Go
@@ -75,4 +78,60 @@ func validateOutputParameters(flow doc, iss *issues) {
 			})
 		}
 	}
+}
+
+// validateForEachItemsShape refuses a top-level step's for_each.items that can
+// never resolve to a list: a non-empty string with no template marker that is
+// not a JSON array literal (reference: for_each items shape; spec
+// forEachItemsShape). Text with a template is not judged, an empty or missing
+// items is for_each_items_required's, and a non-string items gets no finding.
+func validateForEachItemsShape(flow doc, iss *issues) {
+	steps := stepsOf(flow)
+	if steps == nil {
+		return
+	}
+	cfg := spec.ForEachItemsShape
+	for _, stepID := range sortedKeys(steps) {
+		step, ok := asRecord(steps[stepID])
+		if !ok {
+			continue
+		}
+		forEach, ok := getRecord(step, keyForEach)
+		if !ok {
+			continue
+		}
+		base := stepField(stepID, keyForEach)
+		items, ok := iss.stringOf(forEach, keyItems, base)
+		if !ok || items == "" || !forEachItemsUnresolvable(items) {
+			continue
+		}
+		iss.error(Issue{
+			Field: base + "." + keyItems, Code: codeForEachItemsUnresolvable, StepID: stepID,
+			Message:    fmt.Sprintf(cfg.MessageFormat, truncateRunes(items, cfg.MaxRunes, cfg.Ellipsis)),
+			Suggestion: cfg.Suggestion,
+		})
+	}
+}
+
+// forEachItemsUnresolvable reports whether the items text is neither a
+// template nor a JSON array.
+func forEachItemsUnresolvable(items string) bool {
+	if strings.Contains(items, spec.ForEachItemsShape.TemplateMarker) {
+		return false
+	}
+	var decoded any
+	if err := json.Unmarshal([]byte(strings.TrimSpace(items)), &decoded); err != nil {
+		return true
+	}
+	_, isArray := decoded.([]any)
+	return !isArray
+}
+
+// truncateRunes cuts s to max runes, appending ellipsis when it was longer.
+func truncateRunes(s string, max int, ellipsis string) string {
+	r := []rune(s)
+	if len(r) <= max {
+		return s
+	}
+	return string(r[:max]) + ellipsis
 }

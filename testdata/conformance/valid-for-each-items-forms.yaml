@@ -1,0 +1,48 @@
+aigentflow_version: "2.0.0"
+name: "for-each items forms"
+version: "1.0.0"
+start: "seed"
+steps:
+  seed:
+    executor: "function://data/create"
+    query:
+      type: "object"
+      list: "x"
+    next:
+      default: "from_template"
+  from_template:
+    executor: "function://utils/log"
+    for_each:
+      items: "{{ .data.seed.list }}"
+      as: "item"
+    query:
+      message: "{{ .each.item }}"
+    next:
+      default: "from_fromjson"
+  from_fromjson:
+    executor: "function://utils/log"
+    for_each:
+      items: "{{ fromJson .data.seed.list }}"
+      as: "item"
+    query:
+      message: "{{ .each.item }}"
+    next:
+      default: "from_literal"
+  from_literal:
+    executor: "function://utils/log"
+    for_each:
+      items: '["a", "b"]'
+      as: "item"
+    query:
+      message: "{{ .each.item }}"
+    next:
+      default: "from_empty_literal"
+  from_empty_literal:
+    executor: "function://utils/log"
+    for_each:
+      items: "[]"
+      as: "item"
+    query:
+      message: "{{ .each.item }}"
+    next:
+      default: "null"
