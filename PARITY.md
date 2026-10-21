@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.841.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.842.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -24,7 +24,20 @@ v0.16.0, which adds three rules and aligns the atlas rules with the reference (b
 v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` executors and the `ai://` agent-loop parameters and adds two errors for them (below), then
 v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical agent-runtime scheme with `atlas://` as its alias, **removes** signals, dynamic flow modification and campaigns with four new codes, and drops share links from the removal advice (below), then
 v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new code, then
-v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.items` that can never be a list (below).
+v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.items` that can never be a list (below), then
+v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (below).
+
+> **v0.20.1 — `aiflow://` is a known scheme (no new rule).** `specVersion` is `2.842.0`. AIgentFlow
+> resolves `aiflow://{org_handle}/{flow_handle}[/v{n}]` as the alias for a stored flow
+> (`FlowResolver.ResolveFlowByAlias`, `ParseFlowAlias`), but the vendored list lacked it, so the
+> validator warned `unknown_executor_scheme` with "Did you mean 'flow'?" and an author followed it to
+> `flow://stored/<handle>`, which fails at run time. `aiflow` is now in `executorSchemes`; nothing else
+> changes. Shape: the shared executor-URL parser already needs authority plus path, so
+> `aiflow://onlyone` stays `invalid_executor_url` (the reference's save-door parser refuses it too).
+> NOT mirrored: `ParseFlowAlias`'s own checks (org id form, handle grammar, `/v<n>` revision) run in
+> the reference at run time, not at save, so no rule is added; `aiflow://org/flow/v3` draws no finding
+> here. Shared conformance fixtures: `valid-executor-aiflow-alias.yaml` (no error, no
+> `unknown_executor_scheme`) and `invalid-executor-aiflow-one-segment.yaml` (`invalid_executor_url`).
 
 > **v0.20.0 — `for_each.items` shape (new ERROR).** `specVersion` is `2.841.0`. Contract: the
 > reference's save-door rule "for_each items shape" (pure function of the document; AIgentFlow

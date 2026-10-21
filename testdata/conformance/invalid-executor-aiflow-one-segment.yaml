@@ -1,0 +1,16 @@
+aigentflow_version: "2.0.0"
+name: "aiflow alias one segment"
+version: "1.0.0"
+description: "aiflow://{org}/{flow} needs both segments; the shared executor-URL parser refuses a one-segment URL at save."
+start: "prepare"
+steps:
+  prepare:
+    executor: "function://utils/log"
+    query:
+      message: "starting"
+    next:
+      default: "call_child"
+  call_child:
+    executor: "aiflow://onlyone"
+    next:
+      default: null

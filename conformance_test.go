@@ -605,6 +605,18 @@ var conformanceCases = []conformanceCase{
 		file: "valid-campaign-surfaces-not-refused.yaml", valid: true,
 		forbidErrorCodes: []string{codeCampaignRemoved},
 	},
+	// v0.20.1 — AIgentFlow v2.842.0: aiflow:// is a known scheme (the stored-flow
+	// alias aiflow://{org}/{flow}); it must not draw unknown_executor_scheme.
+	{
+		file: "valid-executor-aiflow-alias.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+		forbidErrorCodes:   []string{codeInvalidExecutorURL},
+	},
+	{
+		// The shared URL shape still refuses a one-segment alias.
+		file: "invalid-executor-aiflow-one-segment.yaml", valid: false,
+		wantErrorCodes: []string{codeInvalidExecutorURL},
+	},
 	// v0.20.0 — AIgentFlow v2.841.0: for_each.items shape. A string with no
 	// template that is not a JSON array can never resolve to a list.
 	{
