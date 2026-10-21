@@ -1,0 +1,37 @@
+aigentflow_version: '2.0.0'
+name: valid-signal-surfaces-not-refused
+version: '1.0.0'
+description: >-
+  The no-false-positive control for 2.834.0: a flow:// query carries the CHILD's inputs, a
+  templated executor is not judged, enable_signals is a step key only on aiv://, and a null
+  block key is absent.
+start: child
+steps:
+  child:
+    executor: flow://stored/child-flow
+    query:
+      enable_signals: true
+      flow_modification_allowed: true
+    next:
+      default: 'templated'
+  templated:
+    executor: 'http://{{ .query.host }}/get'
+    query:
+      flow_modification_allowed: true
+    next:
+      default: 'call'
+  call:
+    executor: http://example/get
+    query:
+      url: https://example.com
+      enable_signals: true
+    next:
+      default: 'null'
+checkpoint:
+  enabled: true
+  pre_dfm: ~
+query:
+  host:
+    type: string
+output:
+  - done

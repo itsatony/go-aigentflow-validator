@@ -53,7 +53,7 @@ func init() {
 // never called: only Parse runs, never Execute.
 func stubFunc(...any) any { return nil }
 
-// checkGoTemplateSyntax reports Go text/template problems in src.
+// parseGoTemplate reports Go text/template problems in src.
 //
 // DIVERGENCE from aigentflow-flow-validator-js, in this implementation's favour
 // and recorded in PARITY.md: the JS port hand-rolls an approximate lexer
@@ -69,12 +69,8 @@ func stubFunc(...any) any { return nil }
 // Unknown function names are discovered by registering a stub and re-parsing,
 // so a document with an unknown function still has the REST of its syntax
 // checked (a single-pass parse would stop at the first unknown name).
-func checkGoTemplateSyntax(src string) []templateIssue {
-	issues, _ := parseGoTemplate(src)
-	return issues
-}
-
-// parseGoTemplate is checkGoTemplateSyntax that also returns the parsed
+//
+// It also returns the parsed
 // template (nil when the source has a genuine syntax error) so a rule that
 // judges the parse tree reads the SAME parse the syntax check used. Unknown
 // functions are stubbed, so the tree exists for them too.

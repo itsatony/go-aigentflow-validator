@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: warn-removed-key-ignored-pre-dfm
+version: '1.0.0'
+description: >-
+  checkpoint.pre_dfm is inert since 2.834.0, and AIgentFlow itself wrote it into stored flows, so
+  it is a removed_key_ignored WARNING, never an error and never an unknown key.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+checkpoint:
+  enabled: true
+  pre_dfm: true
+output:
+  - message

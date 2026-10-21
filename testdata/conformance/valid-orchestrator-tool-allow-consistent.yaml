@@ -2,8 +2,8 @@ aigentflow_version: '2.0.0'
 name: orchestrator-tool-allow-consistent
 version: '1.0.0'
 description: >-
-  Every tool orchestrator.tools names passes tools.allow or is exempt (a lifecycle tool, a signal
-  tool with signals on), so nothing is withheld.
+  Every tool orchestrator.tools names passes tools.allow or is exempt (a lifecycle tool), so nothing
+  is withheld.
 start: work
 steps:
   work:
@@ -15,8 +15,7 @@ steps:
 orchestrator:
   mode: monitor
   agentic: true
-  enable_signals: true
-  tools: [aif_step_start, aif_mission_fail, aif_signal_complete]
+  tools: [aif_step_start, aif_mission_fail]
   exons: |
     ---
     name: monitor

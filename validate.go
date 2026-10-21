@@ -105,6 +105,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateExamples(flow, iss)
 	inspector := exonsInspectorOf(opts)
 	validateOrchestratorExons(flow, iss, inspector)
+	validateRemovedOrchestratorSurfaces(flow, iss, inspector)
 	validateResidencyEnforcement(flow, iss, inspector)
 	// Last among the structural rules: it skips a location another rule has
 	// already reported with more specific advice.

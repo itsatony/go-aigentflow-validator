@@ -109,7 +109,7 @@ version rejected them has no way to understand it.
 | --- | --- |
 | Basic structure | required top-level fields, step-map shape, per-step executor, reserved `.` in step IDs, reserved step ID `orchestrator` |
 | Unknown keys and value kinds | any key a flow type does not declare, at every level (`unknown_yaml_key`); a value of the wrong kind, e.g. `next: end` (`invalid_type`) |
-| Retired keys | flow-root `budget:` and `max_retries:`, step and loop sub-step `max_retries:`, `campaign.budget_max_per_child` (all refused as `unknown_yaml_key`) |
+| Retired keys | flow-root `budget:` and `max_retries:`, step and loop sub-step `max_retries:` (all refused as `unknown_yaml_key`) |
 | Executors | the reference's executor-URL shape, `scheme://authority/path` (error; templated URLs skipped), unknown scheme (warning) |
 | Removed agent surfaces | `executor_removed` (an `exons://` or `agent://` step, or the `exons_uploads` key) and `agentic_param_removed` (an `ai://` step carrying `agentic`, `max_tool_turns`, `mcp_server_url`, …) — both errors |
 | Connectivity | `next.default` / `next.conditions[].goto` existence (error; only `null` and `orchestrator` need no step, so `end` must name one), unreachable steps + cycles (warning) |
@@ -124,7 +124,9 @@ version rejected them has no way to understand it.
 | Credential bindings | `credential` vs `credentials` exclusivity, `stored/{provider}/{name}` form, `inject_as` |
 | `input_schema` / `output_schema` | version, field names, types, constraint/type compatibility, `visible_when`, RE2 patterns |
 | `quality_gate` | rubric, threshold range, `on_fail` enum, self-goto, composite/parallel-member scope |
-| Orchestrator / campaign | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `enforce_region` needs `region`, `child_flows`, `max_credits_per_child`, campaign handoff |
+| Orchestrator | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `enforce_region` needs `region` |
+| Removed surfaces | `executor_removed`, `agentic_param_removed` (v2.833.0); `signal_removed`, `flow_modification_removed`, the `removed_key_ignored` warning (v2.834.0); `campaign_removed` (v2.836.0) |
+| Nexus agent steps | `nexus://agent/run`, `nexus://capability/<ref>` and the `atlas://` alias: the `atlas_*` rules |
 | Inline `.exons` documents | orchestrator: a frontmatter spec, `execution.provider`, no `requirements.resources`; a tool one of `orchestrator.tools` / `tools.allow` withholds (warning); with [`exonsinspect`](#exons-documents): the document parses, and every tag of the orchestrator's document can render |
 | `executor_config` | a `${VAR}` reference may name only the variables of the key it is written under |
 | Examples | the optional top-level `examples:` block: ids, limits, input against `input_schema` (unknown / missing / wrong kind / enum), file references (https only), expectations, checkpoints, variants, credential-shaped literals (`example_*`, `examples_*`) |

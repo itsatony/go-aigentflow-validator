@@ -4,8 +4,9 @@ import "fmt"
 
 // validateRetiredKeys refuses grammar keys AIgentFlow deleted because nothing
 // read them: the flow-root `budget:`, the flow-root `max_retries:`, a
-// `max_retries:` directly on a step (all AIF v2.721.0, DC-FORGE-150), and
-// `campaign.budget_max_per_child` (AIF v2.728.0, DC-FORGE-155).
+// `max_retries:` directly on a step (all AIF v2.721.0, DC-FORGE-150). (The
+// `campaign.budget_max_per_child` arm went with the campaign block in AIF
+// v2.836.0: the whole block is campaign_removed, nothing inside it is judged.)
 //
 // The reference's save door (create, update, POST /flows/validate) parses with
 // yaml KnownFields(true), so a flow declaring any of them is REFUSED, and its
@@ -37,16 +38,6 @@ func validateRetiredKeys(flow doc, iss *issues) {
 			Message: retiredMaxRetriesMessage("the flow"), Suggestion: retiredMaxRetriesSuggestion,
 		})
 	}
-	if campaign, ok := getRecord(flow, keyCampaign); ok && has(campaign, keyBudgetMaxPerChild) {
-		iss.error(Issue{
-			Field: keyCampaign + "." + keyBudgetMaxPerChild, Code: codeUnknownYAMLKey,
-			Message: "`campaign.budget_max_per_child` (USD) was removed from the grammar in AIgentFlow " +
-				budgetMaxPerChildRemovedIn + " because it capped nothing, and AIgentFlow refuses to save a flow that declares it.",
-			Suggestion: "Use `campaign.max_credits_per_child: N` (a whole number of credits) — it is checked before " +
-				"each agentic turn of a child, and a spawn may lower it with `max_credits`.",
-		})
-	}
-
 	steps := stepsOf(flow)
 	for _, stepID := range sortedKeys(steps) {
 		step, ok := asRecord(steps[stepID])
@@ -93,8 +84,7 @@ func validateRetiredKeys(flow doc, iss *issues) {
 }
 
 const (
-	retiredKeysRemovedIn       = "v2.721.0"
-	budgetMaxPerChildRemovedIn = "v2.728.0"
+	retiredKeysRemovedIn = "v2.721.0"
 
 	retiredMaxRetriesSuggestion = "Delete it. To retry a step write `error_strategy: { action: \"retry\", max_retries: N }` " +
 		"on that step (or on the flow) — the same key one level down, which is the one that works " +

@@ -3,8 +3,8 @@ name: orchestrator-tool-withheld-named
 version: '1.0.0'
 description: >-
   aif_step_start is named in orchestrator.tools and omitted by tools.allow, so it is never
-  offered. The lifecycle tool and the signal tool named beside it are exempt from tools.allow
-  (signals are enabled by default), and aif_ask_human is allowed.
+  offered. The lifecycle tool named beside it is exempt from tools.allow, and
+  aif_ask_human is allowed.
 start: work
 steps:
   work:
@@ -16,7 +16,7 @@ steps:
 orchestrator:
   mode: monitor
   agentic: true
-  tools: [aif_step_start, aif_mission_complete, aif_signal_complete, aif_ask_human]
+  tools: [aif_step_start, aif_mission_complete, aif_ask_human]
   exons: |
     ---
     name: monitor

@@ -1,0 +1,15 @@
+aigentflow_version: '2.0.0'
+name: invalid-nexus-agent-missing
+version: '1.0.0'
+description: >-
+  The agent rules apply to nexus:// exactly as to atlas://: a run with no agent is refused.
+start: s
+steps:
+  s:
+    executor: nexus://agent/run
+    query:
+      prompt: 'Summarise.'
+    next:
+      default: 'null'
+output:
+  - done

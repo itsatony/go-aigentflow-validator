@@ -1,0 +1,34 @@
+aigentflow_version: '2.0.0'
+name: warn-removed-key-ignored-enable-signals-false
+version: '1.0.0'
+description: >-
+  orchestrator.enable_signals: false withheld tools that no longer exist, so the flow already
+  behaves as declared: a removed_key_ignored WARNING, not signal_removed.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  enable_signals: false
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    tools:
+      allow: [aif_ask_human]
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: step_completed
+output:
+  - message

@@ -79,17 +79,11 @@ const (
 	keyTools                = "tools"
 	keyInterval             = "interval"
 	keyCampaign             = "campaign"
-	keyOnChildrenComplete   = "on_children_complete"
 	keyPreProcessing        = "pre_processing"
 	keyPostProcessing       = "post_processing"
 	keyDescription          = "description"
 	keyDisplayName          = "display_name"
 	keyBudget               = "budget"
-	keyBudgetMaxPerChild    = "budget_max_per_child"
-	keyMaxCreditsPerChild   = "max_credits_per_child"
-	keyChildFlows           = "child_flows"
-	keyFlowID               = "flow_id"
-	keyFlowName             = "flow_name"
 	keyHumanQuestionTimeout = "human_question_timeout"
 	keyRegion               = "region"
 	keyCompliance           = "compliance"
@@ -103,6 +97,10 @@ const (
 	keyOutput               = "output"
 	keyExecutorConfig       = "executor_config"
 	keyEnableSignals        = "enable_signals"
+	keyCheckpoint           = "checkpoint"
+	keyPreDFM               = "pre_dfm"
+	keyDenyTools            = "deny_tools"
+	keyRequireApprovalFor   = "require_approval_for"
 )
 
 // Enum member values the rules branch on. The full sets live in the embedded
@@ -249,8 +247,6 @@ const (
 	codeOrchTimerBadInterv  = "orchestrator_timer_bad_interval"
 	codeOrchToolUnknown     = "orchestrator_tool_unknown"
 	codeOrchNotAgentic      = "orchestrator_not_agentic"
-	codeCampaignNeedsOrch   = "campaign_requires_orchestrator"
-	codeCampaignHandoffStep = "campaign_handoff_step_unknown"
 
 	// templates.
 	codeTemplateSyntax   = "template_syntax_error"
@@ -268,7 +264,6 @@ const (
 
 	// orchestrator / campaign / step warnings (v2.695.0 – v2.728.0).
 	codeOrchHumanQTimeoutInvalid = "orchestrator_human_question_timeout_invalid"
-	codeCampaignMaxCreditsChild  = "campaign_invalid_max_credits_per_child"
 	codeOrchEnforceRegionNeeds   = "orchestrator_enforce_region_needs_region" // v2.820.0
 	codeRespExpUnread            = "response_expectation_unread"
 	codeStepMaxDurationIgnored   = "step_max_duration_ignored"
@@ -302,6 +297,12 @@ const (
 	codeExecutorRemoved     = "executor_removed"
 	codeAgenticParamRemoved = "agentic_param_removed"
 
+	// v0.18.0 — AIgentFlow v2.834.0 (signals + DFM) and v2.836.0 (campaigns).
+	codeSignalRemoved           = "signal_removed"            // VALIDATION_CODE_SIGNAL_REMOVED
+	codeFlowModificationRemoved = "flow_modification_removed" // VALIDATION_CODE_FLOW_MODIFICATION_REMOVED
+	codeRemovedKeyIgnored       = "removed_key_ignored"       // VALIDATION_CODE_REMOVED_KEY_IGNORED (warning)
+	codeCampaignRemoved         = "campaign_removed"          // VALIDATION_CODE_CAMPAIGN_REMOVED
+
 	// v0.6.1 — AIgentFlow CFX-05: a step query naming a server-owned parameter.
 	codeServerOwnedQueryKey = "server_owned_query_key" // VALIDATION_CODE_SERVER_OWNED_QUERY_KEY
 
@@ -317,10 +318,8 @@ const (
 	codeUnknownProcessingConfigKey = "unknown_processing_config_key"
 
 	// Save-door refusals this port carries and the JS port does not (yet).
-	codeReservedStepIDOrch    = "reserved_step_id_orchestrator"
-	codeToolDiscoveryInvalid  = "tool_discovery_invalid"
-	codeMockDelayInvalid      = "mock_delay_invalid"
-	codeOutputParamEmpty      = "output_param_empty"
-	codeCampaignNoChildFlows  = "campaign_no_child_flows"
-	codeCampaignChildFlowNoID = "campaign_child_flow_no_id"
+	codeReservedStepIDOrch   = "reserved_step_id_orchestrator"
+	codeToolDiscoveryInvalid = "tool_discovery_invalid"
+	codeMockDelayInvalid     = "mock_delay_invalid"
+	codeOutputParamEmpty     = "output_param_empty"
 )

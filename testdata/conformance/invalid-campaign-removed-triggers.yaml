@@ -1,0 +1,34 @@
+aigentflow_version: '2.0.0'
+name: invalid-campaign-removed-triggers
+version: '1.0.0'
+description: >-
+  The campaign_child_completed and campaign_child_failed triggers are campaign_removed (one
+  finding), never an unknown trigger. A timer trigger is still live.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: campaign_child_completed
+    - type: timer
+      interval: 5m
+    - type: campaign_child_failed
+output:
+  - message

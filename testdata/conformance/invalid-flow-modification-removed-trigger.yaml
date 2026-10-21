@@ -1,9 +1,9 @@
 aigentflow_version: '2.0.0'
-name: orchestrator-tool-allow-campaign
+name: invalid-flow-modification-removed-trigger
 version: '1.0.0'
 description: >-
-  One campaign tool in tools.allow is enough for the campaign warning, and aif_ask_human is
-  allowed.
+  The dfm_suggestion trigger was removed with dynamic flow modification in 2.834.0. It is refused
+  as flow_modification_removed, never as an unknown trigger.
 start: work
 steps:
   work:
@@ -12,10 +12,6 @@ steps:
       message: 'working'
     next:
       default: 'null'
-campaign:
-  child_flows:
-    - flow_name: expert-unit
-  max_concurrent: 3
 orchestrator:
   mode: monitor
   agentic: true
@@ -27,11 +23,11 @@ orchestrator:
     execution:
       provider: anthropic
       model: claude-sonnet-4-6
-    tools:
-      allow: [aif_ask_human, aif_campaign_status]
     ---
     {~exons.message role="system"~}observe{~/exons.message~}
   triggers:
     - type: step_completed
+    - type: dfm_suggestion
+    - type: dfm_suggestion
 output:
   - message

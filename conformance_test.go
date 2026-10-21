@@ -189,15 +189,6 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeOrchEnforceRegionNeeds},
 	},
 	{
-		// DC-COND-2: campaign.on_children_complete naming a real step.
-		file: "valid-campaign-handoff.yaml", valid: true,
-	},
-	{
-		file:           "invalid-campaign-handoff-unknown-step.yaml",
-		valid:          false,
-		wantErrorCodes: []string{codeCampaignHandoffStep},
-	},
-	{
 		file:           "invalid-orchestrator-owner-no-yield.yaml",
 		valid:          false,
 		wantErrorCodes: []string{codeOrchOwnerNeedsYield},
@@ -235,11 +226,6 @@ var conformanceCases = []conformanceCase{
 	{
 		file: "valid-processing-config-keys-accepted.yaml", valid: true,
 		forbidWarningCodes: []string{codeUnknownProcessingOp, codeUnknownProcessingConfigKey},
-	},
-	{
-		// v2.728.0 (DC-FORGE-155): campaign.budget_max_per_child was deleted.
-		file: "invalid-retired-campaign-budget-max-per-child.yaml", valid: false,
-		wantErrorCodes: []string{codeUnknownYAMLKey},
 	},
 	{
 		// v2.648.0: a sub-step id that is also a loop-result summary field.
@@ -311,22 +297,6 @@ var conformanceCases = []conformanceCase{
 		// yaml.v3 drops a null list entry, so the reference saves this.
 		file: "valid-output-null-entry.yaml", valid: true,
 		forbidErrorCodes: []string{codeOutputParamEmpty},
-	},
-	{
-		// A list of nothing but nulls is empty after the reference decodes it.
-		file: "invalid-campaign-no-child-flows.yaml", valid: false,
-		wantErrorCodes: []string{codeCampaignNoChildFlows},
-	},
-	{
-		file: "invalid-campaign-child-flow-no-id.yaml", valid: false,
-		wantErrorCodes: []string{codeCampaignChildFlowNoID},
-	},
-	{
-		// max_credits_per_child 1.5 truncates and saves; a null child entry is
-		// dropped; flow_id is a Go string, so a number counts.
-		file: "valid-campaign-decoded-shapes.yaml", valid: true,
-		forbidErrorCodes: []string{codeInvalidType, codeCampaignMaxCreditsChild,
-			codeCampaignNoChildFlows, codeCampaignChildFlowNoID},
 	},
 	{
 		// v0.5.0: `end` is looked up as a STEP by the reference's save door, in a
@@ -496,20 +466,8 @@ var conformanceCases = []conformanceCase{
 		wantWarningCodes: []string{codeOrchToolWithheld},
 	},
 	{
-		file: "warn-orchestrator-tool-withheld-signals-off.yaml", valid: true,
-		wantWarningCodes: []string{codeOrchToolWithheld},
-	},
-	{
-		file: "warn-orchestrator-tool-withheld-campaign.yaml", valid: true,
-		wantWarningCodes: []string{codeOrchToolWithheld},
-	},
-	{
 		// The counter-fixtures: a false positive here goes red.
 		file: "valid-orchestrator-tool-allow-consistent.yaml", valid: true,
-		forbidWarningCodes: []string{codeOrchToolWithheld},
-	},
-	{
-		file: "valid-orchestrator-tool-allow-campaign.yaml", valid: true,
 		forbidWarningCodes: []string{codeOrchToolWithheld},
 	},
 	{
@@ -624,9 +582,10 @@ var conformanceCases = []conformanceCase{
 	{file: "warn-credential-endpoint-family-step-query.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-family-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{
-		// v0.8.0 (AIgentFlow v2.819.0): the AigentChat executor is gone, so nexus:// and
-		// aigentchat:// are any unknown scheme: a warning, and no family judgement.
-		file: "warn-removed-executor-nexus.yaml", valid: true,
+		// v0.8.0 (AIgentFlow v2.819.0): the AigentChat executor is gone, so
+		// aigentchat:// is any unknown scheme: a warning, and no family judgement.
+		// (nexus:// is the agent runtime executor again since v2.835.0.)
+		file: "warn-removed-executor-aigentchat.yaml", valid: true,
 		wantWarningCodes:   []string{codeUnknownExecScheme},
 		forbidWarningCodes: []string{codeCredentialEndpointUnpaired},
 	},
@@ -666,6 +625,104 @@ var conformanceCases = []conformanceCase{
 	{file: "valid-display-name-80-runes-multibyte.yaml", valid: true, forbidErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "invalid-display-name-81-runes.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
 	{file: "invalid-display-name-81-runes-multibyte.yaml", valid: false, wantErrorCodes: []string{codeDisplayNameTooLong}},
+	// v0.18.0 — AIgentFlow v2.835.0: nexus:// is the canonical spelling of the
+	// agent runtime executor and atlas:// its alias; one set of rules for both.
+	{
+		file: "valid-nexus-agent-run.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+	},
+	{
+		file: "valid-nexus-capability.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+	},
+	{
+		file: "valid-atlas-alias-agent-run.yaml", valid: true,
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+	},
+	{
+		file: "invalid-nexus-agent-missing.yaml", valid: false,
+		wantErrorCodes:     []string{"atlas_agent_missing"},
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+	},
+	{
+		file: "invalid-nexus-loop-substep-agent-not-literal.yaml", valid: false,
+		wantErrorCodes: []string{"atlas_agent_not_literal"},
+	},
+	{
+		// The pre-2026-10-20 AigentChat shape names no Nexus operation.
+		file: "invalid-nexus-aigentchat-shape.yaml", valid: false,
+		wantErrorCodes: []string{"atlas_operation_unknown"},
+	},
+	// v0.18.0 — AIgentFlow v2.834.0 (AGENTCUT B1): signals and DFM removed.
+	{
+		file: "invalid-signal-removed-enable-signals.yaml", valid: false,
+		wantErrorCodes:   []string{codeSignalRemoved},
+		forbidErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		file: "invalid-signal-removed-tool-lists.yaml", valid: false,
+		wantErrorCodes:     []string{codeSignalRemoved},
+		forbidWarningCodes: []string{codeOrchToolUnknown, codeOrchToolWithheld},
+	},
+	{
+		file: "invalid-signal-removed-aiv-step.yaml", valid: false,
+		wantErrorCodes: []string{codeSignalRemoved},
+	},
+	{
+		file: "invalid-flow-modification-removed-trigger.yaml", valid: false,
+		wantErrorCodes:   []string{codeFlowModificationRemoved},
+		forbidErrorCodes: []string{codeOrchTriggerUnknown},
+	},
+	{
+		file: "invalid-flow-modification-removed-step.yaml", valid: false,
+		wantErrorCodes: []string{codeFlowModificationRemoved},
+	},
+	{
+		file: "warn-removed-key-ignored-pre-dfm.yaml", valid: true,
+		wantWarningCodes:   []string{codeRemovedKeyIgnored},
+		forbidWarningCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		file: "warn-removed-key-ignored-enable-signals-false.yaml", valid: true,
+		wantWarningCodes: []string{codeRemovedKeyIgnored},
+		forbidErrorCodes: []string{codeSignalRemoved},
+	},
+	{
+		// The no-false-positive control.
+		file: "valid-signal-surfaces-not-refused.yaml", valid: true,
+		forbidErrorCodes:   []string{codeSignalRemoved, codeFlowModificationRemoved},
+		forbidWarningCodes: []string{codeRemovedKeyIgnored},
+	},
+	// v0.18.0 — AIgentFlow v2.836.0 (AGENTCUT B2): campaigns removed.
+	{
+		file: "invalid-campaign-removed-block.yaml", valid: false,
+		wantErrorCodes:   []string{codeCampaignRemoved},
+		forbidErrorCodes: []string{codeInvalidType, codeStepNotFound},
+	},
+	{
+		file: "invalid-campaign-removed-empty-block.yaml", valid: false,
+		wantErrorCodes: []string{codeCampaignRemoved},
+	},
+	{
+		file: "invalid-campaign-removed-retired-key.yaml", valid: false,
+		wantErrorCodes:   []string{codeCampaignRemoved},
+		forbidErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
+		file: "invalid-campaign-removed-tool-lists.yaml", valid: false,
+		wantErrorCodes:     []string{codeCampaignRemoved},
+		forbidWarningCodes: []string{codeOrchToolUnknown, codeOrchToolWithheld},
+	},
+	{
+		file: "invalid-campaign-removed-triggers.yaml", valid: false,
+		wantErrorCodes:   []string{codeCampaignRemoved},
+		forbidErrorCodes: []string{codeOrchTriggerUnknown},
+	},
+	{
+		// The no-false-positive control.
+		file: "valid-campaign-surfaces-not-refused.yaml", valid: true,
+		forbidErrorCodes: []string{codeCampaignRemoved},
+	},
 }
 
 func TestConformance(t *testing.T) {

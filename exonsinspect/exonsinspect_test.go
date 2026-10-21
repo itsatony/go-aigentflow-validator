@@ -31,15 +31,16 @@ var engineCases = []struct {
 	{file: "invalid-orchestrator-exons-spec-invalid.yaml", wantErrors: []string{"orchestrator_exons_parse_failed"}},
 	{file: "warn-orchestrator-tool-withheld-ask-human.yaml", valid: true, wantWarns: []string{"orchestrator_tool_withheld"}},
 	{file: "warn-orchestrator-tool-withheld-named.yaml", valid: true, wantWarns: []string{"orchestrator_tool_withheld"}},
-	{file: "warn-orchestrator-tool-withheld-signals-off.yaml", valid: true, wantWarns: []string{"orchestrator_tool_withheld"}},
-	{file: "warn-orchestrator-tool-withheld-campaign.yaml", valid: true, wantWarns: []string{"orchestrator_tool_withheld"}},
 	{file: "valid-orchestrator-tool-allow-consistent.yaml", valid: true, forbidWarns: []string{"orchestrator_tool_withheld"}},
-	{file: "valid-orchestrator-tool-allow-campaign.yaml", valid: true, forbidWarns: []string{"orchestrator_tool_withheld"}},
 	{file: "valid-orchestrator-tool-allow-absent.yaml", valid: true, forbidWarns: []string{"orchestrator_tool_withheld"}},
+	// v0.18.0: a removed signal / campaign name in the engine-read tools.allow is
+	// refused by its own code and never reported as withheld.
+	{file: "invalid-signal-removed-tool-lists.yaml", wantErrors: []string{"signal_removed"}, forbidWarns: []string{"orchestrator_tool_withheld"}},
+	{file: "invalid-campaign-removed-tool-lists.yaml", wantErrors: []string{"campaign_removed"}, forbidWarns: []string{"orchestrator_tool_withheld"}},
+	{file: "warn-removed-key-ignored-enable-signals-false.yaml", valid: true, wantWarns: []string{"removed_key_ignored"}},
 	// Every orchestrator fixture the JS port shares must stay valid with the
 	// engine too: a false refusal here is the failure that matters most.
 	{file: "valid-orchestrator-monitor.yaml", valid: true},
-	{file: "valid-campaign-handoff.yaml", valid: true},
 	{file: "valid-orchestrator-human-question-timeout.yaml", valid: true},
 	{file: "valid-tool-discovery-vocabulary.yaml", valid: true},
 }

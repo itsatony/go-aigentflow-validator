@@ -2,7 +2,7 @@ aigentflow_version: '2.0.0'
 name: orchestrator-tool-allow-absent
 version: '1.0.0'
 description: >-
-  An absent (here: null) tools.allow narrows nothing, so no tool is withheld, campaign or not.
+  An absent (here: null) tools.allow narrows nothing, so no tool is withheld.
 start: work
 steps:
   work:
@@ -11,10 +11,6 @@ steps:
       message: 'working'
     next:
       default: 'null'
-campaign:
-  child_flows:
-    - flow_name: expert-unit
-  max_concurrent: 3
 orchestrator:
   mode: monitor
   agentic: true

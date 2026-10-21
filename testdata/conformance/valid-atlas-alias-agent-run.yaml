@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-alias-agent-run
+version: '1.0.0'
+description: >-
+  atlas:// stays an accepted alias of nexus:// (AIgentFlow 2.835.0): the same step written with
+  the old spelling validates exactly as the new one does.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: 'Summarise {{ .query.topic }}.'
+      capabilities: [web_search]
+    next:
+      default: 'c'
+  c:
+    executor: atlas://capability/web_fetch
+    query:
+      url: https://example.com
+    next:
+      default: 'null'
+output:
+  - done

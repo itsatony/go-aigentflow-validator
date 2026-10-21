@@ -581,14 +581,11 @@ orchestrator:
 		assertError(t, ValidateFlow(src, Options{StrictRegistries: true}),
 			codeOrchToolUnknown, "orchestrator.tools[0]")
 	})
-	t.Run("campaign without an orchestrator", func(t *testing.T) {
+	t.Run("a campaign block is campaign_removed, with or without an orchestrator", func(t *testing.T) {
 		src := minimalFlow + "campaign:\n  spawn: agents\n"
-		assertError(t, ValidateFlow(src, Options{}), codeCampaignNeedsOrch, keyCampaign)
-	})
-	t.Run("campaign handoff to an unknown step", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\ncampaign:\n  on_children_complete: ghost\n"
-		assertError(t, ValidateFlow(src, Options{}),
-			codeCampaignHandoffStep, "campaign.on_children_complete")
+		assertError(t, ValidateFlow(src, Options{}), codeCampaignRemoved, keyCampaign)
+		src = minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\ncampaign:\n  on_children_complete: ghost\n"
+		assertError(t, ValidateFlow(src, Options{}), codeCampaignRemoved, keyCampaign)
 	})
 }
 

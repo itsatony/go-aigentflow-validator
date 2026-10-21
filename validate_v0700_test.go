@@ -401,9 +401,9 @@ func TestApplyExamplePatch(t *testing.T) {
 // generated key sets, with nothing hand-listed.
 func TestExamplesUnknownKeyNamesTheKey(t *testing.T) {
 	cases := []struct{ name, old, new, field string }{
-		{"example level", "    guidance:", "    guidence:", "examples[0].guidence"},
+		{"example level", "    guidance:", "    guidence:", "examples[0].guidence"}, //nolint:misspell // the typo is the test
 		{"expected level", "      rubric:", "      rubrik:", "examples[0].expected.rubrik"},
-		{"matcher level", "tolerance: 0.005", "tolerence: 0.005", "examples[0].expected.fields.total.tolerence"},
+		{"matcher level", "tolerance: 0.005", "tolerence: 0.005", "examples[0].expected.fields.total.tolerence"}, //nolint:misspell // the typo is the test
 		{"variant level", "    expected:\n", "    variants:\n      - { id: v_one, origin: author, hold_out: true, input_patch: { invoice_text: z } }\n    expected:\n", "examples[0].variants[0].hold_out"},
 		{"flow level", "\nexamples:", "\nexample:", "example"},
 		{"checkpoint level", "    expected:\n", "    checkpoints:\n      extract: { rubric: r, optionnal: true }\n    expected:\n", "examples[0].checkpoints.extract.optionnal"},

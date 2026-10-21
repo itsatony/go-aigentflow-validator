@@ -1,0 +1,36 @@
+aigentflow_version: '2.0.0'
+name: invalid-campaign-removed-block
+version: '1.0.0'
+description: >-
+  Campaigns were removed in 2.836.0. The campaign: block is refused whole as campaign_removed;
+  none of the old campaign rules run on its contents (on_children_complete names no step here).
+start: coordinate
+steps:
+  coordinate:
+    executor: function://utils/log
+    query:
+      message: 'coordinating'
+    next:
+      default: 'orchestrator'
+campaign:
+  child_flows:
+    - alias: expert
+  max_credits_per_child: -1
+  on_children_complete: no_such_step
+orchestrator:
+  mode: monitor
+  agentic: true
+  exons: |
+    ---
+    name: monitor
+    description: observe only
+    type: agent
+    execution:
+      provider: anthropic
+      model: claude-sonnet-4-6
+    ---
+    {~exons.message role="system"~}observe{~/exons.message~}
+  triggers:
+    - type: mission_started
+output:
+  - message

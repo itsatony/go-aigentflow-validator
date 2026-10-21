@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: invalid-nexus-loop-substep-agent-not-literal
+version: '1.0.0'
+description: >-
+  A nexus:// loop sub-step whose agent is computed from a template is refused, as on atlas://.
+start: spin
+steps:
+  spin:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: run
+          executor: nexus://agent/run
+          query:
+            agent: '{{ .query.agent }}'
+            prompt: 'Go.'
+    next:
+      default: 'null'
+output:
+  - done

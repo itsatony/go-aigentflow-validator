@@ -155,6 +155,8 @@ const (
 
 // Messages. Wording is not part of the parity contract; it is kept identical to the
 // reference where practical.
+//
+//nolint:gosec // G101: these are messages ABOUT secrets, no credential is held here.
 const (
 	exMsgTooMany          = "flow declares %d examples; the limit is %d"
 	exMsgBlockTooLarge    = "the examples block is %d bytes; the limit is %d. Move large inputs or target outputs to a file reference (https URL)."

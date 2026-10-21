@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: invalid-campaign-removed-retired-key
+version: '1.0.0'
+description: >-
+  The block decodes untyped, so a key the old typed decoder refused (budget_max_per_child) is not
+  an unknown key: the one finding is campaign_removed.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+campaign:
+  budget_max_per_child: 2.5
+  something_new: true
+output:
+  - message

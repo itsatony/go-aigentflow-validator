@@ -44,10 +44,10 @@ func pipedDefaultPipelines(tmpl *template.Template) []string {
 	}
 	found := map[string]struct{}{}
 	for _, t := range tmpl.Templates() {
-		if t.Tree == nil || t.Tree.Root == nil {
+		if t.Tree == nil || t.Root == nil {
 			continue
 		}
-		walkPipedDefault(t.Tree.Root, found)
+		walkPipedDefault(t.Root, found)
 	}
 	out := make([]string, 0, len(found))
 	for pipe := range found {

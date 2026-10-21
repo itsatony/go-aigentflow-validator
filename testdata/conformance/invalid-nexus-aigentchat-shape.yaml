@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-nexus-aigentchat-shape
+version: '1.0.0'
+description: >-
+  Before 2026-10-20 nexus://<org>/<agent> meant the removed AigentChat executor. That shape now
+  reaches the agent runtime executor and names no Nexus operation.
+start: s
+steps:
+  s:
+    executor: nexus://acme/reporter
+    query:
+      message: hello
+    next:
+      default: 'null'
+output:
+  - done

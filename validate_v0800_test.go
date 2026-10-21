@@ -7,10 +7,13 @@ import (
 
 // v0.8.0: the AigentChat executor was removed from AIgentFlow (v2.819.0).
 // The removal is pinned from the outside: what a flow that still names it now
-// gets, and that no spec table carries the dead protocol.
+// gets, and that no spec table carries the dead protocol. v0.18.0: nexus:// came
+// back in AIgentFlow v2.835.0 as the spelling of the agent runtime executor, so
+// only aigentchat:// is still an unknown scheme, and the AigentChat-shaped
+// nexus://<org>/<agent> is judged by the agent runtime rules.
 
-func TestRemovedNexusSchemesAreOnlyUnknownSchemeWarnings(t *testing.T) {
-	for _, scheme := range []string{"nexus", "aigentchat"} {
+func TestRemovedAigentChatSchemeIsOnlyAnUnknownSchemeWarning(t *testing.T) {
+	for _, scheme := range []string{"aigentchat"} {
 		src := unpairedHead + "steps:\n  s:\n    executor: " + scheme + "://org/agent\n    query:\n      message: hi\n      base_url: 'https://chat.example.com'\n"
 		result := ValidateFlow(src, Options{})
 		if !result.Valid {
@@ -47,8 +50,15 @@ func TestRemovedNexusExecutorConfigKeysHaveAnEmptyScope(t *testing.T) {
 	}
 }
 
+func TestTheAigentChatShapedNexusURLIsAnUnknownOperation(t *testing.T) {
+	src := unpairedHead + "steps:\n  s:\n    executor: nexus://org/agent\n    query:\n      message: hi\n      base_url: 'https://chat.example.com'\n"
+	result := ValidateFlow(src, Options{})
+	assertError(t, result, "atlas_operation_unknown", "steps.s")
+	assertCodesAbsent(t, "warning", result.Warnings, []string{codeUnknownExecScheme, codeCredentialEndpointUnpaired})
+}
+
 func TestSpecCarriesNoRemovedProtocol(t *testing.T) {
-	if executorSchemes.has("nexus") || executorSchemes.has("aigentchat") {
+	if executorSchemes.has("aigentchat") {
 		t.Error("executorSchemes still names a removed protocol")
 	}
 	for _, key := range []string{"nexus", "aigentchat"} {
