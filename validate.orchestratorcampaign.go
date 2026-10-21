@@ -2,15 +2,15 @@ package aifvalidate
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 )
 
-// validateOrchestratorCampaign checks the orchestrator and campaign blocks.
+// validateOrchestratorCampaign checks the orchestrator block. (The campaign block
+// was removed in AIgentFlow 2.836.0: it is refused whole as campaign_removed by
+// validateRemovedOrchestratorSurfaces, and none of its old rules run.)
 //
-// Mirrors the portable parts of validateOrchestrator /
-// validateAndNormalizeCampaign (parser.go). The `exons` spec body is parsed by
+// Mirrors the portable parts of validateOrchestrator (parser.go). The `exons` spec body is parsed by
 // the go-exons engine in the reference and is NOT re-implemented here — its
 // PRESENCE is required, its contents are out of scope for a static validator.
 // See PARITY.md.
@@ -62,7 +62,9 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 		if tools, ok := getSlice(orch, keyTools); ok {
 			for i, raw := range tools {
 				tool, isStr := iss.stringAt(raw, indexed(keyOrchestrator+"."+keyTools, i))
-				if !isStr || orchestratorTools.has(tool) {
+				// A removed signal / campaign name is refused by its own code
+				// (validateRemovedOrchestratorSurfaces), never as unknown.
+				if !isStr || orchestratorTools.has(tool) || removedOrchestratorTools.has(tool) {
 					continue
 				}
 				finding := Issue{
@@ -88,42 +90,15 @@ func validateOrchestratorCampaign(flow doc, iss *issues, opts Options) {
 		}
 	}
 
-	if !present(flow, keyCampaign) {
-		return
-	}
-	if !hasOrchestrator {
-		iss.error(Issue{
-			Field: keyCampaign, Code: codeCampaignNeedsOrch,
-			Message: "campaign requires an orchestrator block",
-		})
-	}
-	campaign, isMap := getRecord(flow, keyCampaign)
-	if !isMap {
-		return
-	}
-	validateCampaignChildFlows(campaign, iss)
-	validateMaxCreditsPerChild(campaign, iss)
-
-	// DC-COND-2: on_children_complete, when set, must name a real step — the
-	// engine routes into it deterministically once every child is terminal.
-	target, ok := iss.stringOf(campaign, keyOnChildrenComplete, keyCampaign)
-	if !ok || target == "" {
-		return
-	}
-	steps := stepsOf(flow)
-	if steps == nil {
-		steps = doc{}
-	}
-	if !has(steps, target) {
-		iss.error(Issue{
-			Field: keyCampaign + "." + keyOnChildrenComplete, Code: codeCampaignHandoffStep,
-			Message: fmt.Sprintf("campaign.on_children_complete references unknown step '%s'", target),
-		})
-	}
 }
 
 func validateOrchestratorTrigger(trigger doc, base string, iss *issues) {
 	ttype, isStr := iss.stringOf(trigger, keyType, base)
+	// A removed trigger type (dfm_suggestion, campaign_child_*) is refused by
+	// its own code, never as unknown.
+	if isStr && removedOrchestratorTriggers.has(ttype) {
+		return
+	}
 	if !isStr || !orchestratorTriggers.has(ttype) {
 		iss.error(Issue{
 			Field: base + "." + keyType, Code: codeOrchTriggerUnknown,
@@ -204,121 +179,6 @@ func validateHumanQuestionTimeout(orch doc, iss *issues) {
 		Field: keyOrchestrator + "." + keyHumanQuestionTimeout, Code: codeOrchHumanQTimeoutInvalid,
 		Message: fmt.Sprintf("human_question_timeout '%v' is not a valid positive duration", declared),
 	})
-}
-
-// validateMaxCreditsPerChild ports campaign.max_credits_per_child (AIF
-// v2.728.0, DC-FORGE-155). It is a Go int64 and CampaignConfig.Validate
-// refuses a negative value. Absent, null and 0 mean "no per-child cap".
-//
-// ⚠ A FRACTIONAL number is ACCEPTED, because the reference accepts it: yaml.v3
-// truncates a float into an int64 field (1.5 decodes as 1, -0.5 as 0), measured
-// against the reference's save door. Refusing it here would make this oracle
-// stricter than its door. A string or boolean does not decode (invalid_type).
-func validateMaxCreditsPerChild(campaign doc, iss *issues) {
-	raw := get(campaign, keyMaxCreditsPerChild)
-	if raw == nil {
-		return
-	}
-	field := keyCampaign + "." + keyMaxCreditsPerChild
-	n, isNum := int64OfYAMLNumber(raw)
-	switch {
-	case !isNum:
-		iss.error(Issue{
-			Field: field, Code: codeInvalidType,
-			Message: fmt.Sprintf("campaign.max_credits_per_child must be a whole number of credits, got '%v'", raw),
-		})
-	case n < 0:
-		iss.error(Issue{
-			Field: field, Code: codeCampaignMaxCreditsChild,
-			Message: "campaign: max_credits_per_child must be >= 0",
-		})
-	}
-}
-
-// maxInt64AsFloat is 2^63: a YAML float at or above it cannot decode into an
-// int64 field.
-const maxInt64AsFloat = float64(1 << 63)
-
-// int64OfYAMLNumber decodes a YAML number the way yaml.v3 decodes it into an
-// int64 field: integers exactly (a uint64 beyond int64 fails), floats truncated
-// toward zero when in range. Anything else does not decode.
-func int64OfYAMLNumber(v any) (int64, bool) {
-	switch x := v.(type) {
-	case int:
-		return int64(x), true
-	case int64:
-		return x, true
-	case uint64:
-		if x > math.MaxInt64 {
-			return 0, false
-		}
-		return int64(x), true
-	case float64:
-		if x >= maxInt64AsFloat || x < -maxInt64AsFloat || math.IsNaN(x) {
-			return 0, false
-		}
-		return int64(x), true
-	default:
-		return 0, false
-	}
-}
-
-// validateCampaignChildFlows ports the rest of CampaignConfig.Validate: at least
-// one child flow, and each entry names a flow_id or a flow_name. (max_concurrent,
-// max_depth and max_total_children are defaulted when <= 0 before the reference
-// checks them, so their ">= 1" checks can never fire and are not ported.)
-//
-// The reference decodes child_flows into a typed slice, and yaml.v3 DROPS a null
-// list entry while doing so: `- ~` beside a real entry is simply ignored, and a
-// list of nothing but nulls is "no child flows" (both measured against the
-// reference's save door). This library decodes into untyped values, which keep
-// the nil, so nulls are filtered here. A finding's index is the entry's position
-// in the YAML list, as in the JS port; the reference's own message counts only
-// the non-null entries.
-func validateCampaignChildFlows(campaign doc, iss *issues) {
-	field := keyCampaign + "." + keyChildFlows
-	children, ok := getSlice(campaign, keyChildFlows)
-	if raw := get(campaign, keyChildFlows); raw != nil && !ok {
-		iss.error(Issue{Field: field, Code: codeInvalidType, Message: "campaign.child_flows must be a list"})
-		return
-	}
-	nonNull := 0
-	for _, raw := range children {
-		if raw != nil {
-			nonNull++
-		}
-	}
-	if nonNull == 0 {
-		iss.error(Issue{
-			Field: field, Code: codeCampaignNoChildFlows,
-			Message: "campaign requires at least one entry in child_flows",
-		})
-		return
-	}
-	for i, raw := range children {
-		if raw == nil {
-			continue
-		}
-		child, isMap := asRecord(raw)
-		if !isMap {
-			iss.error(Issue{
-				Field: indexed(field, i), Code: codeInvalidType,
-				Message: "each campaign.child_flows entry must be a mapping",
-			})
-			continue
-		}
-		if id, _ := iss.stringOf(child, keyFlowID, indexed(field, i)); id != "" {
-			continue
-		}
-		if name, _ := iss.stringOf(child, keyFlowName, indexed(field, i)); name != "" {
-			continue
-		}
-		iss.error(Issue{
-			Field: indexed(field, i), Code: codeCampaignChildFlowNoID,
-			Message:    fmt.Sprintf("campaign.child_flows[%d] needs a flow_id or a flow_name", i),
-			Suggestion: "Name the child flow with flow_name (resolved in the caller's org) or pin it with flow_id",
-		})
-	}
 }
 
 // validateEnforceRegion ports the reference's orchestrator region rule (AIF

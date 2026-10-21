@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 )
 
 // specJSON is the vendored enum surface mirrored from the AIgentFlow Go
@@ -88,12 +89,9 @@ type rawSpec struct {
 	TemplateFunctions []string `json:"templateFunctions"`
 	// OrchestratorToolAllow feeds orchestrator_tool_withheld (v2.760.0).
 	OrchestratorToolAllow struct {
-		WarningField         string   `json:"warningField"`
-		AskHumanTool         string   `json:"askHumanTool"`
-		EnableSignalsDefault bool     `json:"enableSignalsDefault"`
-		LifecycleTools       []string `json:"lifecycleTools"`
-		SignalTools          []string `json:"signalTools"`
-		CampaignTools        []string `json:"campaignTools"`
+		WarningField   string   `json:"warningField"`
+		AskHumanTool   string   `json:"askHumanTool"`
+		LifecycleTools []string `json:"lifecycleTools"`
 	} `json:"orchestratorToolAllow"`
 	// Exons names how the orchestrator's inline .exons document is delimited.
 	Exons struct {
@@ -111,6 +109,39 @@ type rawSpec struct {
 		FlowKeyMessageFormat string   `json:"flowKeyMessageFormat"`
 		Suggestion           string   `json:"suggestion"`
 	} `json:"removedAgentSurfaces"`
+	// RemovedSignalSurfaces feeds signal_removed, flow_modification_removed and
+	// removed_key_ignored (AIgentFlow v2.834.0, AGENTCUT B1).
+	RemovedSignalSurfaces struct {
+		SignalRemovedCode                 string   `json:"signalRemovedCode"`
+		FlowModificationRemovedCode       string   `json:"flowModificationRemovedCode"`
+		RemovedKeyIgnoredCode             string   `json:"removedKeyIgnoredCode"`
+		Tools                             []string `json:"tools"`
+		Triggers                          []string `json:"triggers"`
+		StepKey                           string   `json:"stepKey"`
+		StepKeyScheme                     string   `json:"stepKeyScheme"`
+		FlowModificationStepKey           string   `json:"flowModificationStepKey"`
+		StepSkipSchemes                   []string `json:"stepSkipSchemes"`
+		EnableSignalsMessage              string   `json:"enableSignalsMessage"`
+		ToolNamesMessageFormat            string   `json:"toolNamesMessageFormat"`
+		StepKeyMessageFormat              string   `json:"stepKeyMessageFormat"`
+		TriggersMessage                   string   `json:"triggersMessage"`
+		FlowModificationStepMessageFormat string   `json:"flowModificationStepMessageFormat"`
+		IgnoredKeyMessageFormat           string   `json:"ignoredKeyMessageFormat"`
+		IgnoredKeySuggestion              string   `json:"ignoredKeySuggestion"`
+		Suggestion                        string   `json:"suggestion"`
+	} `json:"removedSignalSurfaces"`
+	// RemovedCampaignSurfaces feeds campaign_removed (AIgentFlow v2.836.0,
+	// AGENTCUT B2).
+	RemovedCampaignSurfaces struct {
+		Code                   string   `json:"code"`
+		FlowKey                string   `json:"flowKey"`
+		Tools                  []string `json:"tools"`
+		Triggers               []string `json:"triggers"`
+		BlockMessage           string   `json:"blockMessage"`
+		ToolNamesMessageFormat string   `json:"toolNamesMessageFormat"`
+		TriggersMessageFormat  string   `json:"triggersMessageFormat"`
+		Suggestion             string   `json:"suggestion"`
+	} `json:"removedCampaignSurfaces"`
 	// ExecutorConfigEnvScopes feeds executor_config_env_scope (v2.597.0).
 	ExecutorConfigEnvScopes struct {
 		ReferencePrefix string              `json:"referencePrefix"`
@@ -142,7 +173,7 @@ type rawSpec struct {
 		MessageFormat string   `json:"messageFormat"`
 		Suggestion    string   `json:"suggestion"`
 	} `json:"functionOperations"`
-	// AtlasExecutor feeds the atlas:// rules (providers, resources and the seven
+	// AtlasExecutor feeds the nexus:// (alias atlas://) rules (providers, resources and the seven
 	// finding texts).
 	AtlasExecutor atlasSpec `json:"atlasExecutor"`
 	// ReservedInputNames feeds reserved_input_name.
@@ -306,6 +337,19 @@ var (
 	removedSchemes  set
 	removedAIParams set
 
+	// removedOrchestratorTools / removedOrchestratorTriggers are the signal and
+	// campaign names AIgentFlow removed (v2.834.0, v2.836.0). They left the
+	// registries but are TOLERATED by the unknown-name checks: the only finding
+	// for one is signal_removed / campaign_removed. stepSkipSchemes are the
+	// schemes whose query is never judged for the removed step keys.
+	removedOrchestratorTools    set
+	removedOrchestratorTriggers set
+	removedStepSkipSchemes      set
+
+	// atlasSchemes are the canonical executor scheme of the agent runtime
+	// (nexus) and its aliases (atlas): one set of rules for every spelling.
+	atlasSchemes set
+
 	// functionOperations are the function:// built-ins the reference registers.
 	functionOperations set
 
@@ -353,6 +397,12 @@ func init() {
 	executorSchemes = newSet(spec.ExecutorSchemes)
 	removedSchemes = newSet(spec.RemovedAgentSurfaces.RemovedSchemes)
 	removedAIParams = newSet(spec.RemovedAgentSurfaces.AIParams)
+	removedOrchestratorTools = newSet(append(slices.Clone(spec.RemovedSignalSurfaces.Tools),
+		spec.RemovedCampaignSurfaces.Tools...))
+	removedOrchestratorTriggers = newSet(append(slices.Clone(spec.RemovedSignalSurfaces.Triggers),
+		spec.RemovedCampaignSurfaces.Triggers...))
+	removedStepSkipSchemes = newSet(spec.RemovedSignalSurfaces.StepSkipSchemes)
+	atlasSchemes = newSet(append([]string{spec.AtlasExecutor.Scheme}, spec.AtlasExecutor.Aliases...))
 	dataTypes = newSet(spec.DataTypes)
 	errorStrategyActions = newSet(spec.ErrorStrategyActions)
 	retryOnCategories = newSet(spec.RetryOnCategories)
@@ -422,6 +472,7 @@ type atlasRule struct {
 // atlasSpec is the spec's atlasExecutor block.
 type atlasSpec struct {
 	Scheme                 string    `json:"scheme"`
+	Aliases                []string  `json:"aliases"`
 	ProviderAgent          string    `json:"providerAgent"`
 	ProviderCapability     string    `json:"providerCapability"`
 	AgentResource          string    `json:"agentResource"`

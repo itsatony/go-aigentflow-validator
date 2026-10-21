@@ -85,7 +85,7 @@ func validateOrchestratorExons(flow doc, iss *issues, inspector ExonsInspector) 
 			Suggestion: "Remove requirements.resources, and narrow the agent with tools.mcp_servers and tools.allow",
 		})
 	}
-	warnOrchestratorToolWithheld(flow, orch, report, iss)
+	warnOrchestratorToolWithheld(orch, report, iss)
 }
 
 // warnOrchestratorToolWithheld: an orchestrator tool is offered only if it
@@ -93,26 +93,23 @@ func validateOrchestratorExons(flow doc, iss *issues, inspector ExonsInspector) 
 // tools.allow (absent = no narrowing). Two lists that each read as complete can
 // disagree, and the disagreement is silent at run time. Reported: a tool named
 // in orchestrator.tools that tools.allow omits; with orchestrator.tools empty,
-// a tools.allow without aif_ask_human (human intervention off), and one that
-// names no campaign tool when the flow declares a campaign. The lifecycle tools,
-// and the signal tools when signals are enabled, are exempt from tools.allow.
+// a tools.allow without aif_ask_human (human intervention off). Only the
+// lifecycle tools are exempt from tools.allow.
+//
+// A removed signal or campaign tool name (AIgentFlow 2.834.0 / 2.836.0) is never
+// reported as withheld: it is refused as signal_removed / campaign_removed, and
+// a withheld warning on a name that no longer exists would be noise. The
+// campaign arm ("names no campaign tool") went with the campaigns.
 //
 // A WARNING, never an error: an unattended orchestrator is a legitimate design.
-func warnOrchestratorToolWithheld(flow, orch doc, report ExonsReport, iss *issues) {
+func warnOrchestratorToolWithheld(orch doc, report ExonsReport, iss *issues) {
 	if !report.ToolsAllowDeclared {
 		return
 	}
 	cfg := spec.OrchestratorToolAllow
-	exempt := slices.Clone(cfg.LifecycleTools)
-	signals := cfg.EnableSignalsDefault
-	if v, ok := asBool(get(orch, keyEnableSignals)); ok {
-		signals = v
-	}
-	if signals {
-		exempt = append(exempt, cfg.SignalTools...)
-	}
 	withheld := func(name string) bool {
-		return !slices.Contains(report.ToolsAllow, name) && !slices.Contains(exempt, name)
+		return !slices.Contains(report.ToolsAllow, name) && !slices.Contains(cfg.LifecycleTools, name) &&
+			!removedOrchestratorTools.has(name)
 	}
 
 	var named []string
@@ -143,15 +140,6 @@ func warnOrchestratorToolWithheld(flow, orch doc, report ExonsReport, iss *issue
 				"so this orchestrator can never ask a person a question: human intervention is off. Add %s to "+
 				"tools.allow if a human should be reachable, or ignore this if the orchestrator is meant to run "+
 				"unattended.", cfg.AskHumanTool, cfg.AskHumanTool),
-		})
-	}
-	if _, hasCampaign := getRecord(flow, keyCampaign); hasCampaign &&
-		!slices.ContainsFunc(cfg.CampaignTools, func(name string) bool { return !withheld(name) }) {
-		iss.warn(Issue{
-			Field: cfg.WarningField, Code: codeOrchToolWithheld,
-			Message: fmt.Sprintf("this flow declares a campaign, but the orchestrator's exons definition has a "+
-				"tools.allow list that names none of the campaign tools (%s), so no child mission can be spawned "+
-				"or tracked. Add the campaign tools the orchestrator needs to tools.allow.", joinNames(cfg.CampaignTools)),
 		})
 	}
 }

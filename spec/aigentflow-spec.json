@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.833.0",
+  "specVersion": "2.837.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -31,6 +31,7 @@
     "messenger",
     "mock",
     "mqtt",
+    "nexus",
     "opencorporates",
     "openmeteo",
     "overpass",
@@ -101,12 +102,9 @@
       "step_failed",
       "mission_started",
       "mission_completed",
-      "dfm_suggestion",
       "timer",
       "request_turn",
       "mission_recovered",
-      "campaign_child_completed",
-      "campaign_child_failed",
       "human_response",
       "human_input"
     ],
@@ -122,15 +120,6 @@
       "aif_ask_human",
       "aif_flow_list",
       "aif_mission_reflect",
-      "aif_signal_complete",
-      "aif_signal_need_human",
-      "aif_signal_delegate",
-      "aif_signal_need_tool",
-      "aif_signal_modify_flow",
-      "aif_campaign_spawn",
-      "aif_campaign_status",
-      "aif_campaign_results",
-      "aif_campaign_cancel",
       "aif_memory_plan",
       "aif_memory_record",
       "aif_memory_recall",
@@ -301,23 +290,13 @@
     "fn_urldecode"
   ],
   "orchestratorToolAllow": {
-    "$comment": "An orchestrator tool is offered only if it passes BOTH orchestrator.tools (empty = every tool) AND the inline exons definition's tools.allow (absent = no narrowing). The lifecycle tools, and the signal tools when enable_signals is on (the default), are exempt from tools.allow. Reference: validateOrchestratorToolAllowWithholds (v2.760.0).",
+    "$comment": "An orchestrator tool is offered only if it passes BOTH orchestrator.tools (empty = every tool) AND the inline exons definition's tools.allow (absent = no narrowing). Only the lifecycle tools are exempt from tools.allow. A removed signal or campaign tool name (removedSignalSurfaces.tools, removedCampaignSurfaces.tools) is never reported as withheld: it is refused as signal_removed / campaign_removed. Reference: validateOrchestratorToolAllowWithholds (v2.760.0, signal and campaign arms removed in 2.834.0 / 2.836.0).",
     "warningField": "orchestrator.exons",
     "askHumanTool": "aif_ask_human",
-    "enableSignalsDefault": true,
-    "lifecycleTools": ["aif_mission_complete", "aif_mission_fail", "aif_request_turn"],
-    "signalTools": [
-      "aif_signal_complete",
-      "aif_signal_need_human",
-      "aif_signal_delegate",
-      "aif_signal_need_tool",
-      "aif_signal_modify_flow"
-    ],
-    "campaignTools": [
-      "aif_campaign_cancel",
-      "aif_campaign_results",
-      "aif_campaign_spawn",
-      "aif_campaign_status"
+    "lifecycleTools": [
+      "aif_mission_complete",
+      "aif_mission_fail",
+      "aif_request_turn"
     ]
   },
   "exons": {
@@ -325,7 +304,7 @@
     "frontmatterDelimiter": "---"
   },
   "removedAgentSurfaces": {
-    "$comment": "AIgentFlow no longer runs agents of its own. executor_removed (ERROR): a step or loop sub-step whose executor scheme (text before '://', whitespace-trimmed, lower-cased) is in removedSchemes, or a top-level key in flowKeys (field = the key). agentic_param_removed (ERROR): an ai:// step or loop sub-step whose query carries ANY key of aiParams, on presence alone (null and false included); ONE finding per step, the keys sorted and joined by ', '. Only the paramScheme scheme is checked for params. A templated executor (containing templateActionOpen) is not judged. A step on a removed scheme yields ONLY executor_removed: no unknown_executor_scheme, executor-URL shape or inline-exons finding. Fields: steps.<id> and steps.<id>.loop.steps[<index>]. Not refused: aiv://, atlas://, ai:// tools / tool_choice / autofix / content_parts / stream, flow-level tool_discovery / discoverable_tools, the orchestrator block's own keys. Messages fill %s (the step id as written in the finding, then the scheme or the key list).",
+    "$comment": "AIgentFlow no longer runs agents of its own. executor_removed (ERROR): a step or loop sub-step whose executor scheme (text before '://', whitespace-trimmed, lower-cased) is in removedSchemes, or a top-level key in flowKeys (field = the key). agentic_param_removed (ERROR): an ai:// step or loop sub-step whose query carries ANY key of aiParams, on presence alone (null and false included); ONE finding per step, the keys sorted and joined by ', '. Only the paramScheme scheme is checked for params. A templated executor (containing templateActionOpen) is not judged. A step on a removed scheme yields ONLY executor_removed: no unknown_executor_scheme, executor-URL shape or inline-exons finding. Fields: steps.<id> and steps.<id>.loop.steps[<index>]. Not refused: aiv://, nexus:// (alias atlas://), ai:// tools / tool_choice / autofix / content_parts / stream, flow-level tool_discovery / discoverable_tools, the orchestrator block's own keys. Messages fill %s (the step id as written in the finding, then the scheme or the key list).",
     "removedSchemes": ["exons", "agent"],
     "paramScheme": "ai",
     "aiParams": [
@@ -349,7 +328,56 @@
     "schemeMessageFormat": "step %q uses %s://, which AIgentFlow no longer runs: its own agent chains were removed",
     "paramsMessageFormat": "step %q sets %s on ai://: AIgentFlow's own agent loop (agentic mode) was removed, so these parameters no longer exist",
     "flowKeyMessageFormat": "the flow-level key %q belonged to a removed agent surface and is no longer read",
-    "suggestion": "Rebuild the step: a tool-using agent becomes atlas://agent/run (agent: \"@org/name\", prompt, capabilities); one tool becomes atlas://capability/<ref>; a plain prompt becomes ai://<provider>/chat or a prompt-only aiv://<org>/<name>. A flow that cannot be converted (started by a webhook, a schedule, a share link, a campaign or a flow:// sub-flow, none of which has a person for atlas to act for; or one that needs an inline .exons spec, an arbitrary MCP server URL or signals) has no replacement here: start it from a person, or use a routine in atlas"
+    "suggestion": "Rebuild the step: a tool-using agent becomes nexus://agent/run (agent: \"@org/name\", prompt, capabilities); one tool becomes nexus://capability/<ref>; a plain prompt becomes ai://<provider>/chat or a prompt-only aiv://<org>/<name>. A nexus:// step acts as the person responsible for the run: who started it, who last saved its schedule or webhook trigger, or a flow:// child's parent. What cannot be converted: a run with no person (one started by a service or key that names nobody; share links no longer exist), and a step that needs an inline .exons spec, an arbitrary MCP server URL or signals. For those, start the flow from a person, a schedule or a trigger, or use a routine in Nexus"
+  },
+  "removedSignalSurfaces": {
+    "$comment": "AIgentFlow 2.834.0 removed agent signals and dynamic flow modification (DFM). signal_removed (ERROR): (a) orchestrator.enable_signals: true (field orchestrator.enable_signals); (b) one of tools named in orchestrator.tools, orchestrator.deny_tools, orchestrator.require_approval_for (field = that list) or in the orchestrator .exons definition's tools.allow (field orchestrator.exons) - ONE finding per list, the removed names in list order, each once; (c) stepKey on a step or loop sub-step whose scheme is stepKeyScheme (field steps.<id> / steps.<id>.loop.steps[<index>]). flow_modification_removed (ERROR): (a) orchestrator.triggers holds a trigger of a type in triggers (ONE finding, field orchestrator.triggers); (b) flowModificationStepKey in a step's or loop sub-step's query (any scheme). Step keys are judged on map PRESENCE (null and false included). Steps skipped: templated executors, removed schemes (removedAgentSurfaces.removedSchemes) and the schemes in stepSkipSchemes (a flow:// query carries the CHILD's inputs). removed_key_ignored (WARNING, never an error): checkpoint.pre_dfm with any non-null value, and orchestrator.enable_signals: false. A YAML null on either block key is absent. Tool and trigger names match exactly and case-sensitively. The removed names left the orchestrator tool and trigger registries, but they are TOLERATED by the unknown-name checks, and enable_signals / pre_dfm stay in knownKeys, so the only finding is the new code. Order: the orchestrator block (enable_signals, then the lists, then triggers), then steps by id with loop sub-steps after their parent. Reference: aigentflow.removed.signalsurfaces.go.",
+    "signalRemovedCode": "signal_removed",
+    "flowModificationRemovedCode": "flow_modification_removed",
+    "removedKeyIgnoredCode": "removed_key_ignored",
+    "tools": [
+      "aif_signal_complete",
+      "aif_signal_need_human",
+      "aif_signal_delegate",
+      "aif_signal_need_tool",
+      "aif_signal_modify_flow"
+    ],
+    "triggers": [
+      "dfm_suggestion"
+    ],
+    "stepKey": "enable_signals",
+    "stepKeyScheme": "aiv",
+    "flowModificationStepKey": "flow_modification_allowed",
+    "stepSkipSchemes": [
+      "flow"
+    ],
+    "enableSignalsMessage": "the orchestrator sets enable_signals: true: AIgentFlow's agent signals were removed in 2.834.0, so the tools it asks for no longer exist",
+    "toolNamesMessageFormat": "%s names %s: AIgentFlow's agent signal tools were removed in 2.834.0",
+    "stepKeyMessageFormat": "step %q sets enable_signals: AIgentFlow's agent signals were removed in 2.834.0, so the parameter no longer exists",
+    "triggersMessage": "orchestrator.triggers names dfm_suggestion: dynamic flow modification was removed in 2.834.0, so nothing raises that trigger",
+    "flowModificationStepMessageFormat": "step %q sets flow_modification_allowed: dynamic flow modification was removed in 2.834.0",
+    "ignoredKeyMessageFormat": "%s is ignored: it configured AIgentFlow's agent signals / dynamic flow modification, removed in 2.834.0. AIgentFlow may have written this key into the flow itself; the flow runs as if it were absent",
+    "ignoredKeySuggestion": "Remove the key; nothing reads it",
+    "suggestion": "Signals and dynamic flow modification were removed in 2.834.0. aif_signal_need_human: add an async://human/<operation> step where the person must answer (inside a nexus://agent/run step, the atlas approval wait asks the person). aif_signal_delegate: run the other work as a flow:// step, or route with next: conditions. aif_signal_complete: an orchestrator ends the mission with aif_mission_complete. aif_signal_need_tool: no replacement; give the agent the capability in atlas. aif_signal_modify_flow, dfm_suggestion and flow_modification_allowed: no replacement; declare every step the flow may run and choose between them with next: conditions"
+  },
+  "removedCampaignSurfaces": {
+    "$comment": "AIgentFlow 2.836.0 removed campaigns. campaign_removed (ERROR): (a) the flow-root key flowKey with ANY non-null value (field campaign; the block is refused whole and nothing inside it is judged: no campaign rule, retired-key or unknown-key finding); (b) one of tools in orchestrator.tools, orchestrator.deny_tools, orchestrator.require_approval_for (field = the list) or the orchestrator .exons definition's tools.allow (field orchestrator.exons) - ONE finding per list, names in list order, each once; (c) orchestrator.triggers holding a trigger of a type in triggers (ONE finding, field orchestrator.triggers, the removed types in order, each once). Steps are never judged. Names match exactly and case-sensitively, and are tolerated by the unknown-name checks. There is no removed_key_ignored warning for campaigns. Order: block, then the lists (tools, deny_tools, require_approval_for, tools.allow), then triggers. Reference: aigentflow.removed.campaignsurfaces.go.",
+    "code": "campaign_removed",
+    "flowKey": "campaign",
+    "tools": [
+      "aif_campaign_spawn",
+      "aif_campaign_status",
+      "aif_campaign_results",
+      "aif_campaign_cancel"
+    ],
+    "triggers": [
+      "campaign_child_completed",
+      "campaign_child_failed"
+    ],
+    "blockMessage": "the flow declares a campaign: block: campaigns were removed in 2.836.0, so nothing would spawn or track its child missions",
+    "toolNamesMessageFormat": "%s names %s: AIgentFlow's campaign tools were removed in 2.836.0",
+    "triggersMessageFormat": "orchestrator.triggers names %s: campaigns were removed in 2.836.0, so no child mission raises that trigger",
+    "suggestion": "Campaigns were removed in 2.836.0. Fan the work out inside one flow instead: a for_each step whose executor is flow://stored/<flow_id> runs the child flow once per item and hands the next step every result (.data.<step>, in item order), so a coordinator -> workers -> synthesiser campaign becomes a plan step -> a for_each over flow:// -> a synthesis step (a fixed set of different workers is next: parallel: with a rendezvous). When each worker is an agent, make the worker a nexus://agent/run step (the for_each step itself, or a step of the child flow): it runs as the person responsible for the run, and a flow:// child inherits its parent's. Delete the campaign: block, the aif_campaign_* tool names and the campaign_child_* triggers"
   },
   "executorConfigEnvScopes": {
     "$comment": "executor_config may expand only the environment variables of the key it is written under. A value is a reference when it starts with referencePrefix and ends with referenceSuffix around a non-empty name. Checked fields: fields, plus every string value of extra (prefixed extraFieldPrefix in the message). A key absent from scopes has an EMPTY scope and refuses every reference. scopes is the reference's executorConfigEnvScope evaluated for every key with a non-empty scope. Reference: ValidateExecutorConfigEnvScopes (v2.597.0).",
@@ -525,20 +553,21 @@
     }
   },
   "atlasExecutor": {
-    "$comment": "atlas://<provider>/<resource>: calls into the Atlas platform. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string anywhere in query.capabilities and query.model may not contain templateActionOpen, while prompt, inputs and capability args may. agent, prompt and prompt_template count as present only when they are non-empty strings after trimming whitespace. A message format takes the quoted step id first. A URL the shared executor-URL shape refuses (a dot or colon in a reference, say) is still judged here, split at the first slash after atlas://.",
-    "scheme": "atlas",
+    "$comment": "nexus://<provider>/<resource> (alias atlas://, the same rules for both spellings since AIgentFlow 2.835.0; the scheme match is exact and case-sensitive against scheme and aliases): calls an agent or a capability in Nexus. An AigentChat-shaped nexus://<org>/<agent> (the executor removed in 2.819.0) is atlas_operation_unknown. Codes keep the atlas_ prefix. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string anywhere in query.capabilities and query.model may not contain templateActionOpen, while prompt, inputs and capability args may. agent, prompt and prompt_template count as present only when they are non-empty strings after trimming whitespace. A message format takes the quoted step id first. A URL the shared executor-URL shape refuses (a dot or colon in a reference, say) is still judged here, split at the first slash after the scheme.",
+    "scheme": "nexus",
+    "aliases": ["atlas"],
     "providerAgent": "agent",
     "providerCapability": "capability",
     "agentResource": "run",
     "capabilityRefPattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
     "operationUnknown": {
       "code": "atlas_operation_unknown",
-      "messageFormat": "step %s uses %s, which is not an Atlas operation. The providers are agent (resource run) and capability (resource: a capability reference).",
-      "suggestion": "Use atlas://agent/run or atlas://capability/<capability-ref>."
+      "messageFormat": "step %s uses %s, which is not a Nexus operation. The providers are agent (resource run) and capability (resource: a capability reference).",
+      "suggestion": "Use nexus://agent/run or nexus://capability/<capability-ref>."
     },
     "agentMissing": {
       "code": "atlas_agent_missing",
-      "messageFormat": "step %s runs an Atlas agent but query.agent is missing, empty or not a string.",
+      "messageFormat": "step %s runs a Nexus agent but query.agent is missing, empty or not a string.",
       "suggestion": "Set query.agent to the agent to run, written out as a literal such as @acme/reporter."
     },
     "agentNotLiteral": {
@@ -553,7 +582,7 @@
     },
     "promptMissing": {
       "code": "atlas_prompt_missing",
-      "messageFormat": "step %s runs an Atlas agent with neither query.prompt nor query.prompt_template.",
+      "messageFormat": "step %s runs a Nexus agent with neither query.prompt nor query.prompt_template.",
       "suggestion": "Set exactly one of query.prompt or query.prompt_template."
     },
     "promptBoth": {
@@ -563,7 +592,7 @@
     },
     "capabilityRefInvalid": {
       "code": "atlas_capability_ref_invalid",
-      "messageFormat": "step %s uses atlas://capability/%s, which is not a valid capability reference.",
+      "messageFormat": "step %s uses nexus://capability/%s, which is not a valid capability reference.",
       "suggestion": "A capability reference starts with a letter or digit and continues with letters, digits, _ and - up to 128 characters in all."
     },
     "modelNotLiteral": {
@@ -1201,20 +1230,6 @@
       "BillingConfig": {
         "max_credits": "scalar"
       },
-      "CampaignChildFlowDef": {
-        "alias": "scalar",
-        "flow_id": "scalar",
-        "flow_name": "scalar"
-      },
-      "CampaignConfig": {
-        "child_flows": "list<CampaignChildFlowDef>",
-        "max_concurrent": "scalar",
-        "max_credits_per_child": "scalar",
-        "max_depth": "scalar",
-        "max_total_children": "scalar",
-        "on_children_complete": "scalar",
-        "shared_memory": "scalar"
-      },
       "Checkpoint": {
         "exact": "map<any>",
         "fields": "map<FieldMatcher>",
@@ -1348,7 +1363,7 @@
       "Flow": {
         "aigentflow_version": "scalar",
         "billing": "BillingConfig",
-        "campaign": "CampaignConfig",
+        "campaign": "any",
         "checkpoint": "CheckpointConfig",
         "classification": "FlowClassification",
         "compliance": "FlowCompliance",

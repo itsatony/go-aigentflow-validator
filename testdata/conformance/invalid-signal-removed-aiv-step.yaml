@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: invalid-signal-removed-aiv-step
+version: '1.0.0'
+description: >-
+  enable_signals on an aiv:// step (or loop sub-step) is refused on presence, a null value
+  included: aiv:// was the one remaining executor that read it.
+start: research
+steps:
+  research:
+    executor: aiv://acme/researcher
+    query:
+      topic: 'x'
+      enable_signals: ~
+    next:
+      default: 'spin'
+  spin:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: ask
+          executor: aiv://acme/researcher
+          query:
+            topic: 'y'
+            enable_signals: false
+    next:
+      default: 'null'
+output:
+  - research

@@ -1,6 +1,7 @@
 package aifvalidate
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -159,54 +160,32 @@ func TestOrchestratorYieldViaConditionGoto(t *testing.T) {
 	assertValid(t, ValidateFlow(src, Options{}))
 }
 
-func TestCampaignRules(t *testing.T) {
+// The campaign rules were removed with campaigns (AIgentFlow v2.836.0): every
+// body the old rules judged is now ONE campaign_removed at `campaign`, and none
+// of the old codes (or invalid_type inside the block) fires.
+func TestCampaignRulesAreGone(t *testing.T) {
 	camp := func(body string) string {
 		return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  agentic: true\ncampaign:\n" + body
 	}
-	t.Run("max_credits_per_child", func(t *testing.T) {
-		for _, v := range []string{"-1", "-1.5"} {
-			assertError(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n  max_credits_per_child: "+v+"\n"), Options{}),
-				codeCampaignMaxCreditsChild, "campaign.max_credits_per_child")
+	oldCodes := []string{"campaign_invalid_max_credits_per_child", "campaign_no_child_flows", "campaign_child_flow_no_id",
+		"campaign_requires_orchestrator", "campaign_handoff_step_unknown", codeInvalidType, codeUnknownYAMLKey}
+	for _, body := range []string{
+		"  child_flows:\n    - flow_name: c\n  max_credits_per_child: -1\n",
+		"  child_flows:\n    - flow_name: c\n  max_credits_per_child: \"5\"\n",
+		"  max_concurrent: 2\n",
+		"  child_flows: []\n",
+		"  child_flows:\n    - alias: x\n",
+		"  child_flows:\n    - flow_name: c\n    - foo\n",
+		"  budget_max_per_child: 3\n",
+		"  on_children_complete: ghost\n",
+		"  {}\n",
+	} {
+		r := ValidateFlow(camp(body), Options{})
+		if got := fieldsWithCode(r.Errors, codeCampaignRemoved); !slices.Equal(got, []string{keyCampaign}) {
+			t.Errorf("body %q: campaign_removed on %v, want exactly [campaign]: %s", body, got, formatIssues(r.Errors))
 		}
-		for _, v := range []string{"\"5\"", "true", "1e20"} {
-			assertError(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n  max_credits_per_child: "+v+"\n"), Options{}),
-				codeInvalidType, "campaign.max_credits_per_child")
-		}
-		// The reference truncates a fractional number into its int64 field and
-		// saves the flow; refusing it would be stricter than the door.
-		for _, v := range []string{"0", "5", "1.5", "-0.5", "9223372036854775807", "null"} {
-			assertValid(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n  max_credits_per_child: "+v+"\n"), Options{}))
-		}
-	})
-	t.Run("child_flows", func(t *testing.T) {
-		assertError(t, ValidateFlow(camp("  max_concurrent: 2\n"), Options{}), codeCampaignNoChildFlows, "campaign.child_flows")
-		assertError(t, ValidateFlow(camp("  child_flows: []\n"), Options{}), codeCampaignNoChildFlows, "campaign.child_flows")
-		assertError(t, ValidateFlow(camp("  child_flows:\n    - alias: x\n"), Options{}), codeCampaignChildFlowNoID, "campaign.child_flows[0]")
-		assertValid(t, ValidateFlow(camp("  child_flows:\n    - flow_id: 123\n"), Options{}))
-		assertValid(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n"), Options{}))
-
-		// The reference decodes child_flows into a typed slice and yaml.v3 drops
-		// null entries on the way (measured): a null beside a real entry saves,
-		// and a list of nothing but nulls is "no child flows", never invalid_type.
-		for _, list := range []string{
-			"  child_flows:\n    - flow_name: c\n    - ~\n",
-			"  child_flows:\n    - flow_name: c\n    -\n",
-			"  child_flows:\n    - ~\n    - flow_name: c\n",
-		} {
-			assertValid(t, ValidateFlow(camp(list), Options{}))
-		}
-		for _, list := range []string{"  child_flows: [~]\n", "  child_flows: [~, ~]\n", "  child_flows:\n    -\n"} {
-			r := ValidateFlow(camp(list), Options{})
-			assertError(t, r, codeCampaignNoChildFlows, "campaign.child_flows")
-			assertCodesAbsent(t, "error", r.Errors, []string{codeInvalidType})
-		}
-		// A null is skipped, not renumbered: the index is the YAML position.
-		assertError(t, ValidateFlow(camp("  child_flows:\n    - ~\n    - alias: x\n"), Options{}),
-			codeCampaignChildFlowNoID, "campaign.child_flows[1]")
-		// A non-null non-mapping entry is still refused (the reference cannot decode it).
-		assertError(t, ValidateFlow(camp("  child_flows:\n    - flow_name: c\n    - foo\n"), Options{}),
-			codeInvalidType, "campaign.child_flows[1]")
-	})
+		assertCodesAbsent(t, "error", r.Errors, oldCodes)
+	}
 }
 
 // Save-door refusals this library carried before the JS port (PARITY.md, v0.4.0

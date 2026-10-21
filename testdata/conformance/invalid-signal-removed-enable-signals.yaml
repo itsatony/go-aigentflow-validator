@@ -1,9 +1,8 @@
 aigentflow_version: '2.0.0'
-name: orchestrator-tool-withheld-campaign
+name: invalid-signal-removed-enable-signals
 version: '1.0.0'
 description: >-
-  The flow declares a campaign, and tools.allow names none of the campaign tools, so no child
-  mission can be spawned or tracked.
+  orchestrator.enable_signals: true asks for the signal tools AIgentFlow removed in 2.834.0.
 start: work
 steps:
   work:
@@ -12,13 +11,10 @@ steps:
       message: 'working'
     next:
       default: 'null'
-campaign:
-  child_flows:
-    - flow_name: expert-unit
-  max_concurrent: 3
 orchestrator:
   mode: monitor
   agentic: true
+  enable_signals: true
   exons: |
     ---
     name: monitor
@@ -27,8 +23,6 @@ orchestrator:
     execution:
       provider: anthropic
       model: claude-sonnet-4-6
-    tools:
-      allow: [aif_ask_human]
     ---
     {~exons.message role="system"~}observe{~/exons.message~}
   triggers:

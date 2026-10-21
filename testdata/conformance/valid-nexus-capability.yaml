@@ -1,0 +1,27 @@
+aigentflow_version: '2.0.0'
+name: valid-nexus-capability
+version: '1.0.0'
+description: >-
+  nexus://capability/<ref> runs one capability; its own arguments may be templated. A loop
+  sub-step on the same scheme is judged the same way.
+start: s
+steps:
+  s:
+    executor: nexus://capability/web_fetch
+    query:
+      url: '{{ .query.url }}'
+    next:
+      default: 'spin'
+  spin:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: fetch
+          executor: nexus://capability/web_search
+          query:
+            q: hello
+    next:
+      default: 'null'
+output:
+  - done

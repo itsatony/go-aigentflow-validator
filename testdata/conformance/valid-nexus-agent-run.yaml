@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: valid-nexus-agent-run
+version: '1.0.0'
+description: >-
+  nexus:// is the customer spelling of the agent runtime executor (AIgentFlow 2.835.0). It is a
+  known scheme, so no unknown_executor_scheme warning, and the agent rules pass a complete step.
+start: s
+steps:
+  s:
+    executor: nexus://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: 'Summarise {{ .query.topic }}.'
+      capabilities: [web_search]
+    next:
+      default: 'null'
+output:
+  - done

@@ -1,0 +1,29 @@
+aigentflow_version: '2.0.0'
+name: invalid-flow-modification-removed-step
+version: '1.0.0'
+description: >-
+  flow_modification_allowed on a step or loop sub-step is refused on presence (false included),
+  whatever the scheme.
+start: call
+steps:
+  call:
+    executor: http://example/get
+    query:
+      url: https://example.com
+      flow_modification_allowed: false
+    next:
+      default: 'spin'
+  spin:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: log
+          executor: function://utils/log
+          query:
+            message: hello
+            flow_modification_allowed: true
+    next:
+      default: 'null'
+output:
+  - done

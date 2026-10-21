@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: removed-executor-aigentchat
+version: '1.0.0'
+description: >-
+  aigentchat:// was removed from AIgentFlow in v2.819.0. The reference never rejects on scheme,
+  so this library treats it like any scheme it does not know: an unknown_executor_scheme WARNING,
+  and nothing else. In particular the credential-endpoint rule (credential_endpoint_unpaired)
+  does not judge it. (nexus:// was removed with it and came back in v2.835.0 as the spelling of
+  the agent runtime executor: see invalid-nexus-aigentchat-shape.yaml.)
+start: alias
+steps:
+  alias:
+    executor: aigentchat://org/agent
+    query:
+      message: 'hi'
+      aigentchat_base_url: '{{ .query.endpoint }}'
+      base_url: 'https://chat.example.com'
+    next:
+      default: 'null'
+query:
+  endpoint:
+    type: string
+output:
+  - alias

@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-campaign-removed-empty-block
+version: '1.0.0'
+description: >-
+  An empty campaign: {} block without an orchestrator is still campaign_removed (judged on
+  presence), not the old campaign-requires-orchestrator rule.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+campaign: {}
+output:
+  - message

@@ -193,13 +193,16 @@ func checkFunctionOperation(executor, field, stepID string, iss *issues) {
 	})
 }
 
-// checkAtlasStep applies the atlas:// rules. It runs only for an untemplated
-// atlas:// URL (the scheme match is exact and case-sensitive). The URL says which
-// Atlas operation the step performs; the query is checked against what that
-// operation needs. field is the step itself, as the findings are about the step
-// as a whole.
+// checkAtlasStep applies the agent-runtime rules. It runs only for an untemplated
+// nexus:// URL or one written with its alias atlas:// (AIgentFlow 2.835.0: one
+// executor, two spellings, the same rules and codes for both). The scheme match
+// is exact and case-sensitive. The URL says which Nexus operation the step
+// performs; the query is checked against what that operation needs. field is the
+// step itself, as the findings are about the step as a whole. An AigentChat-shaped
+// nexus://<org>/<agent> (that executor was removed in 2.819.0) now reaches these
+// rules and is atlas_operation_unknown.
 //
-// The URL is split at the first slash after "atlas://" rather than through the
+// The URL is split at the first slash after the scheme rather than through the
 // shared executor-URL shape, so a reference the shape refuses (a dot or colon in
 // a capability reference) is still judged by the atlas rules; the shape's own
 // invalid_executor_url finding is reported separately, as before.
@@ -207,11 +210,11 @@ func checkAtlasStep(executor string, query any, field, stepID string, iss *issue
 	if strings.Contains(executor, templateOpenDelim) {
 		return
 	}
-	prefix := spec.AtlasExecutor.Scheme + "://"
-	if !strings.HasPrefix(executor, prefix) {
+	scheme, rest, found := strings.Cut(executor, schemeSeparator)
+	if !found || !atlasSchemes.has(scheme) {
 		return
 	}
-	provider, resource, _ := strings.Cut(strings.TrimPrefix(executor, prefix), "/")
+	provider, resource, _ := strings.Cut(rest, "/")
 	quoted := strconv.Quote(stepID)
 	report := func(rule atlasRule, args ...any) {
 		iss.error(Issue{

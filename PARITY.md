@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.833.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.837.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -21,7 +21,71 @@ v0.13.0 (AIgentFlow v2.831.0), which adds one rule and sharpens one warning mess
 v0.14.0, which narrows `potential_infinite_loop` (below), then
 v0.15.0, which adds the `atlas://` scheme and seven rules (below), then
 v0.16.0, which adds three rules and aligns the atlas rules with the reference (below), then
-v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` executors and the `ai://` agent-loop parameters and adds two errors for them (below).
+v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` executors and the `ai://` agent-loop parameters and adds two errors for them (below), then
+v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical agent-runtime scheme with `atlas://` as its alias, **removes** signals, dynamic flow modification and campaigns with four new codes, and drops share links from the removal advice (below).
+
+> **v0.18.0 — `nexus://` with `atlas://` as its alias; signals, DFM and campaigns removed
+> (BREAKING).** `specVersion` is `2.837.0`. Contracts: AIgentFlow's traps doc, sections "An executor
+> scheme with two spellings", "AGENTCUT B1 validator contract" and "AGENTCUT B2 validator contract".
+>
+> *`nexus://` (AIgentFlow v2.835.0).* `nexus` joins `executorSchemes` (no `unknown_executor_scheme`
+> warning). The `atlasExecutor` block names `scheme: nexus` and `aliases: [atlas]`; every rule
+> (`atlas_operation_unknown`, `atlas_agent_missing`, `atlas_agent_not_literal`,
+> `atlas_capabilities_not_literal`, `atlas_prompt_missing`, `atlas_prompt_both`,
+> `atlas_capability_ref_invalid`, `atlas_model_not_literal`, `atlas_param_refused`) answers
+> identically for both spellings; the codes keep their `atlas_` prefix, and the messages say
+> `nexus://` / "Nexus". The scheme match stays exact and case-sensitive. An AigentChat-shaped
+> `nexus://<org>/<agent>` (that executor was removed in v2.819.0) is now `atlas_operation_unknown`,
+> no longer an `unknown_executor_scheme` warning; `aigentchat://` stays an unknown scheme.
+>
+> *Signals and DFM (AIgentFlow v2.834.0).* **`signal_removed`** (ERROR): `orchestrator.enable_signals:
+> true`; one of `aif_signal_complete`, `aif_signal_need_human`, `aif_signal_delegate`,
+> `aif_signal_need_tool`, `aif_signal_modify_flow` in `orchestrator.tools`, `deny_tools`,
+> `require_approval_for` (field = the list) or in the orchestrator definition's `tools.allow` (field
+> `orchestrator.exons`), ONE finding per list naming the removed names in list order, each once; and
+> `enable_signals` on an `aiv://` step or loop sub-step (on presence, null included).
+> **`flow_modification_removed`** (ERROR): a `dfm_suggestion` trigger (one finding, field
+> `orchestrator.triggers`) and `flow_modification_allowed` in any step's or loop sub-step's query.
+> Step keys skip templated executors, removed schemes and `flow://` (its query is the child's inputs).
+> **`removed_key_ignored`** (WARNING, never an error): `checkpoint.pre_dfm` (any non-null value; AIgentFlow
+> wrote it into stored flows itself) and `orchestrator.enable_signals: false`. A YAML null on either
+> block key is absent.
+>
+> *Campaigns (AIgentFlow v2.836.0).* **`campaign_removed`** (ERROR): a `campaign` key with ANY non-null
+> value (field `campaign`; the block is refused whole), one of `aif_campaign_spawn`,
+> `aif_campaign_status`, `aif_campaign_results`, `aif_campaign_cancel` in one of the four tool lists
+> (one finding per list), and a `campaign_child_completed` / `campaign_child_failed` trigger (one
+> finding, the removed types in order). Steps are never judged.
+>
+> *Removals.* The removed tool and trigger names leave `orchestrator.tools` / `orchestrator.triggers`
+> but are TOLERATED by `orchestrator_tool_unknown` and `orchestrator_trigger_unknown` (also under
+> `StrictRegistries`), so each is reported once, with advice. `orchestrator_tool_withheld` loses its
+> signal exemption and its campaign arm and never names a removed tool; `orchestratorToolAllow` drops
+> `enableSignalsDefault`, `signalTools` and `campaignTools`. The campaign rules are deleted
+> (`campaign_requires_orchestrator`, `campaign_handoff_step_unknown`,
+> `campaign_invalid_max_credits_per_child`, `campaign_no_child_flows`, `campaign_child_flow_no_id`, and
+> the retired-key arm for `campaign.budget_max_per_child`), and the `campaign` block decodes untyped
+> (`knownKeys`: `any`; `CampaignConfig` and `CampaignChildFlowDef` are gone), so nothing inside it is
+> an unknown key. `enable_signals` and `pre_dfm` stay in `knownKeys`.
+>
+> *Share links (AIgentFlow v2.837.0).* The `executor_removed` / `agentic_param_removed` suggestion is
+> AIgentFlow's current `SUGGESTION_REMOVED_AGENT_ADVICE`: it writes `nexus://`, says share links no
+> longer exist, and names the run's responsible person.
+>
+> *Fixtures*, byte-identical to the JS port's (0.28.0). Added: `valid-nexus-agent-run`,
+> `valid-nexus-capability`, `valid-atlas-alias-agent-run`, `invalid-nexus-agent-missing`,
+> `invalid-nexus-loop-substep-agent-not-literal`, `invalid-nexus-aigentchat-shape`,
+> `invalid-signal-removed-{enable-signals,tool-lists,aiv-step}`,
+> `invalid-flow-modification-removed-{trigger,step}`,
+> `warn-removed-key-ignored-{pre-dfm,enable-signals-false}`, `valid-signal-surfaces-not-refused`,
+> `invalid-campaign-removed-{block,empty-block,retired-key,tool-lists,triggers}` and
+> `valid-campaign-surfaces-not-refused`. Renamed: `warn-removed-executor-nexus` →
+> `warn-removed-executor-aigentchat` (aigentchat:// only). Edited: `warn-orchestrator-tool-withheld-named`,
+> `valid-orchestrator-tool-allow-consistent`, `valid-orchestrator-tool-allow-absent` (no removed names).
+> Deleted: `valid-campaign-handoff`, `valid-campaign-decoded-shapes`,
+> `invalid-campaign-{handoff-unknown-step,no-child-flows,child-flow-no-id}`,
+> `invalid-retired-campaign-budget-max-per-child`, `valid-orchestrator-tool-allow-campaign`,
+> `warn-orchestrator-tool-withheld-{campaign,signals-off}`.
 
 > **v0.17.0 — the agent surfaces are removed (BREAKING).** AIgentFlow v2.833.0 no longer runs
 > agents of its own: the `ai://<provider>/…` agent loop, the `exons://` scheme and the `agent://`

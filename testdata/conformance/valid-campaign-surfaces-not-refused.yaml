@@ -1,0 +1,27 @@
+aigentflow_version: '2.0.0'
+name: valid-campaign-surfaces-not-refused
+version: '1.0.0'
+description: >-
+  The no-false-positive control for 2.836.0: campaign: null is absent, steps are never judged (a
+  step query key named campaign, a flow:// child input max_credits_per_child), and a data: key
+  campaign_id is not the block.
+start: child
+steps:
+  child:
+    executor: flow://stored/child-flow
+    query:
+      max_credits_per_child: 5
+    next:
+      default: 'log'
+  log:
+    executor: function://utils/log
+    query:
+      message: 'working'
+      campaign: spring
+    next:
+      default: 'null'
+campaign: ~
+data:
+  campaign_id: c-1
+output:
+  - message
