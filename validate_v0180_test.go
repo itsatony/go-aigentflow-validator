@@ -7,10 +7,12 @@ import (
 )
 
 // v0.18.0 — AIgentFlow v2.834.0 … v2.837.0: nexus:// canonical with atlas:// as
-// its alias (v2.835.0), signals and DFM removed (v2.834.0, AGENTCUT B1),
-// campaigns removed (v2.836.0, AGENTCUT B2), and the removal advice no longer
-// naming share links (v2.837.0). The conformance fixtures pin the verdicts; these
-// tests pin fields, cardinality, messages and the no-false-positive edges.
+// its alias (v2.835.0), signals and DFM removed (v2.834.0), campaigns removed
+// (v2.836.0), and the removal advice no longer naming share links (v2.837.0).
+// The arms of v0.18.0 that looked inside the orchestrator block went with the
+// block in v0.19.0 (validate_v0190_test.go). The conformance fixtures pin the
+// verdicts; these tests pin fields, cardinality, messages and the
+// no-false-positive edges.
 
 // issueKeys renders findings as code@field#step, in order, so two spellings can
 // be compared finding for finding.
@@ -86,50 +88,6 @@ func TestNexusMessagesNameNexus(t *testing.T) {
 	}
 }
 
-func TestSignalRemovedOnTheOrchestratorBlock(t *testing.T) {
-	src := orchFlow("tools:\n  allow: [aif_ask_human, aif_signal_need_tool, aif_signal_need_tool]\n",
-		"  enable_signals: true\n"+
-			"  tools: [aif_ask_human, aif_signal_complete, aif_signal_need_human, aif_signal_complete]\n"+
-			"  deny_tools: [aif_signal_delegate]\n"+
-			"  require_approval_for: [aif_signal_modify_flow, AIF_SIGNAL_COMPLETE]\n", "")
-	r := ValidateFlow(src, Options{StrictRegistries: true})
-	got := fieldsWithCode(r.Errors, codeSignalRemoved)
-	want := []string{"orchestrator.deny_tools", "orchestrator.enable_signals", "orchestrator.exons",
-		"orchestrator.require_approval_for", "orchestrator.tools"}
-	if !slices.Equal(got, want) {
-		t.Fatalf("signal_removed on %v, want %v", got, want)
-	}
-	for _, e := range r.Errors {
-		if e.Code == codeSignalRemoved && e.Field == "orchestrator.tools" &&
-			!strings.Contains(e.Message, "names aif_signal_complete, aif_signal_need_human:") {
-			t.Errorf("names in list order, each once: %q", e.Message)
-		}
-		if e.Code == codeSignalRemoved && e.Field == "orchestrator.exons" &&
-			!strings.Contains(e.Message, "names aif_signal_need_tool:") {
-			t.Errorf("tools.allow message: %q", e.Message)
-		}
-		if e.Code == codeSignalRemoved && e.Suggestion != spec.RemovedSignalSurfaces.Suggestion {
-			t.Errorf("signal advice missing on %s", e.Field)
-		}
-	}
-	// The removed names are tolerated by the registry checks, even strict ones;
-	// a differently-cased name is NOT a removed name (exact match), so it is
-	// simply unknown.
-	if got := fieldsWithCode(r.Errors, codeOrchToolUnknown); len(got) != 0 {
-		t.Errorf("orchestrator_tool_unknown on %v", got)
-	}
-	assertCodesAbsent(t, "warning", r.Warnings, []string{codeOrchToolWithheld, codeRemovedKeyIgnored})
-}
-
-func TestDFMTriggerIsOneFindingAndNotUnknown(t *testing.T) {
-	src := orchFlow("", "  triggers:\n    - type: dfm_suggestion\n    - type: step_completed\n    - type: dfm_suggestion\n", "")
-	r := ValidateFlow(src, Options{})
-	if got := fieldsWithCode(r.Errors, codeFlowModificationRemoved); !slices.Equal(got, []string{"orchestrator.triggers"}) {
-		t.Fatalf("flow_modification_removed on %v", got)
-	}
-	assertCodesAbsent(t, "error", r.Errors, []string{codeOrchTriggerUnknown})
-}
-
 func TestRemovedStepKeys(t *testing.T) {
 	step := func(executor, query string) string {
 		return atlasProbe(executor, query)
@@ -180,17 +138,15 @@ func TestRemovedStepKeys(t *testing.T) {
 }
 
 func TestRemovedKeyIgnoredWarnings(t *testing.T) {
-	r := ValidateFlow(orchFlow("", "  enable_signals: false\n", "checkpoint:\n  pre_dfm: false\n"), Options{})
+	r := ValidateFlow(minimalFlow+"checkpoint:\n  pre_dfm: false\n", Options{})
 	assertValid(t, r)
-	if got := fieldsWithCode(r.Warnings, codeRemovedKeyIgnored); !slices.Equal(got,
-		[]string{"checkpoint.pre_dfm", "orchestrator.enable_signals"}) {
+	if got := fieldsWithCode(r.Warnings, codeRemovedKeyIgnored); !slices.Equal(got, []string{"checkpoint.pre_dfm"}) {
 		t.Fatalf("removed_key_ignored on %v", got)
 	}
 	assertCodesAbsent(t, "warning", r.Warnings, []string{codeUnknownYAMLKey})
-	// A YAML null is absent on both block keys.
-	r = ValidateFlow(orchFlow("", "  enable_signals: ~\n", "checkpoint:\n  pre_dfm: ~\n"), Options{})
+	// A YAML null is absent.
+	r = ValidateFlow(minimalFlow+"checkpoint:\n  pre_dfm: ~\n", Options{})
 	assertCodesAbsent(t, "warning", r.Warnings, []string{codeRemovedKeyIgnored})
-	assertCodesAbsent(t, "error", r.Errors, []string{codeSignalRemoved})
 }
 
 func TestCampaignRemoved(t *testing.T) {
@@ -205,49 +161,8 @@ func TestCampaignRemoved(t *testing.T) {
 		r := ValidateFlow(minimalFlow+"campaign: ~\n", Options{})
 		assertCodesAbsent(t, "error", r.Errors, []string{codeCampaignRemoved})
 	})
-	t.Run("the lists and the triggers", func(t *testing.T) {
-		src := orchFlow("tools:\n  allow: [aif_ask_human, aif_campaign_results]\n",
-			"  tools: [aif_campaign_status, aif_campaign_spawn, aif_campaign_status]\n"+
-				"  deny_tools: [aif_campaign_cancel]\n  require_approval_for: [aif_campaign_spawn]\n"+
-				"  triggers:\n    - type: campaign_child_failed\n    - type: timer\n      interval: 1m\n"+
-				"    - type: campaign_child_completed\n    - type: campaign_child_failed\n", "")
-		r := ValidateFlow(src, Options{StrictRegistries: true})
-		want := []string{"orchestrator.deny_tools", "orchestrator.exons", "orchestrator.require_approval_for",
-			"orchestrator.tools", "orchestrator.triggers"}
-		if got := fieldsWithCode(r.Errors, codeCampaignRemoved); !slices.Equal(got, want) {
-			t.Fatalf("campaign_removed on %v, want %v", got, want)
-		}
-		for _, e := range r.Errors {
-			switch {
-			case e.Code == codeCampaignRemoved && e.Field == "orchestrator.tools" &&
-				!strings.Contains(e.Message, "names aif_campaign_status, aif_campaign_spawn:"):
-				t.Errorf("tools message: %q", e.Message)
-			case e.Code == codeCampaignRemoved && e.Field == "orchestrator.triggers" &&
-				!strings.Contains(e.Message, "names campaign_child_failed, campaign_child_completed:"):
-				t.Errorf("triggers message: %q", e.Message)
-			}
-		}
-		assertCodesAbsent(t, "error", r.Errors, []string{codeOrchToolUnknown, codeOrchTriggerUnknown})
-		assertCodesAbsent(t, "warning", r.Warnings, []string{codeOrchToolWithheld})
-	})
 	t.Run("steps are never judged", func(t *testing.T) {
 		r := ValidateFlow(atlasProbe("flow://stored/c", "      campaign: x\n      max_credits_per_child: 3\n"), Options{})
 		assertCodesAbsent(t, "error", r.Errors, []string{codeCampaignRemoved})
 	})
-}
-
-func TestTheRegistriesNoLongerOfferTheRemovedNames(t *testing.T) {
-	for _, name := range append(slices.Clone(spec.RemovedSignalSurfaces.Tools), spec.RemovedCampaignSurfaces.Tools...) {
-		if orchestratorTools.has(name) {
-			t.Errorf("tool %q is still in the orchestrator registry", name)
-		}
-	}
-	for _, name := range append(slices.Clone(spec.RemovedSignalSurfaces.Triggers), spec.RemovedCampaignSurfaces.Triggers...) {
-		if orchestratorTriggers.has(name) {
-			t.Errorf("trigger %q is still in the orchestrator registry", name)
-		}
-	}
-	if _, ok := spec.KnownKeys.Types["CampaignConfig"]; ok {
-		t.Error("the campaign block must decode untyped")
-	}
 }

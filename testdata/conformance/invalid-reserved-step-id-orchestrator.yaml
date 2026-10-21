@@ -2,9 +2,10 @@ aigentflow_version: '2.0.0'
 name: reserved-step-id-orchestrator
 version: '1.0.0'
 description: >-
-  A top-level step may not be called 'orchestrator' (AIF v2.484.0, DC-COND-1).
-  It is the engine's step id for orchestrator-originated signals and a reserved
-  next marker. The check is case-sensitive, so 'Orchestrator' below is legal.
+  A top-level step may not be called 'orchestrator'. The id stays reserved after
+  the orchestrator was removed (AIgentFlow 2.838.0), so `next: orchestrator` can
+  only ever mean the removed hand-over. The check is case-sensitive, so
+  'Orchestrator' below is legal.
 start: Orchestrator
 steps:
   Orchestrator:

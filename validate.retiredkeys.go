@@ -28,8 +28,7 @@ func validateRetiredKeys(flow doc, iss *issues) {
 			Message: "The flow-level `budget:` key was removed from the grammar in AIgentFlow " + retiredKeysRemovedIn +
 				" because nothing read it (it limited no spend), and AIgentFlow refuses to save a flow that declares it.",
 			Suggestion: "Delete it. To cap spend use `billing: { max_credits: N }` — it caps the credit reservation " +
-				"and refuses further agentic turns (agentic ai://, exons://, the orchestrator); plain chat steps " +
-				"and flow:// sub-flows are not checked against it.",
+				"of the run (what AIgentFlow itself spends); a run can lower it with `options.max_credits`.",
 		})
 	}
 	if has(flow, keyMaxRetries) {

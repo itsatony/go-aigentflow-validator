@@ -1,9 +1,9 @@
 aigentflow_version: '2.0.0'
-name: invalid-flow-modification-removed-trigger
+name: invalid-orchestrator-removed-block
 version: '1.0.0'
 description: >-
-  The dfm_suggestion trigger was removed with dynamic flow modification in 2.834.0. It is refused
-  as flow_modification_removed, never as an unknown trigger.
+  AIgentFlow 2.838.0 removed the orchestrator. A well-formed orchestrator: block
+  is refused whole as orchestrator_removed, once, at the field orchestrator.
 start: work
 steps:
   work:
@@ -26,8 +26,11 @@ orchestrator:
     ---
     {~exons.message role="system"~}observe{~/exons.message~}
   triggers:
-    - type: step_completed
-    - type: dfm_suggestion
-    - type: dfm_suggestion
+    - type: mission_started
+    - type: timer
+      interval: 30s
+  tools:
+    - aif_step_inspect
+    - aif_mission_complete
 output:
   - message

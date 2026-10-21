@@ -13,7 +13,7 @@ import (
 
 // residencyFlow builds a one-step flow. residency is the YAML list body;
 // stepQuery is extra query lines (6-space indented); tail is appended verbatim
-// (flow-level blocks: executor_config, orchestrator).
+// (flow-level blocks such as executor_config).
 func residencyFlow(residency, executor, stepQuery, tail string) string {
 	return fmt.Sprintf(`aigentflow_version: '2.0.0'
 name: residency-probe
@@ -31,12 +31,6 @@ steps:
 %s    next:
       default: 'null'
 %s`, residency, executor, stepQuery, tail)
-}
-
-func orchestratorBlock(provider, extra string) string {
-	return "orchestrator:\n  mode: monitor\n  agentic: true\n" + extra +
-		"  exons: |\n    ---\n    name: o\n    description: d\n    type: agent\n    execution:\n      provider: " + provider +
-		"\n      model: m\n    ---\n    {~exons.message role=\"system\"~}x{~/exons.message~}\n"
 }
 
 func residencyWarnings(t *testing.T, yamlText string) []Issue {
@@ -72,8 +66,6 @@ func TestResidencyUnenforcedWarns(t *testing.T) {
 		"empty own base_url":                residencyFlow(eu, "ai://mistral/chat", "      mistral_base_url: ''\n", ""),
 		"executor_config of another":        residencyFlow(eu, "ai://mistral/chat", "", "executor_config:\n  openai:\n    base_url: 'https://x'\n"),
 		"every region-lane provider":        residencyFlow(eu, "ai://deepgram/transcribe", "", ""),
-		"orchestrator with nothing":         residencyFlow(eu, "mock://test/a", "", orchestratorBlock("mistral", "")),
-		"orchestrator enforce false":        residencyFlow(eu, "mock://test/a", "", orchestratorBlock("openai", "  enforce_region: false\n")),
 	}
 	for name, text := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -91,35 +83,29 @@ func TestResidencyUnenforcedWarns(t *testing.T) {
 func TestResidencyUnenforcedSilent(t *testing.T) {
 	eu := "['EU']"
 	cases := map[string]string{
-		"region set":                        residencyFlow(eu, "ai://mistral/chat", "      region: eu\n", ""),
-		"region templated is stated":        residencyFlow(eu, "ai://mistral/chat", "      region: '{{ .query.r }}'\n", ""),
-		"enforce_region alone":              residencyFlow(eu, "ai://mistral/chat", "      enforce_region: true\n", ""),
-		"enforce_region string true":        residencyFlow(eu, "ai://mistral/chat", "      enforce_region: 'true'\n", ""),
-		"enforce_region string 1":           residencyFlow(eu, "ai://mistral/chat", "      enforce_region: '1'\n", ""),
-		"enforce_region string yes":         residencyFlow(eu, "ai://mistral/chat", "      enforce_region: 'yes'\n", ""),
-		"both":                              residencyFlow(eu, "ai://mistral/chat", "      region: eu\n      enforce_region: true\n", ""),
-		"author-directed step endpoint":     residencyFlow(eu, "ai://mistral/chat", "      mistral_base_url: 'https://api.eu.mistral.ai'\n", ""),
-		"author-directed flow endpoint":     residencyFlow(eu, "ai://mistral/chat", "", "executor_config:\n  mistral:\n    base_url: 'https://api.eu.mistral.ai'\n"),
-		"no region lane scaleway":           residencyFlow(eu, "ai://scaleway/chat", "", ""),
-		"no region lane vaiembed":           residencyFlow(eu, "ai://vaiembed/embed", "", ""),
-		"no region lane anthropic":          residencyFlow(eu, "ai://anthropic/chat", "", ""),
-		"templated provider":                residencyFlow(eu, "'ai://{{ .query.p }}/chat'", "", ""),
-		"provider without an operation":     residencyFlow(eu, "ai://mistral", "", ""),
-		"exons step":                        residencyFlow(eu, "exons://agent/execute", "", ""),
-		"aiv step":                          residencyFlow(eu, "aiv://org/agent", "", ""),
-		"non-AI step":                       residencyFlow(eu, "http://example.com/x", "", ""),
-		"mixed residency EU and US":         residencyFlow("['EU', 'US']", "ai://mistral/chat", "", ""),
-		"US residency":                      residencyFlow("['US']", "ai://mistral/chat", "", ""),
-		"empty residency":                   residencyFlow("[]", "ai://mistral/chat", "", ""),
-		"orchestrator with region":          residencyFlow(eu, "mock://test/a", "", orchestratorBlock("mistral", "  region: eu\n")),
-		"orchestrator enforce_region only":  residencyFlow(eu, "mock://test/a", "", orchestratorBlock("mistral", "  enforce_region: true\n")),
-		"orchestrator no region lane":       residencyFlow(eu, "mock://test/a", "", orchestratorBlock("scaleway", "")),
-		"orchestrator executor_config base": residencyFlow(eu, "mock://test/a", "", "executor_config:\n  mistral:\n    base_url: 'https://api.eu.mistral.ai'\n"+orchestratorBlock("mistral", "")),
+		"region set":                    residencyFlow(eu, "ai://mistral/chat", "      region: eu\n", ""),
+		"region templated is stated":    residencyFlow(eu, "ai://mistral/chat", "      region: '{{ .query.r }}'\n", ""),
+		"enforce_region alone":          residencyFlow(eu, "ai://mistral/chat", "      enforce_region: true\n", ""),
+		"enforce_region string true":    residencyFlow(eu, "ai://mistral/chat", "      enforce_region: 'true'\n", ""),
+		"enforce_region string 1":       residencyFlow(eu, "ai://mistral/chat", "      enforce_region: '1'\n", ""),
+		"enforce_region string yes":     residencyFlow(eu, "ai://mistral/chat", "      enforce_region: 'yes'\n", ""),
+		"both":                          residencyFlow(eu, "ai://mistral/chat", "      region: eu\n      enforce_region: true\n", ""),
+		"author-directed step endpoint": residencyFlow(eu, "ai://mistral/chat", "      mistral_base_url: 'https://api.eu.mistral.ai'\n", ""),
+		"author-directed flow endpoint": residencyFlow(eu, "ai://mistral/chat", "", "executor_config:\n  mistral:\n    base_url: 'https://api.eu.mistral.ai'\n"),
+		"no region lane scaleway":       residencyFlow(eu, "ai://scaleway/chat", "", ""),
+		"no region lane vaiembed":       residencyFlow(eu, "ai://vaiembed/embed", "", ""),
+		"no region lane anthropic":      residencyFlow(eu, "ai://anthropic/chat", "", ""),
+		"templated provider":            residencyFlow(eu, "'ai://{{ .query.p }}/chat'", "", ""),
+		"provider without an operation": residencyFlow(eu, "ai://mistral", "", ""),
+		"exons step":                    residencyFlow(eu, "exons://agent/execute", "", ""),
+		"aiv step":                      residencyFlow(eu, "aiv://org/agent", "", ""),
+		"non-AI step":                   residencyFlow(eu, "http://example.com/x", "", ""),
+		"mixed residency EU and US":     residencyFlow("['EU', 'US']", "ai://mistral/chat", "", ""),
+		"US residency":                  residencyFlow("['US']", "ai://mistral/chat", "", ""),
+		"empty residency":               residencyFlow("[]", "ai://mistral/chat", "", ""),
 	}
 	for name, text := range cases {
 		t.Run(name, func(t *testing.T) {
-			// enforce_region without region is a separate ERROR for the
-			// orchestrator; only the residency warning is asserted here.
 			result := ValidateFlow(text, Options{})
 			for _, w := range result.Warnings {
 				if w.Code == codeComplianceResidencyUnenforced {
@@ -164,7 +150,7 @@ steps:
             prompt: 'hi'
     next:
       default: 'null'
-` + orchestratorBlock("google", "")
+`
 	warns := residencyWarnings(t, text)
 	type got struct{ field, step string }
 	var have []got
@@ -172,11 +158,10 @@ steps:
 		have = append(have, got{w.Field, w.StepID})
 	}
 	want := []got{
-		// Step ids sorted ("looper" < "top"), a step's sub-steps right after it,
-		// the orchestrator last: the reference's ExecutorSites order.
+		// Step ids sorted ("looper" < "top"), a step's sub-steps right after it:
+		// the reference's ExecutorSites order.
 		{"steps.looper.loop.steps.inner.executor", "looper"},
 		{"steps.top.executor", "top"},
-		{"orchestrator.exons", ""},
 	}
 	if !slices.Equal(have, want) {
 		t.Fatalf("findings = %v, want %v", have, want)

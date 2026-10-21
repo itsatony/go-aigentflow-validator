@@ -14,8 +14,7 @@ share one vendored enum surface and one conformance corpus, and agree on error `
 [PARITY.md](./PARITY.md).
 
 - **Zero-config, offline, deterministic.** No network, no filesystem, no credentials, no server.
-- **One dependency.** `gopkg.in/yaml.v3` and nothing else. (The optional
-  [`exonsinspect`](#exons-documents) companion module adds the `.exons` engine.)
+- **One dependency.** `gopkg.in/yaml.v3` and nothing else.
 - **WASM-safe.** Builds for `GOOS=js GOARCH=wasm`, so the same rules run in a server, a CLI, and a browser.
 - **Positioned findings.** Every finding resolves to a line and column in the source.
 - **Parity-tracked.** Mirrors a pinned AIgentFlow flow-schema version, with a test that diffs against the JS implementation.
@@ -57,7 +56,7 @@ same verdict, but cannot set `Line`/`Column` — there is no source to locate fi
 
 `Valid` is `false` if and only if `Errors` is non-empty. **Warnings never lower the verdict**, and a
 consumer that treats them as blocking will reject legitimate flows: the vendored allow-lists
-(executor schemes, template functions, orchestrator tools) can lag the live AIgentFlow registries,
+(executor schemes, template functions) can lag the live AIgentFlow registries,
 so an unrecognised-but-real name is reported as a warning on purpose.
 
 Set `Options{StrictRegistries: true}` to promote unrecognised-name findings to errors. That is
@@ -72,29 +71,14 @@ list equals AIgentFlow's registry, so the warning is a real problem unless your 
 
 ### Exons documents
 
-A flow can carry an `.exons` agent definition inline in `orchestrator.exons` (the `exons://` step executor was removed in v0.17.0; such a step reports `executor_removed`). AIgentFlow's save door judges it with the go-exons engine: whether the
-document parses, and whether every tag can render. This module has no template engine for `.exons`,
-so by default it reads only a document's YAML frontmatter (`execution.provider`, `tools.allow`,
-`requirements.resources`) and cannot tell whether the document parses or renders. For the
-reference's exact verdict, pass the go-exons-backed inspector from the companion module:
-
-```go
-import (
-    aifvalidate "github.com/itsatony/go-aigentflow-validator"
-    "github.com/itsatony/go-aigentflow-validator/exonsinspect"
-)
-
-result := aifvalidate.ValidateFlow(yamlSource, aifvalidate.Options{Exons: exonsinspect.New()})
-```
-
-```bash
-go get github.com/itsatony/go-aigentflow-validator/exonsinspect
-```
-
-It is a separate module so this one keeps a single dependency and stays WASM-safe. Without it, a
-flow whose `.exons` document the engine refuses passes here (PARITY.md, divergence #16). **A consumer
-that gates what AIgentFlow will later save should use it.** `Options.Exons` accepts any
-`ExonsInspector`, so a consumer with its own engine can supply one.
+Since v0.19.0 (AIgentFlow v2.838.0) a flow carries no inline `.exons` document this library
+judges: the `exons://` step executor was removed in v0.17.0 (`executor_removed`), and the
+orchestrator, whose `orchestrator.exons` was the last such document, was removed in v0.19.0 (its
+block is refused whole as `orchestrator_removed`). `Options.Exons` and the `ExonsInspector` type are
+kept so existing callers compile, but no rule consults them: passing
+`exonsinspect.New()` changes no verdict. The companion module
+`github.com/itsatony/go-aigentflow-validator/exonsinspect` still judges a single `.exons`
+document on its own (`exonsinspect.New().InspectExons(source)`).
 
 ### Reporting which schema version judged a flow
 
@@ -112,8 +96,8 @@ version rejected them has no way to understand it.
 | Retired keys | flow-root `budget:` and `max_retries:`, step and loop sub-step `max_retries:` (all refused as `unknown_yaml_key`) |
 | Executors | the reference's executor-URL shape, `scheme://authority/path` (error; templated URLs skipped), unknown scheme (warning) |
 | Removed agent surfaces | `executor_removed` (an `exons://` or `agent://` step, or the `exons_uploads` key) and `agentic_param_removed` (an `ai://` step carrying `agentic`, `max_tool_turns`, `mcp_server_url`, …) — both errors |
-| Connectivity | `next.default` / `next.conditions[].goto` existence (error; only `null` and `orchestrator` need no step, so `end` must name one), unreachable steps + cycles (warning) |
-| `next.parallel` | rendezvous + member existence, non-empty fan-out, `next: orchestrator` needs an orchestrator |
+| Connectivity | `next.default` / `next.conditions[].goto` existence (error; only `null` and `orchestrator` need no step, so `end` must name one; `orchestrator` itself is `orchestrator_removed`), unreachable steps + cycles (warning) |
+| `next.parallel` | rendezvous + member existence, non-empty fan-out |
 | `error_strategy` | action enum, `goto_step` existence, Go durations, `backoff_multiplier > 0`, `retry_on` categories, a `goto_step` no action can take (warning) |
 | `query` schema | param types, nested `properties`, array `items` types, `min_items`/`max_items` |
 | `response_expectation` | field data types, array `items`, `required` as bool-or-template, an expectation nothing reads (warning) |
@@ -124,10 +108,8 @@ version rejected them has no way to understand it.
 | Credential bindings | `credential` vs `credentials` exclusivity, `stored/{provider}/{name}` form, `inject_as` |
 | `input_schema` / `output_schema` | version, field names, types, constraint/type compatibility, `visible_when`, RE2 patterns |
 | `quality_gate` | rubric, threshold range, `on_fail` enum, self-goto, composite/parallel-member scope |
-| Orchestrator | `exons` presence, `mode` enum + owner-needs-yield, triggers, tools, `human_question_timeout`, `enforce_region` needs `region` |
-| Removed surfaces | `executor_removed`, `agentic_param_removed` (v2.833.0); `signal_removed`, `flow_modification_removed`, the `removed_key_ignored` warning (v2.834.0); `campaign_removed` (v2.836.0) |
+| Removed surfaces | `executor_removed`, `agentic_param_removed` (v2.833.0); `signal_removed`, `flow_modification_removed`, the `removed_key_ignored` warning (v2.834.0); `campaign_removed` (v2.836.0); `orchestrator_removed` (v2.838.0: the `orchestrator:` block refused whole, the flow-level `tool_discovery` / `discoverable_tools`, and `next: orchestrator`) |
 | Nexus agent steps | `nexus://agent/run`, `nexus://capability/<ref>` and the `atlas://` alias: the `atlas_*` rules |
-| Inline `.exons` documents | orchestrator: a frontmatter spec, `execution.provider`, no `requirements.resources`; a tool one of `orchestrator.tools` / `tools.allow` withholds (warning); with [`exonsinspect`](#exons-documents): the document parses, and every tag of the orchestrator's document can render |
 | `executor_config` | a `${VAR}` reference may name only the variables of the key it is written under |
 | Examples | the optional top-level `examples:` block: ids, limits, input against `input_schema` (unknown / missing / wrong kind / enum), file references (https only), expectations, checkpoints, variants, credential-shaped literals (`example_*`, `examples_*`) |
 | Display name | the optional top-level `display_name` is at most 80 characters, counted in runes (`display_name_too_long`) |
@@ -135,7 +117,7 @@ version rejected them has no way to understand it.
 | Credential endpoints | an endpoint a server-supplied credential will never be sent to: an `ai://` `<provider>_base_url` (or a literal `executor_config.<provider>.base_url`) with no key of the flow's own, a family secret that is a server `${AIGENTFLOW_…}` variable beside a literal non-default endpoint (warning, `credential_endpoint_unpaired`) |
 | Templates | Go `text/template` syntax across `query`, `pre_processing`, `post_processing`, `conditions[].if` |
 | `expression_functions` | exactly one of `package` / `function`; `package:` refused; `function:` must be in the fixed catalog; a template calling an `fn_` name must declare it |
-| Other save-door rules | `tool_discovery` vocabulary, mock-scenario `delay` durations, empty `output:` entries |
+| Other save-door rules | mock-scenario `delay` durations, empty `output:` entries |
 
 ## What it does not check
 

@@ -100,7 +100,7 @@ orchestrator:
 		want := []string{
 			"billing.currency", "constraints", "executor_config.openai.region",
 			"input_schema.fields[0].placeholder", "mock_scenarios.s.a.latency",
-			"orchestrator.triggers[0].zz", "orchestrator.zz", "query.q.label",
+			"query.q.label",
 			"steps.a.credentials.k.scope", "steps.a.error_strategy.retries",
 			"steps.a.for_each.throttle.rate", "steps.a.loop.steps[0].timeout", "steps.a.loop.until",
 			"steps.a.next.otherwise", "steps.a.output", "steps.a.quality_gate.judge",
@@ -252,14 +252,6 @@ func TestDurationNumericSpellings(t *testing.T) {
 			t.Errorf("got %v, want %v", got, want)
 		}
 		assertValid(t, ValidateFlow(fan("0", "0"), Options{}))
-	})
-	t.Run("a timer interval of 0 saves and 100 does not", func(t *testing.T) {
-		timer := func(interval string) string {
-			return minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: timer\n      interval: " + interval + "\n"
-		}
-		zero := ValidateFlow(timer("0"), Options{})
-		assertCodesAbsent(t, "error", zero.Errors, []string{codeOrchTimerNoInterval, codeOrchTimerBadInterv})
-		assertCodesPresent(t, "error", ValidateFlow(timer("100"), Options{}).Errors, []string{codeOrchTimerBadInterv})
 	})
 	t.Run("an object with no source text falls back to the decoded value", func(t *testing.T) {
 		flow, _, _ := ParseFlow(mock("0"))

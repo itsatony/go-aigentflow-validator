@@ -1,10 +1,9 @@
 aigentflow_version: '2.0.0'
-name: orchestrator-tool-withheld-ask-human
+name: invalid-orchestrator-removed-next-with-block
 version: '1.0.0'
 description: >-
-  orchestrator.tools is empty, so tools.allow alone decides, and it does not name aif_ask_human:
-  this orchestrator can never ask a person a question. A warning (v2.760.0): an unattended
-  orchestrator is a legitimate design.
+  A block AND a step that yields to it: one orchestrator_removed finding for the
+  block (field orchestrator) and one for the step (field steps.work).
 start: work
 steps:
   work:
@@ -12,10 +11,9 @@ steps:
     query:
       message: 'working'
     next:
-      default: 'null'
+      default: orchestrator
 orchestrator:
-  mode: monitor
-  agentic: true
+  mode: owner
   exons: |
     ---
     name: monitor
@@ -24,11 +22,7 @@ orchestrator:
     execution:
       provider: anthropic
       model: claude-sonnet-4-6
-    tools:
-      allow: [aif_step_start]
     ---
     {~exons.message role="system"~}observe{~/exons.message~}
-  triggers:
-    - type: step_completed
 output:
   - message

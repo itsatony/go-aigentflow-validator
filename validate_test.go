@@ -237,19 +237,6 @@ steps:
 	})
 }
 
-func TestOrchestratorNextRequiresOrchestratorBlock(t *testing.T) {
-	src := `aigentflow_version: "2.0.0"
-name: f
-start: a
-steps:
-  a:
-    executor: function://utils/log
-    next:
-      default: orchestrator
-`
-	assertError(t, ValidateFlow(src, Options{}), codeOrchNextRequiresOrch, "steps.a.next")
-}
-
 func TestErrorStrategy(t *testing.T) {
 	wrap := func(body string) string {
 		return "aigentflow_version: \"2.0.0\"\nname: f\nstart: a\nsteps:\n  a:\n    executor: function://utils/log\n    error_strategy:\n" + body
@@ -531,61 +518,6 @@ steps:
       rubric: good
 `
 		assertError(t, ValidateFlow(src, Options{}), codeQGOnComposite, "steps.a.quality_gate")
-	})
-}
-
-func TestOrchestratorAndCampaign(t *testing.T) {
-	t.Run("orchestrator without exons", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  agentic: true\n"
-		assertError(t, ValidateFlow(src, Options{}), codeOrchExonsRequired, "orchestrator.exons")
-	})
-	t.Run("invalid mode", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  mode: dictator\n"
-		assertError(t, ValidateFlow(src, Options{}), codeOrchModeInvalid, "orchestrator.mode")
-	})
-	t.Run("owner mode without a yield edge", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  mode: owner\n"
-		assertError(t, ValidateFlow(src, Options{}), codeOrchOwnerNeedsYield, "orchestrator.mode")
-	})
-	t.Run("owner mode WITH a yield edge is valid", func(t *testing.T) {
-		src := `aigentflow_version: "2.0.0"
-name: f
-start: a
-steps:
-  a:
-    executor: function://utils/log
-    next:
-      default: orchestrator
-orchestrator:
-  exons: "---\nname: orch\ndescription: coordinates\ntype: agent\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\n---\nhi"
-  mode: owner
-`
-		result := ValidateFlow(src, Options{})
-		if hasCode(result.Errors, codeOrchOwnerNeedsYield) {
-			t.Errorf("an explicit yield edge must satisfy owner mode: %s", formatIssues(result.Errors))
-		}
-	})
-	t.Run("timer trigger without an interval", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: timer\n"
-		assertError(t, ValidateFlow(src, Options{}),
-			codeOrchTimerNoInterval, "orchestrator.triggers[0].interval")
-	})
-	t.Run("unknown trigger type", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  triggers:\n    - type: eclipse\n"
-		assertError(t, ValidateFlow(src, Options{}),
-			codeOrchTriggerUnknown, "orchestrator.triggers[0].type")
-	})
-	t.Run("unknown tool warns by default, errors under StrictRegistries", func(t *testing.T) {
-		src := minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\n  tools: [not_a_real_tool]\n"
-		assertWarningNotError(t, ValidateFlow(src, Options{}), codeOrchToolUnknown)
-		assertError(t, ValidateFlow(src, Options{StrictRegistries: true}),
-			codeOrchToolUnknown, "orchestrator.tools[0]")
-	})
-	t.Run("a campaign block is campaign_removed, with or without an orchestrator", func(t *testing.T) {
-		src := minimalFlow + "campaign:\n  spawn: agents\n"
-		assertError(t, ValidateFlow(src, Options{}), codeCampaignRemoved, keyCampaign)
-		src = minimalFlow + "orchestrator:\n  exons: \"---\\nname: orch\\ndescription: coordinates\\ntype: agent\\nexecution: {provider: anthropic, model: claude-sonnet-4-6}\\n---\\nhi\"\ncampaign:\n  on_children_complete: ghost\n"
-		assertError(t, ValidateFlow(src, Options{}), codeCampaignRemoved, keyCampaign)
 	})
 }
 

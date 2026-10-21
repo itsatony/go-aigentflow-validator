@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-orchestrator-removed-scalar
+version: '1.0.0'
+description: >-
+  A scalar orchestrator value is orchestrator_removed too, never a type error
+  that would hide the advice: the block is judged on presence, untyped.
+start: work
+steps:
+  work:
+    executor: function://utils/log
+    query:
+      message: 'working'
+    next:
+      default: 'null'
+orchestrator: true
+output:
+  - message

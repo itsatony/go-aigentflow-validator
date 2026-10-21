@@ -5,63 +5,18 @@ import (
 	"time"
 )
 
-// Save-door refusals the reference applies in FlowParser.ValidateFlow. This
+// Save-door refusals the reference applies in FlowParser.ValidateFlow. (The
+// tool_discovery vocabulary rule went with the orchestrator in AIgentFlow
+// v2.838.0: the flow-level key is orchestrator_removed, and nothing reads the
+// vocabulary any more.) This
 // library carried them first; the JS port ported them in its 0.13.0 (PARITY.md,
 // v0.4.0 note). Each is a pure function of the document, so it is portable; each
 // is an ERROR because AIgentFlow refuses the flow at save.
 
-// toolDiscoveryModes is the closed tool_discovery vocabulary (reference:
-// IsValidDiscoveryMode). An empty value means "unset" and is legal everywhere.
-var toolDiscoveryModes = newSet([]string{"eager", "lazy", "off"})
-
 // validateSaveDoorExtras runs the rules above.
 func validateSaveDoorExtras(flow doc, iss *issues) {
-	validateToolDiscovery(flow, iss)
 	validateMockScenarioDelays(flow, iss)
 	validateOutputParameters(flow, iss)
-}
-
-// validateToolDiscovery refuses an unrecognised tool_discovery value on any of
-// its three surfaces: the flow root, the orchestrator block, and a step's
-// `query` (reference: validateToolDiscoveryVocabulary, AIF DC-FORGE-48).
-//
-// The value decides TOOL EXPOSURE, and every consuming switch treats an unknown
-// value as eager — so `tool_discovery: "of"` (a typo for off) injected every
-// tool. A templated value is skipped: it is rendered at run time. On a step the
-// surface is a free-form query key, so only a string is judged there.
-func validateToolDiscovery(flow doc, iss *issues) {
-	check := func(value, field, stepID string) {
-		if value == "" || isTemplate(value) || toolDiscoveryModes.has(value) {
-			return
-		}
-		iss.error(Issue{
-			Field: field, Code: codeToolDiscoveryInvalid, StepID: stepID,
-			Message:    fmt.Sprintf("tool_discovery '%s' is not a recognised mode", value),
-			Suggestion: "Use one of: " + joinNames(sortedSet(toolDiscoveryModes)),
-		})
-	}
-	if value, ok := iss.stringOf(flow, keyToolDiscovery, ""); ok {
-		check(value, keyToolDiscovery, "")
-	}
-	if orch, ok := getRecord(flow, keyOrchestrator); ok {
-		if value, ok := iss.stringOf(orch, keyToolDiscovery, keyOrchestrator); ok {
-			check(value, keyOrchestrator+"."+keyToolDiscovery, "")
-		}
-	}
-	steps := stepsOf(flow)
-	for _, stepID := range sortedKeys(steps) {
-		step, ok := asRecord(steps[stepID])
-		if !ok {
-			continue
-		}
-		query, ok := getRecord(step, keyQuery)
-		if !ok {
-			continue
-		}
-		if value, ok := getString(query, keyToolDiscovery); ok {
-			check(value, stepField(stepID, keyQuery, keyToolDiscovery), stepID)
-		}
-	}
 }
 
 // validateMockScenarioDelays refuses a mock step `delay:` that is not a Go

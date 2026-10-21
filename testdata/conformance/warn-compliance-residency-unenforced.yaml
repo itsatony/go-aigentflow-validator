@@ -5,9 +5,8 @@ description: >-
   AIgentFlow v2.821.0. An EU-only compliance.residency is a catalogue eligibility
   check, not endpoint evidence, so a literal call on a provider whose default
   endpoint commits to no jurisdiction (openai, mistral) that sets neither region
-  nor enforce_region draws compliance_residency_unenforced, as does an
-  orchestrator on such a provider. A provider with no region lane (anthropic) is
-  never warned. A warning, never an error: the flow stays valid.
+  nor enforce_region draws compliance_residency_unenforced. A provider with no
+  region lane (anthropic) is never warned. A warning, never an error: the flow stays valid.
 compliance:
   residency: ['EU']
 start: ask_openai
@@ -33,16 +32,3 @@ steps:
       prompt: 'hi'
     next:
       default: 'null'
-orchestrator:
-  mode: monitor
-  agentic: true
-  exons: |
-    ---
-    name: monitor
-    description: observe only
-    type: agent
-    execution:
-      provider: openai
-      model: gpt-5
-    ---
-    {~exons.message role="system"~}observe{~/exons.message~}
