@@ -1,0 +1,16 @@
+aigentflow_version: "2.0.0"
+name: "aiflow alias child"
+version: "1.0.0"
+description: "A step calls a stored flow through the aiflow://{org}/{flow} alias; the scheme is known and must not warn."
+start: "prepare"
+steps:
+  prepare:
+    executor: "function://utils/log"
+    query:
+      message: "starting"
+    next:
+      default: "call_child"
+  call_child:
+    executor: "aiflow://vai/child-flow"
+    next:
+      default: null
