@@ -137,6 +137,11 @@ type rawSpec struct {
 		MessageFormat  string `json:"messageFormat"`
 		Suggestion     string `json:"suggestion"`
 	} `json:"forEachItemsShape"`
+	// StoredBytesTolerated feeds Options.StoredBytes: the codes AIgentFlow
+	// refuses at save and tolerates when loading a stored flow.
+	StoredBytesTolerated struct {
+		Codes []string `json:"codes"`
+	} `json:"storedBytesTolerated"`
 	// ExecutorConfigEnvScopes feeds executor_config_env_scope (v2.597.0).
 	ExecutorConfigEnvScopes struct {
 		ReferencePrefix string              `json:"referencePrefix"`

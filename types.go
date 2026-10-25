@@ -86,6 +86,15 @@ type Options struct {
 	// not for admission control.
 	StrictRegistries bool
 
+	// StoredBytes judges a document that is ALREADY stored, not a new save: every
+	// error whose code AIgentFlow tolerates when loading a stored flow (spec block
+	// storedBytesTolerated: the rules it tightened after flows were stored, and
+	// the removed agent surfaces) is reported as a WARNING instead, with its code,
+	// field, message and suggestion unchanged. Every other error stays an error.
+	// Valid is then true when only tolerated rules fired. A save or publish gate
+	// must leave this OFF: the point of the save door is to refuse them.
+	StoredBytes bool
+
 	// Exons is retained so existing callers keep compiling; NO rule reads it
 	// since v0.19.0. The last inline .exons document a flow could carry was the
 	// orchestrator's, and AIgentFlow v2.838.0 removed the orchestrator (its block

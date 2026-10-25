@@ -108,6 +108,9 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	// already reported with more specific advice.
 	validateUnknownKeys(flow, iss)
 	stats := validateTemplates(flow, iss, opts)
+	if opts.StoredBytes {
+		tolerateStoredBytes(iss)
+	}
 
 	return finish(iss, flow, stats)
 }
@@ -142,4 +145,25 @@ func finish(iss *issues, flow doc, stats templateStats) Result {
 			TemplatesValid: max(0, stats.found-stats.syntaxErrors),
 		},
 	}
+}
+
+// tolerateStoredBytes demotes the errors AIgentFlow tolerates on LOAD to warnings
+// (Options.StoredBytes). Only the severity changes: the finding keeps its code,
+// field, message and suggestion, and joins the warnings after the ones already
+// raised.
+func tolerateStoredBytes(iss *issues) {
+	tolerated := make(map[string]struct{}, len(spec.StoredBytesTolerated.Codes))
+	for _, code := range spec.StoredBytesTolerated.Codes {
+		tolerated[code] = struct{}{}
+	}
+	kept := make([]Issue, 0, len(iss.errors))
+	for _, e := range iss.errors {
+		if _, ok := tolerated[e.Code]; ok {
+			e.Severity = SeverityWarning
+			iss.warnings = append(iss.warnings, e)
+			continue
+		}
+		kept = append(kept, e)
+	}
+	iss.errors = kept
 }

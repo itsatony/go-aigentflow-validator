@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.842.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.851.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -25,7 +25,24 @@ v0.17.0 (AIgentFlow v2.833.0), which **removes** the `exons://` / `agent://` exe
 v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical agent-runtime scheme with `atlas://` as its alias, **removes** signals, dynamic flow modification and campaigns with four new codes, and drops share links from the removal advice (below), then
 v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new code, then
 v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.items` that can never be a list (below), then
-v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (below).
+v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (below), then
+v0.21.0 (AIgentFlow v2.851.0), which adds the `StoredBytes` option (below).
+
+> **v0.21.0 — `Options.StoredBytes` (new option, no new rule).** `specVersion` is `2.851.0`; no grammar
+> changed between 2.842.0 and 2.851.0 (the parser and the flow/step types are untouched). Contract: the
+> reference LOADS a stored flow that trips a rule it tightened after the flow was saved and refuses it
+> only at the SAVE door (`FlowParser.refuseRetroactively`); the removed agent surfaces are logged on load
+> and refused at run start. A caller that re-judges STORED bytes (aigentverse's read path) sets
+> `Options{StoredBytes: true}` and gets the codes in the spec block `storedBytesTolerated` reported as
+> WARNINGS: `executor_config_env_scope`, `mock_delay_invalid`, `for_each_items_unresolvable`,
+> `invalid_executor_url`, `unknown_function_operation`, `loop_substep_next_*` (3), the two
+> `expression_function_*_use` rules and the six removed-surface codes. Only the severity changes (code,
+> field, message, suggestion), `Valid` follows the remaining errors, every other error stays an error, a
+> parse failure is never demoted. A save or publish gate leaves the option off. Test:
+> `TestStoredBytesDemotesExactlyTheToleratedCodesOnEveryFixture` (every conformance fixture, and every
+> listed code must be raised by some fixture). NOT mirrored (AIF-only advisories, PARITY #14):
+> `cel_unknown_reference`, `data_read_before_write`, `script_compile_error` (needs a CEL parser),
+> `subflow_not_found` / `subflow_reference_unresolvable` (need the store).
 
 > **v0.20.1 — `aiflow://` is a known scheme (no new rule).** `specVersion` is `2.842.0`. AIgentFlow
 > resolves `aiflow://{org_handle}/{flow_handle}[/v{n}]` as the alias for a stored flow
