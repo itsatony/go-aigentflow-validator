@@ -1,0 +1,12 @@
+aigentflow_version: '2.0.0'
+name: collection-functions
+version: '1.0.0'
+description: Uses list, dict, first, last, floor and ceil, which are standard template functions.
+start: build
+steps:
+  build:
+    executor: function://utils/log
+    query:
+      message: '{{ first (list 1 2 3) }} {{ last (list 1 2 3) }} {{ floor 2.7 }} {{ ceil 2.1 }} {{ toJson (dict "k" 1) }}'
+    next:
+      default: 'null'

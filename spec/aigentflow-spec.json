@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.851.0",
+  "specVersion": "2.854.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -227,6 +227,12 @@
     "truncate",
     "htmlEscape",
     "urlencode",
+    "list",
+    "dict",
+    "first",
+    "last",
+    "floor",
+    "ceil",
     "fn_avg",
     "fn_camelCase",
     "fn_chunk",
