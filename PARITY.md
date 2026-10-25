@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.851.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.854.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -26,7 +26,15 @@ v0.18.0 (AIgentFlow v2.834.0 – v2.837.0), which makes `nexus://` the canonical
 v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new code, then
 v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.items` that can never be a list (below), then
 v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (below), then
-v0.21.0 (AIgentFlow v2.851.0), which adds the `StoredBytes` option (below).
+v0.21.0 (AIgentFlow v2.851.0), which adds the `StoredBytes` option (below), then
+v0.22.0 (AIgentFlow v2.854.0), which adds six standard template functions (below).
+
+> **v0.22.0 — six standard template functions (no new rule).** `specVersion` is `2.854.0`. AIgentFlow
+> 2.854.0 registers `list`, `dict`, `first`, `last`, `floor` and `ceil` (Sprig names, Sprig meaning), so
+> they join `templateFunctions`; before the bump a template using them drew `template_function_unknown`.
+> ⚠ Release order: AIgentFlow 2.854.0 must be live on a fleet before a validator carrying this list runs
+> there, or the validator would pass a template that fails at run time. Fixture, byte-identical to the JS
+> port's: `valid-template-collection-functions.yaml`.
 
 > **v0.21.0 — `Options.StoredBytes` (new option, no new rule).** `specVersion` is `2.851.0`; no grammar
 > changed between 2.842.0 and 2.851.0 (the parser and the flow/step types are untouched). Contract: the

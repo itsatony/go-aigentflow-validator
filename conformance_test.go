@@ -53,6 +53,11 @@ type conformanceCase struct {
 var conformanceCases = []conformanceCase{
 	{file: "valid-minimal.yaml", valid: true},
 	{
+		// 0.22.0 (AIgentFlow v2.854.0): list, dict, first, last, floor and ceil are standard functions.
+		file: "valid-template-collection-functions.yaml", valid: true,
+		forbidWarningCodes: []string{codeTemplateFuncUnkn, codeTemplateSyntax},
+	},
+	{
 		// v2.648.0 (DC-FORGE-78): the loop body is walked. Every template here is
 		// unparseable and the flow must still be VALID: loop-body findings are
 		// warnings.
