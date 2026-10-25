@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.842.0",
+  "specVersion": "2.851.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -326,6 +326,27 @@
     "ellipsis": "…",
     "messageFormat": "for_each.items \"%s\" is neither a template ({{ … }}) nor a JSON array, so it can never resolve to a list; write {{ .data.<step>.<field> }} to read a value, or a JSON array literal such as '[\"a\",\"b\"]'",
     "suggestion": "Wrap the path in braces: {{ .data.<step>.<field> }}"
+  },
+  "storedBytesTolerated": {
+    "$comment": "AIgentFlow tightened these rules AFTER flows were stored, so it refuses them at the SAVE door and TOLERATES them when LOADING a stored flow (FlowParser.refuseRetroactively: executor_config_env_scope, mock_scenario_delay, for_each_items_shape, executor_url_parsable, function_operation_known, loop_substep_next; the expression-function usage rules run at save only; the removed agent surfaces are logged on load and refused at run start with advice). A caller judging STORED bytes (not a new save) passes the stored-bytes option and gets exactly these codes reported as WARNINGS, severity changed and nothing else: code, field, message and suggestion are untouched. Every other error stays an error. A caller judging a save or a publish never sets the option.",
+    "codes": [
+      "executor_config_env_scope",
+      "mock_delay_invalid",
+      "for_each_items_unresolvable",
+      "invalid_executor_url",
+      "unknown_function_operation",
+      "loop_substep_next_target_not_found",
+      "loop_substep_next_sentinel",
+      "loop_substep_next_parallel",
+      "expression_function_undeclared_use",
+      "expression_function_unknown_use",
+      "executor_removed",
+      "agentic_param_removed",
+      "signal_removed",
+      "flow_modification_removed",
+      "campaign_removed",
+      "orchestrator_removed"
+    ]
   },
   "executorConfigEnvScopes": {
     "$comment": "executor_config may expand only the environment variables of the key it is written under. A value is a reference when it starts with referencePrefix and ends with referenceSuffix around a non-empty name. Checked fields: fields, plus every string value of extra (prefixed extraFieldPrefix in the message). A key absent from scopes has an EMPTY scope and refuses every reference. scopes is the reference's executorConfigEnvScope evaluated for every key with a non-empty scope. Reference: ValidateExecutorConfigEnvScopes (v2.597.0).",
