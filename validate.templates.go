@@ -162,10 +162,10 @@ func (w templateWalker) check(value, field string) {
 	for _, pipeline := range pipedDefaultPipelines(parsed) {
 		// Same positional severity as the syntax findings: a loop body demotes it.
 		report(Issue{
-			Field: field, Code: codeTemplateDefaultPiped, StepID: w.stepID,
+			Field: field, Code: spec.TemplateDefaultPiped.Code, StepID: w.stepID,
 			Message:    templateDefaultPipedMessage(pipeline),
 			Context:    "Template: " + value,
-			Suggestion: sugTemplateDefaultPiped,
+			Suggestion: spec.TemplateDefaultPiped.Suggestion,
 		})
 	}
 	for _, problem := range problems {

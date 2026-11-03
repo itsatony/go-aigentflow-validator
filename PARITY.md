@@ -57,6 +57,33 @@ v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below)
 > `unknown-key-hints-cases.json`, which pins every finding's exact message (alias, distance, multi-match
 > order, `İD`, a 13-byte guess, and the three that must carry NO hint), asserted by
 > `TestUnknownKeyHintsManifest` here and by `test/v0330-key-did-you-mean.test.ts` there.
+>
+> **Also in v0.23.0: the two ports agree byte for byte again.** `make parity-check` had been red since
+> v0.11.0: each port had written its own spec text and fixtures for `template_default_piped`,
+> `strict_templates`, `here://`, `flow_data_key_reserved` and `unknown_function_operation`.
+>
+> - **Spec.** The JS port's copy is authoritative and `spec/aigentflow-spec.json` is again a byte copy
+>   of it. This port now reads from it what it had hard-coded or spelt differently: the block
+>   `templateDefaultPiped` (code, the function name, message format, suggestion), and `code`, `scheme`
+>   and `suggestionFormat` of `functionOperations` and `code` of `flowDataReservedKeys`. Both message
+>   formats now take the key / step id already quoted; this port quotes it with `strconv.Quote`, which
+>   is exactly the reference's `%q` (`ERR_MSG_FLOW_DATA_KEY_RESERVED`, `ERR_MSG_STEP_FUNCTION_UNKNOWN`),
+>   so every MESSAGE is byte-identical to v0.22.0's (checked over the whole fixture corpus, and by
+>   `validate_specread_test.go` with keys holding `"`, U+00A0, BEL and DEL). The
+>   `unknown_function_operation` SUGGESTION is now the spec's: "Use one of the built-in function
+>   operations: <list>. For custom logic use a script://, http:// or ai:// executor instead."
+> - **A real verdict difference, fixed toward the reference.** This port lower-cased the scheme
+>   before `unknown_function_operation`, so `FUNCTION://nope/nothing` was refused. The reference's
+>   `ParseExecutorURLString` keeps the scheme as written and only `function` is a function:// step;
+>   the match is now exact (fixture `valid-function-operation-scheme-case.yaml`).
+> - **Fixtures.** Both ports carry the UNION, byte-identical. Where the two had different files under
+>   one name, the JS port's keeps the name and this port's is renamed `-alt` (eight:
+>   `invalid-function-operation-unknown[-loop-substep]`, `invalid-template-default-piped`,
+>   `valid-executor-here`, `valid-function-operation-{builtins,templated}`, `valid-strict-templates`,
+>   `warn-template-default-piped-loop`). No case was loosened; each port passes every fixture.
+> - **New API (Go only):** `KeyAliases() map[string][]string`, the `keyAliases` table as a deep copy,
+>   for AIgentFlow to gate its own `KEYHINT_ALIASES` against with `reflect.DeepEqual`. The JS index
+>   exports no spec tables, so it has no counterpart.
 
 > **v0.22.0 — six standard template functions (no new rule).** `specVersion` is `2.854.0`. AIgentFlow
 > 2.854.0 registers `list`, `dict`, `first`, `last`, `floor` and `ceil` (Sprig names, Sprig meaning), so
@@ -1206,6 +1233,10 @@ When AIgentFlow's flow schema changes:
 4. Port the new rule, with its `code` constant added to `keys.go`. A new or renamed field in any
    flow type arrives as a `knownKeys` change in the copied spec; nothing to port for it here.
 5. `make ci && make parity-check`, and `make differential` against a fresh reference verdict file.
+   **A tag requires `make parity-check` to exit 0 with the cross-language tests RUN, not skipped:**
+   its output must show `--- PASS` for `TestParitySpecIsByteIdenticalUpstream`,
+   `TestParityFixtureSetIsIdentical` and `TestParityVerdictsMatchTheJSImplementation` (a missing or
+   stale JS checkout makes them SKIP, which proves nothing).
 6. Note the version and the ported rule at the top of this file's tracked-version line.
 
 ## Consumers that BLOCK on a verdict

@@ -161,6 +161,7 @@ type rawSpec struct {
 	} `json:"serverOwnedQueryKeys"`
 	// FlowDataReservedKeys feeds flow_data_key_reserved (AIgentFlow v2.828.0).
 	FlowDataReservedKeys struct {
+		Code     string            `json:"code"`
 		Exact    map[string]string `json:"exact"`
 		Prefixes []struct {
 			Prefix string `json:"prefix"`
@@ -172,10 +173,19 @@ type rawSpec struct {
 	} `json:"flowDataReservedKeys"`
 	// FunctionOperations feeds unknown_function_operation (AIgentFlow v2.831.0).
 	FunctionOperations struct {
-		Operations    []string `json:"operations"`
-		MessageFormat string   `json:"messageFormat"`
-		Suggestion    string   `json:"suggestion"`
+		Code             string   `json:"code"`
+		Scheme           string   `json:"scheme"`
+		Operations       []string `json:"operations"`
+		MessageFormat    string   `json:"messageFormat"`
+		SuggestionFormat string   `json:"suggestionFormat"`
 	} `json:"functionOperations"`
+	// TemplateDefaultPiped feeds template_default_piped (AIgentFlow v2.827.0).
+	TemplateDefaultPiped struct {
+		Code          string `json:"code"`
+		Function      string `json:"function"`
+		MessageFormat string `json:"messageFormat"`
+		Suggestion    string `json:"suggestion"`
+	} `json:"templateDefaultPiped"`
 	// AtlasExecutor feeds the nexus:// (alias atlas://) rules (providers, resources and the seven
 	// finding texts).
 	AtlasExecutor atlasSpec `json:"atlasExecutor"`
@@ -419,6 +429,19 @@ func init() {
 // (sorted). A flow opts into entries with `expression_functions: [{function: …}]`.
 func ExpressionFunctionCatalog() []string {
 	return sortedSet(expressionFunctionCatalog)
+}
+
+// KeyAliases returns the alias table behind the unknown_yaml_key "did you mean"
+// (spec keyAliases, the AIgentFlow reference's KEYHINT_ALIASES): a key authors
+// commonly guess, lower-cased, mapped in order to the grammar keys it may have
+// meant. A target is offered only where the unknown key's parent declares it.
+// The result is a deep copy; changing it does not change this package's table.
+func KeyAliases() map[string][]string {
+	out := make(map[string][]string, len(spec.KeyAliases))
+	for alias, targets := range spec.KeyAliases {
+		out[alias] = append([]string(nil), targets...)
+	}
+	return out
 }
 
 // SpecVersion is the AIgentFlow flow-schema version whose static rules this

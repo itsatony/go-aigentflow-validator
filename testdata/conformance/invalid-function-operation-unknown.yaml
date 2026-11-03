@@ -1,15 +1,13 @@
 aigentflow_version: '2.0.0'
-name: invalid-function-operation-unknown
+name: function-operation-unknown
 version: '1.0.0'
-description: >-
-  A function:// executor naming no registered built-in is refused at save; it
-  would otherwise fail every run with "function not found".
-start: s
+description: A function:// executor naming an operation that is not registered fails every run, so the save door refuses it.
+start: first
 steps:
-  s:
+  first:
     executor: function://utils/noop
     query:
-      message: hello
+      message: hi
     next:
       default: 'null'
 output:

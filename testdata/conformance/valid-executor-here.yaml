@@ -2,15 +2,15 @@ aigentflow_version: '2.0.0'
 name: executor-here
 version: '1.0.0'
 description: >-
-  A here:// step is a known executor scheme. It must draw no unknown_executor_scheme
-  warning.
-start: s
+  The here:// map executor (geocode, reverse_geocode, route, places) is a known
+  scheme. No unknown_executor_scheme warning may appear.
+start: locate
 steps:
-  s:
+  locate:
     executor: here://maps/geocode
     query:
-      q: Berlin
+      q: 'Alexanderplatz, Berlin'
     next:
       default: 'null'
 output:
-  - done
+  - locate

@@ -1,0 +1,28 @@
+aigentflow_version: '2.0.0'
+name: template-default-clean
+version: '1.0.0'
+description: >-
+  The control for template_default_piped. Every template below merely contains
+  the word default, or calls it correctly, and none may raise the code.
+start: only
+steps:
+  only:
+    executor: function://utils/log
+    query:
+      correct: '{{ default .query.name "world" }}'
+      composed: '{{ atoi (default .query.n "0") }}'
+      pipe_no_default: '{{ .query.name | upper }}'
+      field_named_default: '{{ .query.default }}'
+      field_named_default_piped: '{{ .query.default | upper }}'
+      index_literal: '{{ index .query "default" }}'
+      plain_text: 'literal text: | default "w"'
+      in_string_literal: '{{ "x | default y" }}'
+      variable_named_default: '{{ $default := "w" }}{{ $default | upper }}'
+      default_first_piped_argument: '{{ default (.query.a | upper) "w" }}'
+      default_first_then_pipe: '{{ default .query.a "w" | upper }}'
+      in_comment: '{{/* .x | default "w" */}}done'
+      printf_after_pipe: '{{ .query.name | printf "%s" }}'
+    next:
+      default: 'null'
+output:
+  - correct

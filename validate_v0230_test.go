@@ -212,3 +212,21 @@ func TestKeyAliasesAreTheReferenceTable(t *testing.T) {
 		}
 	}
 }
+
+func TestKeyAliasesIsADeepCopy(t *testing.T) {
+	got := KeyAliases()
+	if !reflect.DeepEqual(got, spec.KeyAliases) {
+		t.Fatalf("KeyAliases() = %v, want the spec table %v", got, spec.KeyAliases)
+	}
+	got["key"][0] = "mutated"
+	got["title"] = append(got["title"], "extra")
+	got["new"] = []string{"x"}
+	delete(got, "id")
+	again := KeyAliases()
+	if again["key"][0] != "name" || len(again["title"]) != 2 || again["new"] != nil || again["id"] == nil {
+		t.Errorf("a caller's change reached the table: %v", again)
+	}
+	if closeKeys("key", []string{"name"})[0] != "name" {
+		t.Error("the validator's own lookup changed")
+	}
+}

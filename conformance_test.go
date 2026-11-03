@@ -442,32 +442,64 @@ var conformanceCases = []conformanceCase{
 	// two controls forbid the code: a warning never changes the verdict, so
 	// `valid: true` alone could not see a false positive.
 	// v0.11.0 (AIgentFlow v2.827.0): the here:// scheme, the strict_templates key
-	// and the template_default_piped rule. Fixtures are Go-first: the JS port has
-	// not taken these yet.
+	// and the template_default_piped rule. Since v0.23.0 both ports carry the UNION
+	// of what each wrote: where the two had written different fixtures under one
+	// name, the JS port's keeps the name and this port's is the `-alt` one.
 	{file: "valid-executor-here.yaml", valid: true, forbidWarningCodes: []string{codeUnknownExecScheme}},
-	{file: "valid-strict-templates.yaml", valid: true, forbidErrorCodes: []string{codeUnknownYAMLKey, codeInvalidType}},
+	{file: "valid-executor-here-alt.yaml", valid: true, forbidWarningCodes: []string{codeUnknownExecScheme}},
+	{
+		file: "valid-strict-templates.yaml", valid: true,
+		forbidErrorCodes:   []string{codeUnknownYAMLKey, codeInvalidType, codeTemplateDefaultPiped},
+		forbidWarningCodes: []string{codeTemplateDefaultPiped},
+	},
+	{file: "valid-strict-templates-alt.yaml", valid: true, forbidErrorCodes: []string{codeUnknownYAMLKey, codeInvalidType}},
 	{file: "invalid-strict-templates-not-bool.yaml", valid: false, wantErrorCodes: []string{codeInvalidType}},
+	{file: "invalid-strict-templates-type.yaml", valid: false, wantErrorCodes: []string{codeInvalidType}},
 	{file: "invalid-template-default-piped.yaml", valid: false, wantErrorCodes: []string{codeTemplateDefaultPiped}},
+	{file: "invalid-template-default-piped-alt.yaml", valid: false, wantErrorCodes: []string{codeTemplateDefaultPiped}},
 	{file: "warn-template-default-piped-loop.yaml", valid: true, wantWarningCodes: []string{codeTemplateDefaultPiped}, forbidErrorCodes: []string{codeTemplateDefaultPiped}},
+	{file: "warn-template-default-piped-loop-alt.yaml", valid: true, wantWarningCodes: []string{codeTemplateDefaultPiped}, forbidErrorCodes: []string{codeTemplateDefaultPiped}},
 	{
 		file: "valid-template-default-lookalikes.yaml", valid: true,
 		forbidWarningCodes: []string{codeTemplateDefaultPiped},
 		forbidErrorCodes:   []string{codeTemplateDefaultPiped},
 	},
-	// v0.12.0 (AIgentFlow v2.828.0): flow_data_key_reserved. The valid fixture
-	// forbids the code: a false positive on an author's key is the whole risk.
+	{
+		file: "valid-template-default-clean.yaml", valid: true,
+		forbidWarningCodes: []string{codeTemplateDefaultPiped, codeTemplateSyntax},
+		forbidErrorCodes:   []string{codeTemplateDefaultPiped},
+	},
+	// v0.12.0 (AIgentFlow v2.828.0): flow_data_key_reserved. The valid fixtures
+	// forbid the code: a false positive on an author's key is the whole risk.
 	{file: "valid-flow-data-keys.yaml", valid: true, forbidErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "valid-flow-data-key-lookalikes.yaml", valid: true, forbidErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-exact.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-bookkeeping.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-underscore-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-dot-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	{file: "invalid-flow-data-key-namespace.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-org-id.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-memory.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-underscore.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-dot.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-memory-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-orchestrator-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-campaign-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-voiceagent-prefix.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
+	{file: "invalid-flow-data-key-reserved-current-flow.yaml", valid: false, wantErrorCodes: []string{codeFlowDataKeyReserved}},
 	// v0.13.0 (AIgentFlow v2.831.0): unknown_function_operation. The valid
 	// fixtures forbid the code: a false positive on a real built-in is the risk.
 	{file: "invalid-function-operation-unknown.yaml", valid: false, wantErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "invalid-function-operation-unknown-alt.yaml", valid: false, wantErrorCodes: []string{codeUnknownFunctionOperation}},
 	{file: "invalid-function-operation-unknown-loop-substep.yaml", valid: false, wantErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "invalid-function-operation-unknown-loop-substep-alt.yaml", valid: false, wantErrorCodes: []string{codeUnknownFunctionOperation}},
 	{file: "valid-function-operation-builtins.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "valid-function-operation-builtins-alt.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
 	{file: "valid-function-operation-templated.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
+	{file: "valid-function-operation-templated-alt.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
+	// v0.23.0: the scheme match is exact, as in the reference. Before, this port
+	// lower-cased it and refused FUNCTION://nope/nothing.
+	{file: "valid-function-operation-scheme-case.yaml", valid: true, forbidErrorCodes: []string{codeUnknownFunctionOperation}},
 	// v0.15.0: the atlas:// executor scheme and its seven rules. The valid fixtures
 	// forbid every atlas code and the unknown-scheme warning.
 	{file: "invalid-atlas-operation-unknown.yaml", valid: false, wantErrorCodes: []string{"atlas_operation_unknown"}},

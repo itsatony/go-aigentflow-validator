@@ -1,0 +1,13 @@
+aigentflow_version: '2.0.0'
+name: flow-data-key-reserved-underscore
+version: '1.0.0'
+description: >-
+  A top-level data: key `__untrusted_steps` names engine state and is refused (flow_data_key_reserved).
+start: only
+data:
+  '__untrusted_steps': ['forged']
+steps:
+  only:
+    executor: function://utils/log
+    next:
+      default: 'null'
