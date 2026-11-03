@@ -170,14 +170,21 @@ func (w knownKeyWalker) walk(value any, shape knownKeyShape, path string) {
 			if path != "" {
 				where = fmt.Sprintf(" in '%s'", path)
 			}
-			retired := ""
+			accepted := sortedMapKeys(keys)
+			// A retired key was spelled right: it names a key the grammar deleted, so
+			// a "did you mean" would read as "you made a typo" and point the author at
+			// a neighbour (binary_results -> binary_assets) instead of at deleting it.
+			// Only a key that never existed gets the hint.
+			var tail string
 			if retiredGrammarKeyNames.has(key) {
-				retired = " It was removed from the grammar and AIgentFlow refuses to save a flow that still declares it."
+				tail = " It was removed from the grammar and AIgentFlow refuses to save a flow that still declares it."
+			} else {
+				tail = didYouMean(key, accepted)
 			}
 			w.report(codeUnknownYAMLKey, field,
 				fmt.Sprintf("Unknown key '%s'%s. AIgentFlow refuses to save a flow with a key its grammar "+
-					"does not declare, because the key would be silently dropped.%s", key, where, retired),
-				"Known keys here: "+joinNames(sortedMapKeys(keys)))
+					"does not declare, because the key would be silently dropped.%s", key, where, tail),
+				"Known keys here: "+joinNames(accepted))
 		}
 	}
 }

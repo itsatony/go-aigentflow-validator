@@ -1,0 +1,13 @@
+aigentflow_version: '2.0.0'
+name: flow-data-key-reserved-org-id
+version: '1.0.0'
+description: >-
+  A top-level data: key `org_id` names engine state and is refused (flow_data_key_reserved).
+start: only
+data:
+  org_id: 'someone-elses-org'
+steps:
+  only:
+    executor: function://utils/log
+    next:
+      default: 'null'

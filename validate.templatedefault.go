@@ -1,27 +1,17 @@
 package aifvalidate
 
 import (
+	"fmt"
 	"sort"
 	"text/template"
 	"text/template/parse"
 )
 
-// templateFuncDefault is the AIgentFlow template function whose argument order
-// the rule below judges.
-const templateFuncDefault = "default"
-
-// codeTemplateDefaultPiped marks a pipeline that pipes a value into `default`.
-const codeTemplateDefaultPiped = "template_default_piped"
-
-const (
-	msgTemplateDefaultPipedPrefix = "`default` takes the value FIRST, and a pipe passes the piped value LAST: `"
-	msgTemplateDefaultPipedSuffix = "` is `default <fallback> <value>`, so the fallback is always the result"
-	sugTemplateDefaultPiped       = "write the value first and the fallback second, as a call: `{{ default .x \"fallback\" }}` (the pipe form of other template libraries does not work here)"
-)
-
-// templateDefaultPipedMessage renders the finding's message for one pipeline.
+// templateDefaultPipedMessage renders the finding's message for one pipeline,
+// from the spec block templateDefaultPiped (which also names the function the
+// rule judges, its code and its suggestion).
 func templateDefaultPipedMessage(pipeline string) string {
-	return msgTemplateDefaultPipedPrefix + pipeline + msgTemplateDefaultPipedSuffix
+	return fmt.Sprintf(spec.TemplateDefaultPiped.MessageFormat, pipeline)
 }
 
 // pipedDefaultPipelines returns the source text of every pipeline in tmpl (and in
@@ -81,7 +71,7 @@ func walkPipedDefault(node parse.Node, found map[string]struct{}) {
 			return
 		}
 		for i, cmd := range n.Cmds {
-			if i > 0 && commandCallsFunction(cmd, templateFuncDefault) {
+			if i > 0 && commandCallsFunction(cmd, spec.TemplateDefaultPiped.Function) {
 				found[n.String()] = struct{}{}
 			}
 			for _, arg := range cmd.Args {

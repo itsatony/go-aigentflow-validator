@@ -1,0 +1,35 @@
+aigentflow_version: '2.0.0'
+name: unknown-key-did-you-mean
+version: '1.0.0'
+description: >-
+  Every unknown key below is refused (unknown_yaml_key). The finding offers the
+  accepted key the author most likely meant, and offers nothing when no key is
+  close. The exact messages are pinned in unknown-key-hints-cases.json.
+title: Did you mean # alias title -> label, name: only name is a Flow key
+input: {} # alias input -> query, input_schema: both, in table order
+input_schema:
+  version: 1
+  fields:
+    - name: topic
+      type: string
+      key: topic # alias key -> name
+      İD: topic # Go strings.ToLower folds U+0130 to i: alias id -> name, then min
+      nam: x # distance: name (1), then enum and max (2, in sorted order)
+      mäx_ïtëmß: 3 # 13 UTF-8 bytes allow distance 4: max_items
+start: fetch
+steps:
+  fetch:
+    executor: mock://api/fetch
+    excutor: mock://api/typo # distance: executor
+    params: {} # alias params -> query
+    input: {} # alias input -> query only: a step has no input_schema
+    language: go # alias language -> lang, which a step does not accept: no hint
+    zzzzzz: 1 # nothing close: no hint
+    next:
+      default: 'null'
+mock_scenarios:
+  happy:
+    fetch:
+      binary_results: [] # retired: the removal sentence, never binary_assets
+output:
+  - body

@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: strict-templates-type
+version: '1.0.0'
+description: strict_templates is a boolean; a list is not one.
+strict_templates:
+  - true
+start: greet
+steps:
+  greet:
+    executor: function://utils/log
+    query:
+      message: 'hello'
+    next:
+      default: 'null'
+output:
+  - message

@@ -112,13 +112,14 @@ func checkExecutor(executor, field, stepID string, iss *issues) {
 		})
 		return
 	}
-	if lower == schemeFunction && !templated {
+	// Exact and case-sensitive, as the reference's ParseExecutorURLString keeps the
+	// scheme as written: FUNCTION://x/y is not a function:// step there.
+	if scheme == spec.FunctionOperations.Scheme && !templated {
 		checkFunctionOperation(executor, field, stepID, iss)
 	}
 }
 
 const (
-	schemeFunction = "function"
 	// schemeDecide is a scheme authors guess for decision models; they run
 	// through ai://{provider}/decide.
 	schemeDecide = "decide"
@@ -187,9 +188,10 @@ func checkFunctionOperation(executor, field, stepID string, iss *issues) {
 	sort.Strings(available)
 	list := strings.Join(available, ", ")
 	iss.error(Issue{
-		Field: field, Code: codeUnknownFunctionOperation, StepID: stepID,
-		Message:    fmt.Sprintf(spec.FunctionOperations.MessageFormat, stepID, op, list),
-		Suggestion: fmt.Sprintf(spec.FunctionOperations.Suggestion, list),
+		Field: field, Code: spec.FunctionOperations.Code, StepID: stepID,
+		// strconv.Quote is exactly the reference's %q (ERR_MSG_STEP_FUNCTION_UNKNOWN).
+		Message:    fmt.Sprintf(spec.FunctionOperations.MessageFormat, strconv.Quote(stepID), op, list),
+		Suggestion: fmt.Sprintf(spec.FunctionOperations.SuggestionFormat, list),
 	})
 }
 

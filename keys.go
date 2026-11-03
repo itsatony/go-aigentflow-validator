@@ -252,6 +252,9 @@ const (
 	// v0.10.0 — AIgentFlow v2.821.0 (#217): an EU-only compliance.residency does not pin a call.
 	codeComplianceResidencyUnenforced = "compliance_residency_unenforced"
 
+	// v0.11.0 — AIgentFlow v2.827.0: a value piped into `default`.
+	codeTemplateDefaultPiped = "template_default_piped"
+
 	// v0.12.0 — AIgentFlow v2.828.0: a top-level data: key naming engine state.
 	codeFlowDataKeyReserved = "flow_data_key_reserved" // VALIDATION_CODE_FLOW_DATA_KEY_RESERVED
 

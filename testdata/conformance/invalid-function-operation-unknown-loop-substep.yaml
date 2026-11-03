@@ -1,24 +1,20 @@
 aigentflow_version: '2.0.0'
-name: invalid-function-operation-unknown-loop-substep
+name: function-operation-unknown-loop-substep
 version: '1.0.0'
-description: >-
-  The same refusal applies to a loop sub-step executor.
-start: looper
+description: The same refusal applies to a loop sub-step executor.
+start: first
 steps:
-  looper:
+  first:
     loop:
-      while: '{{ lt (atoi .loop.vars.counter) 2 }}'
-      max_iterations: 3
+      while: '{{ lt (atoi .loop.vars.n) 3 }}'
+      max_iterations: 5
       vars:
-        counter: '0'
+        n: '0'
       steps:
         - id: body
-          executor: function://notify/send
+          executor: function://utils/noop
           query:
-            message: hello
-          post_processing:
-            - loop.set:
-                counter: '{{ add (atoi .loop.vars.counter) 1 }}'
+            message: hi
     next:
       default: 'null'
 output:

@@ -1,0 +1,74 @@
+[
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "title",
+  "message": "Unknown key 'title' at the top level. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `name`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "input",
+  "message": "Unknown key 'input' at the top level. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `query` or `input_schema`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "input_schema.fields[0].key",
+  "message": "Unknown key 'key' in 'input_schema.fields[0]'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `name`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "input_schema.fields[0].İD",
+  "message": "Unknown key 'İD' in 'input_schema.fields[0]'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `name` or `min`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "input_schema.fields[0].nam",
+  "message": "Unknown key 'nam' in 'input_schema.fields[0]'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `name` or `enum` or `max`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "input_schema.fields[0].mäx_ïtëmß",
+  "message": "Unknown key 'mäx_ïtëmß' in 'input_schema.fields[0]'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `max_items`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "steps.fetch.excutor",
+  "message": "Unknown key 'excutor' in 'steps.fetch'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `executor`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "steps.fetch.params",
+  "message": "Unknown key 'params' in 'steps.fetch'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `query`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "steps.fetch.input",
+  "message": "Unknown key 'input' in 'steps.fetch'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. Did you mean `query`?"
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "steps.fetch.language",
+  "message": "Unknown key 'language' in 'steps.fetch'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped."
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "steps.fetch.zzzzzz",
+  "message": "Unknown key 'zzzzzz' in 'steps.fetch'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped."
+ },
+ {
+  "file": "invalid-unknown-key-did-you-mean.yaml",
+  "code": "unknown_yaml_key",
+  "field": "mock_scenarios.happy.fetch.binary_results",
+  "message": "Unknown key 'binary_results' in 'mock_scenarios.happy.fetch'. AIgentFlow refuses to save a flow with a key its grammar does not declare, because the key would be silently dropped. It was removed from the grammar and AIgentFlow refuses to save a flow that still declares it."
+ }
+]

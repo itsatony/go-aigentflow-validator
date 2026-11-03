@@ -27,7 +27,63 @@ v0.19.0 (AIgentFlow v2.838.0), which **removes** the orchestrator with one new c
 v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.items` that can never be a list (below), then
 v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (below), then
 v0.21.0 (AIgentFlow v2.851.0), which adds the `StoredBytes` option (below), then
-v0.22.0 (AIgentFlow v2.854.0), which adds six standard template functions (below).
+v0.22.0 (AIgentFlow v2.854.0), which adds six standard template functions (below), then
+v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below).
+
+> **v0.23.0 — `unknown_yaml_key` says which key was meant (no new rule, no new code).** `specVersion`
+> stays `2.854.0`: no grammar changed, the spec only gains the data block `keyAliases` (precedent: the
+> `serverOwnedQueryKeys` and `credentialEndpointPairing` blocks, both added with `specVersion`
+> unchanged). It is the reference's `KEYHINT_ALIASES` verbatim (AIgentFlow #322), an object of
+> lower-cased guess -> ordered list of grammar keys; AIgentFlow gates its own table against this block.
+> `keyhints.go` ports the reference's `closeKeys` (`aigentflow.parser.keyhints.go`): the alias targets
+> of `strings.ToLower(guess)` first, in table order, only those the parent type declares; then every
+> declared key whose rune Levenshtein distance from the guess (both lower-cased) is at most
+> `max(2, len(guess)/3)` (`len` in BYTES, integer division), nearest first; deduplicated. When
+> non-empty, the message gains `` Did you mean `a` or `b`?`` at its end; the suggestion
+> ("Known keys here: …") is unchanged. Two choices that are this port's, shared with the JS port
+> (0.33.0), which reproduces the Go string semantics exactly (simple case fold, so U+0130 is `i`;
+> code-point distance; UTF-8 byte length):
+>
+> - **Ties** keep the SORTED key order both ports print as "Known keys here"; the reference keeps its
+>   struct declaration order, which the spec does not carry, so two keys at the same distance may be
+>   listed in the other order there. The set offered is the same.
+> - **A retired key gets no hint.** It was spelled right; it names a key the grammar deleted, and its
+>   removal sentence tells the author to delete it. A hint would read as "typo" and point at a
+>   neighbour: `binary_results` under a mock step would offer `binary_assets`, which is a different
+>   key, not its new name. The reference appends both. The retired-key and connectivity sites with
+>   their own advice (`validate.retiredkeys.go`, `goto_step`) are untouched.
+>
+> Fixture, byte-identical to the JS port's: `invalid-unknown-key-did-you-mean.yaml`, with the manifest
+> `unknown-key-hints-cases.json`, which pins every finding's exact message (alias, distance, multi-match
+> order, `İD`, a 13-byte guess, and the three that must carry NO hint), asserted by
+> `TestUnknownKeyHintsManifest` here and by `test/v0330-key-did-you-mean.test.ts` there.
+>
+> **Also in v0.23.0: the two ports agree byte for byte again.** `make parity-check` had been red since
+> v0.11.0: each port had written its own spec text and fixtures for `template_default_piped`,
+> `strict_templates`, `here://`, `flow_data_key_reserved` and `unknown_function_operation`.
+>
+> - **Spec.** The JS port's copy is authoritative and `spec/aigentflow-spec.json` is again a byte copy
+>   of it. This port now reads from it what it had hard-coded or spelt differently: the block
+>   `templateDefaultPiped` (code, the function name, message format, suggestion), and `code`, `scheme`
+>   and `suggestionFormat` of `functionOperations` and `code` of `flowDataReservedKeys`. Both message
+>   formats now take the key / step id already quoted; this port quotes it with `strconv.Quote`, which
+>   is exactly the reference's `%q` (`ERR_MSG_FLOW_DATA_KEY_RESERVED`, `ERR_MSG_STEP_FUNCTION_UNKNOWN`),
+>   so every MESSAGE is byte-identical to v0.22.0's (checked over the whole fixture corpus, and by
+>   `validate_specread_test.go` with keys holding `"`, U+00A0, BEL and DEL). The
+>   `unknown_function_operation` SUGGESTION is now the spec's: "Use one of the built-in function
+>   operations: <list>. For custom logic use a script://, http:// or ai:// executor instead."
+> - **A real verdict difference, fixed toward the reference.** This port lower-cased the scheme
+>   before `unknown_function_operation`, so `FUNCTION://nope/nothing` was refused. The reference's
+>   `ParseExecutorURLString` keeps the scheme as written and only `function` is a function:// step;
+>   the match is now exact (fixture `valid-function-operation-scheme-case.yaml`).
+> - **Fixtures.** Both ports carry the UNION, byte-identical. Where the two had different files under
+>   one name, the JS port's keeps the name and this port's is renamed `-alt` (eight:
+>   `invalid-function-operation-unknown[-loop-substep]`, `invalid-template-default-piped`,
+>   `valid-executor-here`, `valid-function-operation-{builtins,templated}`, `valid-strict-templates`,
+>   `warn-template-default-piped-loop`). No case was loosened; each port passes every fixture.
+> - **New API (Go only):** `KeyAliases() map[string][]string`, the `keyAliases` table as a deep copy,
+>   for AIgentFlow to gate its own `KEYHINT_ALIASES` against with `reflect.DeepEqual`. The JS index
+>   exports no spec tables, so it has no counterpart.
 
 > **v0.22.0 — six standard template functions (no new rule).** `specVersion` is `2.854.0`. AIgentFlow
 > 2.854.0 registers `list`, `dict`, `first`, `last`, `floor` and `ceil` (Sprig names, Sprig meaning), so
@@ -945,6 +1001,8 @@ and the same wrong value kinds (`invalid_type`), from the derived `knownKeys` in
 spec. What stays open is what the reference leaves open: Go maps (author-chosen keys), interfaces
 (`any`: a step's `query`, `data`, a mock's `content`), and a processing-operation entry, which has
 its own unmarshaller (divergence #12). Scalars are judged for kind only.
+Since v0.23.0 the message also names the key most likely meant (the reference's `closeKeys`; see
+v0.23.0 above for the two ways its text differs from AIgentFlow's).
 
 ### 10. The loop body is walked for every step (shared with JS)
 
@@ -1175,6 +1233,10 @@ When AIgentFlow's flow schema changes:
 4. Port the new rule, with its `code` constant added to `keys.go`. A new or renamed field in any
    flow type arrives as a `knownKeys` change in the copied spec; nothing to port for it here.
 5. `make ci && make parity-check`, and `make differential` against a fresh reference verdict file.
+   **A tag requires `make parity-check` to exit 0 with the cross-language tests RUN, not skipped:**
+   its output must show `--- PASS` for `TestParitySpecIsByteIdenticalUpstream`,
+   `TestParityFixtureSetIsIdentical` and `TestParityVerdictsMatchTheJSImplementation` (a missing or
+   stale JS checkout makes them SKIP, which proves nothing).
 6. Note the version and the ported rule at the top of this file's tracked-version line.
 
 ## Consumers that BLOCK on a verdict

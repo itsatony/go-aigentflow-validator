@@ -2,9 +2,8 @@ aigentflow_version: '2.0.0'
 name: template-default-piped-loop
 version: '1.0.0'
 description: >-
-  A piped default inside a loop body is a WARNING, positional like
-  template_syntax_error: the loop engine swallows template failures in its body,
-  and stored flows predate the rule. The code survives the demotion.
+  A piped `default` inside a loop body is a warning, not an error: positional,
+  exactly like template_syntax_error. The code survives the demotion.
 start: looper
 steps:
   looper:

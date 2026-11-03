@@ -1,0 +1,13 @@
+aigentflow_version: '2.0.0'
+name: function-operation-scheme-case
+version: '1.0.0'
+description: >-
+  The reference keeps the executor scheme as written, so only the exact scheme
+  `function` names a built-in function. An upper-case spelling is not judged by
+  unknown_function_operation.
+start: shout
+steps:
+  shout:
+    executor: FUNCTION://nope/nothing
+    next:
+      default: 'null'

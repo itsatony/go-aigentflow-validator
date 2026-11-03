@@ -2,6 +2,7 @@ package aifvalidate
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -41,9 +42,11 @@ func validateFlowDataKeys(flow doc, iss *issues) {
 			continue
 		}
 		iss.error(Issue{
-			Field:      fmt.Sprintf(spec.FlowDataReservedKeys.FieldFormat, key),
-			Code:       codeFlowDataKeyReserved,
-			Message:    fmt.Sprintf(spec.FlowDataReservedKeys.MessageFormat, key, reason),
+			Field: fmt.Sprintf(spec.FlowDataReservedKeys.FieldFormat, key),
+			Code:  spec.FlowDataReservedKeys.Code,
+			// The spec's format takes the key already quoted; strconv.Quote is
+			// exactly the reference's %q (ERR_MSG_FLOW_DATA_KEY_RESERVED).
+			Message:    fmt.Sprintf(spec.FlowDataReservedKeys.MessageFormat, strconv.Quote(key), reason),
 			Suggestion: spec.FlowDataReservedKeys.Suggestion,
 		})
 	}

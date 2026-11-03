@@ -1,17 +1,15 @@
 aigentflow_version: '2.0.0'
-name: strict-templates-bool
+name: strict-templates
 version: '1.0.0'
-description: >-
-  The optional top-level boolean strict_templates is a known key and a bool is
-  valid.
+description: A flow that opts in to strict template rendering.
 strict_templates: true
-start: s
+start: greet
 steps:
-  s:
+  greet:
     executor: function://utils/log
     query:
-      message: hello
+      message: 'Hello, {{ default .query.name "world" }}!'
     next:
       default: 'null'
 output:
-  - done
+  - message

@@ -527,6 +527,57 @@
       ]
     }
   },
+  "serverOwnedQueryKeys": {
+    "$comment": "Executor parameters only the server's credential resolver may set. A key in keys, matched exactly and case-sensitively, is refused (error) in the query of a top-level step (field stepFieldFormat) and of a loop sub-step (field loopStepFieldFormat, whose second placeholder is the sub-step's id as written). No other surface is scanned. A new server-owned key is a change to keys. Reference: validateNoServerOwnedStepQueryKeys, IsServerOwnedParamKey (CFX-05, after v2.790.0).",
+    "keys": [
+      "aiv_api_key",
+      "aiv_base_url",
+      "aiv_delegation"
+    ],
+    "stepFieldFormat": "steps.%s.query.%s",
+    "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s"
+  },
+  "functionOperations": {
+    "$comment": "unknown_function_operation (ERROR): a step or loop sub-step whose executor is function://<authority>/<path> where authority+\"/\"+path is not in operations. Templated executors (containing templateActionOpen), unparsable URLs (invalid_executor_url owns them) and other schemes are skipped; the scheme match is exact and case-sensitive, as in the reference. The message is messageFormat with the stepId quoted exactly as Go's %q (strconv.Quote), the operation, then operations joined by ', '. Reference: validateFunctionOperationKnown (parser.go), functionSchemaOperations.",
+    "code": "unknown_function_operation",
+    "scheme": "function",
+    "messageFormat": "step %s uses function://%s, which is not a built-in function. Available: %s",
+    "suggestionFormat": "Use one of the built-in function operations: %s. For custom logic use a script://, http:// or ai:// executor instead.",
+    "operations": [
+      "binary-processor/validate-and-store",
+      "data/create",
+      "data/from-json",
+      "data/to-json",
+      "data/validate",
+      "demo/adult-processor",
+      "demo/calculator",
+      "demo/data-processor",
+      "demo/finalizer",
+      "demo/senior-processor",
+      "demo/youth-processor",
+      "document/finalize",
+      "document/prepare",
+      "json/validate",
+      "math/basic",
+      "math/calculate",
+      "math/sum",
+      "results-compiler/aggregate",
+      "system/info",
+      "text/analysis",
+      "text/count-characters",
+      "text/count-lines",
+      "text/count-occurrences",
+      "text/count-words",
+      "text/find-pattern",
+      "text/generate",
+      "text/replace-text",
+      "text/search",
+      "utils/datetime",
+      "utils/format-date",
+      "utils/log",
+      "utils/parse-date"
+    ]
+  },
   "atlasExecutor": {
     "$comment": "nexus://<provider>/<resource> (alias atlas://, the same rules for both spellings since AIgentFlow 2.835.0; the scheme match is exact and case-sensitive against scheme and aliases): calls an agent or a capability in Nexus. An AigentChat-shaped nexus://<org>/<agent> (the executor removed in 2.819.0) is atlas_operation_unknown. Codes keep the atlas_ prefix. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string anywhere in query.capabilities and query.model may not contain templateActionOpen, while prompt, inputs and capability args may. agent, prompt and prompt_template count as present only when they are non-empty strings after trimming whitespace. A message format takes the quoted step id first. A URL the shared executor-URL shape refuses (a dot or colon in a reference, say) is still judged here, split at the first slash after the scheme.",
     "scheme": "nexus",
@@ -610,7 +661,11 @@
     "schemaFieldFormat": "input_schema.fields.%s"
   },
   "flowDataReservedKeys": {
-    "$comment": "flow_data_key_reserved (ERROR, no loop demotion): a key of the top-level data: map (the flow's pre-populated state) that names engine state. data: is seeded into the mission's .data namespace, where the engine keeps its own bookkeeping, so such a key would forge internal state. A key is reserved when it equals an entry of exact (case-sensitive) or starts with a prefix entry; the first match supplies the reason text. Field format: fieldFormat with the key. Reference: FlowDataKeyReservation / validateFlowDataKeysAreNotReserved (AIgentFlow v2.828.0). Order of exact and prefixes is the reference's lookup order.",
+    "$comment": "flow_data_key_reserved (ERROR, no loop demotion): a key of the top-level data: map that names engine state. data: is seeded into the mission's .data namespace, where the engine keeps its own bookkeeping, so a flow declaring such a key would forge it. Matching is exact and case-sensitive. A key is reserved when it is one of exact (each with its reason), or starts with one of prefixes (checked in order, first wins; each with its reason). The finding's field is fieldFormat with the key; the message is messageFormat with the key quoted exactly as Go's %q (strconv.Quote) then the reason; the suggestion is verbatim. Findings are sorted by key. Reference: FlowDataKeyReservation, validateFlowDataKeysAreNotReserved (aigentflow#247 review).",
+    "code": "flow_data_key_reserved",
+    "fieldFormat": "data.%s",
+    "messageFormat": "data: key %s is reserved: %s. It would write into the engine's own state, so it is not seeded.",
+    "suggestion": "Rename the key (no leading `_` or `.`, and not one of the engine namespaces memory., orchestrator., campaign., voiceagent.).",
     "exact": {
       "org_id": "the mission's organization, set by the engine for Thalamus/Engram calls",
       "memory": "the memory scope namespace",
@@ -631,59 +686,7 @@
       { "prefix": "orchestrator.", "reason": "the `orchestrator.` namespace belonged to the orchestrator (removed in 2.838.0); a pre-2.838.0 mission may still carry it" },
       { "prefix": "campaign.", "reason": "the `campaign.` namespace belongs to the campaign engine" },
       { "prefix": "voiceagent.", "reason": "the `voiceagent.` namespace belongs to the voice agent" }
-    ],
-    "fieldFormat": "data.%s",
-    "messageFormat": "data: key %q is reserved: %s. It would write into the engine's own state, so it is not seeded.",
-    "suggestion": "Rename the key (no leading `_` or `.`, and not one of the engine namespaces memory., orchestrator., campaign., voiceagent.)."
-  },
-  "functionOperations": {
-    "$comment": "unknown_function_operation (ERROR, no loop demotion): a step or loop sub-step whose executor is function://<provider>/<resource> where <provider>/<resource> is not one of the built-ins registered in the reference binary (a closed, compile-time set; nothing is loaded at run time). Templated executors, unparsable URLs and other schemes are skipped. Field: the step's executor field. Reference: validateFunctionOperationKnown (AIgentFlow v2.831.0).",
-    "operations": [
-      "binary-processor/validate-and-store",
-      "data/create",
-      "data/from-json",
-      "data/to-json",
-      "data/validate",
-      "demo/adult-processor",
-      "demo/calculator",
-      "demo/data-processor",
-      "demo/finalizer",
-      "demo/senior-processor",
-      "demo/youth-processor",
-      "document/finalize",
-      "document/prepare",
-      "json/validate",
-      "math/basic",
-      "math/calculate",
-      "math/sum",
-      "results-compiler/aggregate",
-      "system/info",
-      "text/analysis",
-      "text/count-characters",
-      "text/count-lines",
-      "text/count-occurrences",
-      "text/count-words",
-      "text/find-pattern",
-      "text/generate",
-      "text/replace-text",
-      "text/search",
-      "utils/datetime",
-      "utils/format-date",
-      "utils/log",
-      "utils/parse-date"
-    ],
-    "messageFormat": "step %q uses function://%s, which is not a built-in function. Available: %s",
-    "suggestion": "Use one of the built-in functions: %s."
-  },
-  "serverOwnedQueryKeys": {
-    "$comment": "Executor parameters only the server's credential resolver may set. A key in keys, matched exactly and case-sensitively, is refused (error) in the query of a top-level step (field stepFieldFormat) and of a loop sub-step (field loopStepFieldFormat, whose second placeholder is the sub-step's id as written). No other surface is scanned. A new server-owned key is a change to keys. Reference: validateNoServerOwnedStepQueryKeys, IsServerOwnedParamKey (CFX-05, after v2.790.0).",
-    "keys": [
-      "aiv_api_key",
-      "aiv_base_url",
-      "aiv_delegation"
-    ],
-    "stepFieldFormat": "steps.%s.query.%s",
-    "loopStepFieldFormat": "steps.%s.loop.steps.%s.query.%s"
+    ]
   },
   "credentialEndpointPairing": {
     "$comment": "credential_endpoint_unpaired (WARNING, never an error): the one statically certain shape of AIgentFlow's run-time credential/endpoint pairing refusal. ai: an ai://<provider>/... step (top-level or loop sub-step) whose query holds a non-empty string <provider>+providerBaseUrlParamSuffix while neither its query (genericKeyParam or <provider>+providerKeyParamSuffix, non-empty strings) nor executor_config.<provider>.api_key (a literal, not an env reference) supplies a key; and executor_config.<provider>.base_url for a provider in executorConfigProviders when it is a literal, the block has no literal api_key, and it is not the case that at least one step uses the provider and every such step brings its own query key. keylessProviders are exempt from both. families: a step whose executor resolves (the key protocol+familyKeySeparator+driver, else protocol) to a row. implicitServerCredential rows are never judged. A row warns when its secret (the first non-empty string secretParam in the query, else per configKey in order: executor_config api_key when configApiKeyParam is a secretParam, else the first non-empty string secretParam under extra) is exactly an env reference to a serverEnv name on a row with expandsServerEnvReferences, and its endpoint (the first non-empty string endpointParam in the query, else per configKey: base_url when configBaseUrlParam is an endpointParam, else the first non-empty string endpointParam under extra) is a literal: no templateActionOpen, not an env reference, and not of the same origin as a defaultEndpoint (lower-cased scheme://host:port, defaultPorts filled). serverEnv is the reference's per-family server-variable set, evaluated. Field formats are the reference's. Reference: validateCredentialEndpointPairing (DC-FORGE-231) and validateFamilyCredentialEndpointPairing (DC-FORGE-233).",
@@ -1014,6 +1017,13 @@
         ]
       }
     }
+  },
+  "templateDefaultPiped": {
+    "$comment": "template_default_piped (ERROR at the top level, WARNING inside a loop body, like template_syntax_error). The template function `default` takes the value FIRST; a pipeline that passes a value into it as a non-first command hands the piped value as the LAST argument, so the fallback is always the result. Flagged: any pipeline (in any action, including if / else if / range / with / template / block conditions, parenthesised sub-pipelines and variable declarations) in which a command whose first word is the bare identifier `default` is not the FIRST command. Never flagged: a field, a variable, a string literal, a comment, `default` as the first command. The message fills %s with the pipeline.",
+    "code": "template_default_piped",
+    "function": "default",
+    "messageFormat": "`default` takes the value FIRST, and a pipe passes the piped value LAST: `%s` is `default <fallback> <value>`, so the fallback is always the result",
+    "suggestion": "write the value first and the fallback second, as a call: `{{ default .x \"fallback\" }}` (the pipe form of other template libraries does not work here)"
   },
   "complianceResidency": {
     "$comment": "compliance_residency_unenforced (WARNING, never an error; needs no catalogue). When compliance.residency is non-empty and every code (trimmed, upper-cased) is in euResidencyCodes, each top-level step and loop sub-step whose executor starts with aiProtocol+protocolSeparator warns when its provider (literal, lower-cased; skipped when empty or containing templateActionOpen) is in regionLaneProviders and the call is not pinned. Pinned = query region a non-empty string after trimming; OR enforce_region true (bool true or the strings in enforceRegionTrueStrings); OR the author named the endpoint: query <provider>+baseUrlParamSuffix a non-empty string after trimming, or executor_config.<provider>.base_url non-empty after trimming. The provider segment of ai://<provider>/<operation> exists only when a slash follows it. regionLaneProviders is the set of providers whose adapter routes on `region`; a provider outside it has no region lane and is never warned. Message, suggestion and site formats fill %s and %q (a Go-quoted string) in order; the message's last placeholder is the residency list as written, printed [A B]. Reference: validateResidencyEnforcement (validation.residency.go).",
@@ -1561,5 +1571,70 @@
         "in": "list<any>"
       }
     }
+  },
+  "keyAliases": {
+    "key": [
+      "name"
+    ],
+    "id": [
+      "name"
+    ],
+    "title": [
+      "label",
+      "name"
+    ],
+    "desc": [
+      "description"
+    ],
+    "url": [
+      "executor"
+    ],
+    "uri": [
+      "executor"
+    ],
+    "type": [
+      "executor"
+    ],
+    "params": [
+      "query"
+    ],
+    "parameters": [
+      "query"
+    ],
+    "input": [
+      "query",
+      "input_schema"
+    ],
+    "inputs": [
+      "query",
+      "input_schema"
+    ],
+    "script": [
+      "query"
+    ],
+    "code": [
+      "expression"
+    ],
+    "expr": [
+      "expression"
+    ],
+    "language": [
+      "lang"
+    ],
+    "retries": [
+      "max_retries"
+    ],
+    "retry": [
+      "error_strategy"
+    ],
+    "timeout": [
+      "max_duration"
+    ],
+    "next_step": [
+      "next"
+    ],
+    "goto": [
+      "next"
+    ]
   }
 }

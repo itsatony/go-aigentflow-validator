@@ -1,0 +1,22 @@
+aigentflow_version: '2.0.0'
+name: flow-data-key-lookalikes
+version: '1.0.0'
+description: >-
+  The counter-fixture for flow_data_key_reserved: ordinary keys, a dotted key outside the engine namespaces, and keys that merely contain a reserved word all save.
+start: only
+data:
+  versuche: 3
+  counter: 0
+  'my.key': 'x'
+  memory_notes: 'x'
+  orgid: 'x'
+  my_memory: 'x'
+  campaigns: 'x'
+  orchestrated: 'x'
+  Memory: 'x'
+  org: 'x'
+steps:
+  only:
+    executor: function://utils/log
+    next:
+      default: 'null'
