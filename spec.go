@@ -51,7 +51,10 @@ type rawSpec struct {
 		Root  string                       `json:"root"`
 		Types map[string]map[string]string `json:"types"`
 	} `json:"knownKeys"`
-	EvalJudgeURL string `json:"evalJudgeUrl"`
+	// KeyAliases feeds the unknown_yaml_key "did you mean" (AIgentFlow #322):
+	// a guessed key, lower-cased, to the grammar keys it may have meant, in order.
+	KeyAliases   map[string][]string `json:"keyAliases"`
+	EvalJudgeURL string              `json:"evalJudgeUrl"`
 	QualityGate  struct {
 		OnFailActions  []string `json:"onFailActions"`
 		OnFailRejected []string `json:"onFailRejected"`

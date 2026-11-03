@@ -1561,5 +1561,70 @@
         "in": "list<any>"
       }
     }
+  },
+  "keyAliases": {
+    "key": [
+      "name"
+    ],
+    "id": [
+      "name"
+    ],
+    "title": [
+      "label",
+      "name"
+    ],
+    "desc": [
+      "description"
+    ],
+    "url": [
+      "executor"
+    ],
+    "uri": [
+      "executor"
+    ],
+    "type": [
+      "executor"
+    ],
+    "params": [
+      "query"
+    ],
+    "parameters": [
+      "query"
+    ],
+    "input": [
+      "query",
+      "input_schema"
+    ],
+    "inputs": [
+      "query",
+      "input_schema"
+    ],
+    "script": [
+      "query"
+    ],
+    "code": [
+      "expression"
+    ],
+    "expr": [
+      "expression"
+    ],
+    "language": [
+      "lang"
+    ],
+    "retries": [
+      "max_retries"
+    ],
+    "retry": [
+      "error_strategy"
+    ],
+    "timeout": [
+      "max_duration"
+    ],
+    "next_step": [
+      "next"
+    ],
+    "goto": [
+      "next"
+    ]
   }
 }

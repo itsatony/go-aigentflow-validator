@@ -286,6 +286,13 @@ var conformanceCases = []conformanceCase{
 		wantErrorCodes: []string{codeUnknownYAMLKey},
 	},
 	{
+		// v0.23.0 (AIgentFlow #322): an unknown key's finding offers the accepted key the
+		// author most likely meant. The exact messages, including the ones that must
+		// carry NO hint, are pinned in unknown-key-hints-cases.json.
+		file: "invalid-unknown-key-did-you-mean.yaml", valid: false,
+		wantErrorCodes: []string{codeUnknownYAMLKey},
+	},
+	{
 		// `next: end` is a scalar where a mapping is required; `tags:` a list.
 		file: "invalid-value-kind.yaml", valid: false,
 		wantErrorCodes: []string{codeInvalidType},
