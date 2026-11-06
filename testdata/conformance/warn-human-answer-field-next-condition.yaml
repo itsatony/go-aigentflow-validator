@@ -1,0 +1,23 @@
+aigentflow_version: '2.0.0'
+name: human-answer-field-next-condition
+version: '1.0.0'
+description: >-
+  human_answer_field. A human step's own next condition reads its answer as
+  .step.response.text; the answer is .step.response.response.
+start: ask
+steps:
+  ask:
+    executor: async://human/prompt/choice
+    query:
+      prompt: 'Continue?'
+    next:
+      conditions:
+        - if: '{{ eq .step.response.text "yes" }}'
+          goto: after
+      default: 'null'
+  after:
+    executor: function://utils/log
+    query:
+      message: 'continued'
+    next:
+      default: 'null'

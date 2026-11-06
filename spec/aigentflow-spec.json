@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.854.0",
+  "specVersion": "2.878.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -1024,6 +1024,16 @@
     "function": "default",
     "messageFormat": "`default` takes the value FIRST, and a pipe passes the piped value LAST: `%s` is `default <fallback> <value>`, so the fallback is always the result",
     "suggestion": "write the value first and the fallback second, as a call: `{{ default .x \"fallback\" }}` (the pipe form of other template libraries does not work here)"
+  },
+  "humanAnswerField": {
+    "$comment": "human_answer_field (WARNING everywhere: never an error, never demoted or promoted by position, `valid` unaffected). Every door a person answers a human step through commits exactly answerKeys, so any other key renders \"<no value>\". Human answer steps H: TOP-LEVEL steps whose executor string starts with executorPrefix, whose remainder is non-empty, and whose mode (the remainder up to its first `/`) is not in nonParkingModes; loop sub-steps are never in H. Judged: every template string the template walk checks (step query values recursively, condition, next.conditions[].if, pre/post_processing operation values and `if` guards, loop sub-step templates), and only one that parses. Finding 1 (dataMessageFormat, args: step, h, x, h, h, x): a ROOT field chain `.data.<h>.<x>` with h in H and x not in answerKeys. Finding 2 (stepMessageFormat, args: step, x, x): a root chain `.step.response.<x>` with x not in answerKeys, only in a human step's OWN next.conditions[i].if and OWN post_processing[i] templates (not its query, not pre_processing, not another step). Root chain: a field reference rooted at the dot. Not judged: the bodies (and else branches) of `range` and `with` (their controlling pipeline is), variables (`$.data.h.x`), parenthesised chains (`(expr).data.h.x`), `index`. `if` bodies and else branches, pipelines and function arguments are judged. A 2-segment `.data.h` is not judged; `.data.h.response.city` is fine. Field: the template site's path; StepID: the step whose template it is. One finding per distinct reference per site, ordered by message. %q is a Go-quoted string. suggestionFormat fills %s with `.data.<h>.response` or `.step.response.response`. Reference: humanAnswerFieldWarnings (validation.humananswer.go).",
+    "code": "human_answer_field",
+    "executorPrefix": "async://human/",
+    "nonParkingModes": ["announce"],
+    "answerKeys": ["response", "comments", "timed_out"],
+    "dataMessageFormat": "step %q reads `.data.%s.%s`, but %q is a human step and its answer is `.data.%s.response`; `%s` renders \"<no value>\"",
+    "stepMessageFormat": "human step %q reads `.step.response.%s`, but its answer is `.step.response.response`; `%s` renders \"<no value>\"",
+    "suggestionFormat": "Did you mean `%s`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
   },
   "complianceResidency": {
     "$comment": "compliance_residency_unenforced (WARNING, never an error; needs no catalogue). When compliance.residency is non-empty and every code (trimmed, upper-cased) is in euResidencyCodes, each top-level step and loop sub-step whose executor starts with aiProtocol+protocolSeparator warns when its provider (literal, lower-cased; skipped when empty or containing templateActionOpen) is in regionLaneProviders and the call is not pinned. Pinned = query region a non-empty string after trimming; OR enforce_region true (bool true or the strings in enforceRegionTrueStrings); OR the author named the endpoint: query <provider>+baseUrlParamSuffix a non-empty string after trimming, or executor_config.<provider>.base_url non-empty after trimming. The provider segment of ai://<provider>/<operation> exists only when a slash follows it. regionLaneProviders is the set of providers whose adapter routes on `region`; a provider outside it has no region lane and is never warned. Message, suggestion and site formats fill %s and %q (a Go-quoted string) in order; the message's last placeholder is the residency list as written, printed [A B]. Reference: validateResidencyEnforcement (validation.residency.go).",

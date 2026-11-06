@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.854.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.878.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -28,7 +28,62 @@ v0.20.0 (AIgentFlow v2.841.0), which adds one save-door error for a `for_each.it
 v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (below), then
 v0.21.0 (AIgentFlow v2.851.0), which adds the `StoredBytes` option (below), then
 v0.22.0 (AIgentFlow v2.854.0), which adds six standard template functions (below), then
-v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below).
+v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below), then
+v0.24.0 (AIgentFlow v2.878.0), which adds one warning, `human_answer_field` (below).
+
+> **v0.24.0 — `human_answer_field` (new WARNING).** `specVersion` is `2.878.0`. Contract: the
+> reference's `humanAnswerFieldWarnings` (`validation.humananswer.go`), called from
+> `validateTemplateExpression` on every template that parses. Spec block: `humanAnswerField` (code,
+> executor prefix, non-parking modes, answer keys, both message formats and the suggestion format).
+>
+> Every door a person answers a human step through commits the same envelope: `response`, plus
+> `comments` when they wrote one and `timed_out` when a default_response was applied, and nothing
+> else. A read of any other key renders "<no value>" with no error at all. The motivating incident: a
+> demo flow read `.step.response.content` on a human step, the answer rendered `<no value>`, a guard
+> ran `atoi` over it and the run could not continue.
+>
+> - **Human answer steps H**: TOP-LEVEL steps whose `executor` string starts with `async://human/`,
+>   whose remainder is non-empty, and whose mode (the remainder up to its first `/`) is not
+>   `announce` (an announcement never parks). This is the reference's `AsyncHumanParkURL` exactly, so
+>   `async://human//x` (empty mode) IS a human step and `async://human/` is not. Loop sub-steps are
+>   never in H. The prefix match is exact (`ASYNC://human/…` is not one).
+> - **Sites**: every template the template walk checks (`validate.templates.go` `templateWalker.check`:
+>   step `query` values recursively, `pre_processing` / `post_processing` operation values and `if`
+>   guards, `next.conditions[].if`, and the loop body's `condition`, `query`, processing operations
+>   and `next.conditions[].if`), and only a template that parses with no finding (the reference judges
+>   only a template whose parse succeeds; an unknown function fails its parse).
+> - **Finding 1**: a ROOT field chain `.data.<h>.<x>`, h in H, x not an answer key, in any site.
+> - **Finding 2**: a root chain `.step.response.<x>`, x not an answer key, only in a human step's OWN
+>   `next.conditions[i].if` and OWN `post_processing[i]` (values and `if` guard): the two places
+>   `.step.response` is the answer. Not its query or pre_processing (they run before the park), not any
+>   other step.
+> - **Root chains** are `parse.FieldNode`s reached by the reference's `walkRootFieldChains`, ported
+>   verbatim: `if` bodies and else branches, pipelines, function arguments, `define` / `block` bodies
+>   and `template` arguments are judged; `range` and `with` bodies and their else branches are not
+>   (the dot is rebound); a variable (`$.data.h.x`) and a parenthesised chain (`(expr).data.h.x`) are
+>   not fields; `index .data "h" "x"` is not judged. A 2-segment `.data.h` is not judged, and
+>   `.data.h.response.city` is fine.
+> - **Severity**: WARNING everywhere: never an error, never demoted or promoted by position (a loop
+>   body), untouched by `StoredBytes` and `StrictRegistries`; `Valid` is unaffected.
+> - **Addressing**: `Field` is the site's path (the paths the walk already produces, which are the
+>   reference's: `steps.ask.post_processing[0].picked`, `steps.ask.next.conditions[0].if`,
+>   `steps.after.query.message`); `StepID` is the step whose template it is (a loop sub-step's
+>   template carries its parent's id, as everywhere in the walk). AIgentFlow's save door dedupes this
+>   port's findings against its own by (code, field). One finding per distinct reference per site,
+>   ordered by message (the reference's order). Messages and suggestion are the reference's text,
+>   `%q` being `strconv.Quote`.
+>
+> Fixtures, byte-identical to the JS port's (0.34.0): `warn-human-answer-field-post-processing.yaml`,
+> `warn-human-answer-field-next-condition.yaml`, `warn-human-answer-field-data-read.yaml`,
+> `warn-human-answer-field-loop-substep.yaml` (each one warning, valid) and the control
+> `valid-human-answer-field-lookalikes.yaml` (forbids the code: the answer keys, `.response.city`, an
+> announce step, a non-human `async://external/…` step, the human step's own query and
+> pre_processing, a range / with body, `$.data`, `index`, a parenthesised chain, a string, a comment,
+> a non-human step's `.step.response.content`). The manifest
+> `testdata/conformance/human-answer-field-cases.json` (51 cases, also byte-identical) pins every
+> finding's exact field, step id, message and suggestion; its expectations were produced by running
+> the reference over those very flows. Test: `validate_v0240_test.go`. No divergence from the
+> reference was found over the manifest, the fixtures, or the conformance corpus.
 
 > **v0.23.0 — `unknown_yaml_key` says which key was meant (no new rule, no new code).** `specVersion`
 > stays `2.854.0`: no grammar changed, the spec only gains the data block `keyAliases` (precedent: the

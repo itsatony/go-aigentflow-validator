@@ -1,0 +1,73 @@
+aigentflow_version: '2.0.0'
+name: human-answer-field-lookalikes
+version: '1.0.0'
+description: >-
+  The control for human_answer_field. Every read below either uses a key the
+  answer doors commit (response, comments, timed_out), is not a root field
+  chain, is not on a human answer step, or is not a site where .step.response
+  is the answer. None may raise the code.
+start: ask
+steps:
+  ask:
+    executor: async://human/prompt/text
+    query:
+      prompt: 'Which city? {{ .step.response.content }}'
+    pre_processing:
+      - data.set:
+          before: '{{ .step.response.content }}'
+    post_processing:
+      - data.set:
+          picked: '{{ .step.response.response }}'
+          note: '{{ .step.response.comments }}'
+      - if: '{{ .step.response.timed_out }}'
+        data.set:
+          late: 'yes'
+    next:
+      conditions:
+        - if: '{{ eq .step.response.response "stop" }}'
+          goto: done
+      default: notice
+  notice:
+    executor: async://human/announce
+    query:
+      prompt: 'Thanks'
+    next:
+      default: external
+  external:
+    executor: async://external/rest/x
+    query:
+      callback: 'cb'
+    next:
+      default: after
+  after:
+    executor: function://utils/log
+    query:
+      answer: '{{ .data.ask.response }}'
+      city: '{{ .data.ask.response.city }}'
+      comments: '{{ .data.ask.comments }}'
+      timed_out: '{{ default false .data.ask.timed_out }}'
+      whole: '{{ toJson .data.ask }}'
+      range_body: '{{ range .data.ask.response }}{{ .data.ask.content }}{{ end }}'
+      range_else: '{{ range .data.ask.response }}x{{ else }}{{ .data.ask.content }}{{ end }}'
+      with_body: '{{ with .data.ask }}{{ .data.ask.content }}{{ end }}'
+      variable: '{{ range .data.ask.response }}{{ $.data.ask.content }}{{ end }}'
+      index_one: '{{ index .data.ask "content" }}'
+      index_two: '{{ index .data "ask" "content" }}'
+      parenthesised: '{{ (.data).ask.content }}'
+      announce_step: '{{ .data.notice.content }}'
+      non_human_async: '{{ .data.external.content }}'
+      other_step_response: '{{ .step.response.content }}'
+      in_string: '{{ ".data.ask.content" }}'
+      in_comment: '{{/* .data.ask.content */}}done'
+      data_set_key: '{{ .data.picked }}'
+    post_processing:
+      - data.set:
+          own: '{{ .step.response.content }}'
+    next:
+      default: done
+  done:
+    executor: function://utils/log
+    query:
+      message: 'done'
+    next:
+      default: 'null'

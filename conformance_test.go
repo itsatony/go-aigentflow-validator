@@ -469,6 +469,18 @@ var conformanceCases = []conformanceCase{
 		forbidWarningCodes: []string{codeTemplateDefaultPiped, codeTemplateSyntax},
 		forbidErrorCodes:   []string{codeTemplateDefaultPiped},
 	},
+	// v0.24.0 (AIgentFlow v2.878.0): human_answer_field, a WARNING everywhere (also
+	// inside a loop body, never an error). The control forbids the code: a warning
+	// never changes the verdict, and a false positive on a correct read is the risk.
+	{file: "warn-human-answer-field-post-processing.yaml", valid: true, wantWarningCodes: []string{codeHumanAnswerField}, forbidErrorCodes: []string{codeHumanAnswerField}},
+	{file: "warn-human-answer-field-next-condition.yaml", valid: true, wantWarningCodes: []string{codeHumanAnswerField}, forbidErrorCodes: []string{codeHumanAnswerField}},
+	{file: "warn-human-answer-field-data-read.yaml", valid: true, wantWarningCodes: []string{codeHumanAnswerField}, forbidErrorCodes: []string{codeHumanAnswerField}},
+	{file: "warn-human-answer-field-loop-substep.yaml", valid: true, wantWarningCodes: []string{codeHumanAnswerField}, forbidErrorCodes: []string{codeHumanAnswerField}},
+	{
+		file: "valid-human-answer-field-lookalikes.yaml", valid: true,
+		forbidWarningCodes: []string{codeHumanAnswerField, codeTemplateSyntax, codeTemplateFuncUnkn},
+		forbidErrorCodes:   []string{codeHumanAnswerField},
+	},
 	// v0.12.0 (AIgentFlow v2.828.0): flow_data_key_reserved. The valid fixtures
 	// forbid the code: a false positive on an author's key is the whole risk.
 	{file: "valid-flow-data-keys.yaml", valid: true, forbidErrorCodes: []string{codeFlowDataKeyReserved}},

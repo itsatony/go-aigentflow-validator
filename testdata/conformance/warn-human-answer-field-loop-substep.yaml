@@ -1,0 +1,25 @@
+aigentflow_version: '2.0.0'
+name: human-answer-field-loop-substep
+version: '1.0.0'
+description: >-
+  human_answer_field inside a loop body: still a warning, never an error. The
+  loop sub-step reads the human step's answer as .data.ask.content.
+start: ask
+steps:
+  ask:
+    executor: async://human/prompt/text
+    query:
+      prompt: 'Topic?'
+    next:
+      default: refine
+  refine:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: draft
+          executor: function://utils/log
+          query:
+            message: '{{ .data.ask.content }}'
+    next:
+      default: 'null'
