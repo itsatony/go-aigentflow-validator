@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: human-answer-field-data-read
+version: '1.0.0'
+description: >-
+  human_answer_field. A later step reads the human step's answer as
+  .data.ask.answer (inside an if, which does not rebind the dot); the answer is
+  .data.ask.response.
+start: ask
+steps:
+  ask:
+    executor: async://human/review/doc
+    query:
+      prompt: 'Review this'
+    next:
+      default: after
+  after:
+    executor: function://utils/log
+    query:
+      message: '{{ if .data.ask.response }}{{ .data.ask.answer }}{{ end }}'
+    next:
+      default: 'null'

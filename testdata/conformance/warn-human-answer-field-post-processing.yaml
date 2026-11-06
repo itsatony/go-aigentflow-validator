@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: human-answer-field-post-processing
+version: '1.0.0'
+description: >-
+  human_answer_field. A human step's own post_processing reads its answer as
+  .step.response.content; every answer door commits it as response, so the
+  value renders "<no value>".
+start: ask
+steps:
+  ask:
+    executor: async://human/prompt/text
+    query:
+      prompt: 'Which city?'
+    post_processing:
+      - data.set:
+          picked: '{{ .step.response.content }}'
+    next:
+      default: after
+  after:
+    executor: function://utils/log
+    query:
+      message: '{{ .data.picked }}'
+    next:
+      default: 'null'

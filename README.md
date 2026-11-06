@@ -116,6 +116,7 @@ version rejected them has no way to understand it.
 | Server-owned parameters | a step or loop sub-step `query:` may not declare `aiv_api_key`, `aiv_base_url` or `aiv_delegation` |
 | Credential endpoints | an endpoint a server-supplied credential will never be sent to: an `ai://` `<provider>_base_url` (or a literal `executor_config.<provider>.base_url`) with no key of the flow's own, a family secret that is a server `${AIGENTFLOW_…}` variable beside a literal non-default endpoint (warning, `credential_endpoint_unpaired`) |
 | Templates | Go `text/template` syntax across `query`, `pre_processing`, `post_processing`, `conditions[].if` |
+| Human answers | a read of a human step's answer under a key no answer door commits: `.data.<h>.<x>` for an `async://human/…` step, or `.step.response.<x>` in its own `next:` conditions and `post_processing`, `x` not `response` / `comments` / `timed_out` (warning, `human_answer_field`, v2.878.0) |
 | `expression_functions` | exactly one of `package` / `function`; `package:` refused; `function:` must be in the fixed catalog; a template calling an `fn_` name must declare it |
 | Other save-door rules | mock-scenario `delay` durations, empty `output:` entries, a `for_each.items` that is neither a template nor a JSON array (`for_each_items_unresolvable`, v2.841.0) |
 

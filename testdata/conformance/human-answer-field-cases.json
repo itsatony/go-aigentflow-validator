@@ -1,0 +1,499 @@
+{
+  "$comment": "human_answer_field: the shared case table (byte-identical in both ports). Each case fills flowTemplate's six %s, in order, with the sites named in sites (a missing site takes its value from defaults; a single quote is doubled, as YAML's single-quoted style needs). findings is EXACTLY the list of human_answer_field findings the flow must raise, in emitted order, every one a warning. It was produced by running the AIgentFlow reference (humanAnswerFieldWarnings) over these very flows.",
+  "flowTemplate": "aigentflow_version: '2.0.0'\nname: human-answer-reads\nversion: '1.0.0'\nstart: ask\nsteps:\n  ask:\n    executor: '%s'\n    query:\n      prompt: '%s'\n    pre_processing:\n      - data.set:\n          early: '%s'\n    post_processing:\n      - data.set:\n          picked: '%s'\n    next:\n      conditions:\n        - if: '%s'\n          goto: after\n      default: after\n  after:\n    executor: function://utils/log\n    query:\n      message: '%s'\n    next:\n      default: 'null'\n",
+  "sites": [
+    "executor",
+    "prompt",
+    "pre",
+    "post",
+    "condition",
+    "later"
+  ],
+  "defaults": {
+    "executor": "async://human/prompt/text",
+    "prompt": "Pick one",
+    "pre": "ready",
+    "post": "{{ .step.response.response }}",
+    "condition": "{{ eq .data.picked \"1\" }}",
+    "later": "{{ .data.ask.response }}"
+  },
+  "cases": [
+    {
+      "name": "the post_processing data.set shape",
+      "post": "{{ .step.response.content }}",
+      "findings": [
+        {
+          "field": "steps.ask.post_processing[0].picked",
+          "stepId": "ask",
+          "message": "human step \"ask\" reads `.step.response.content`, but its answer is `.step.response.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.step.response.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "the step's own next condition",
+      "condition": "{{ eq .step.response.text \"1\" }}",
+      "findings": [
+        {
+          "field": "steps.ask.next.conditions[0].if",
+          "stepId": "ask",
+          "message": "human step \"ask\" reads `.step.response.text`, but its answer is `.step.response.response`; `text` renders \"<no value>\"",
+          "suggestion": "Did you mean `.step.response.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "another step's .data read",
+      "later": "{{ .data.ask.answer }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.answer`, but \"ask\" is a human step and its answer is `.data.ask.response`; `answer` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "inside if, a pipeline and a function argument",
+      "later": "{{ if .data.ask.content }}{{ .data.ask.value | upper }}{{ end }}{{ printf \"%v\" .data.ask.result }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        },
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.result`, but \"ask\" is a human step and its answer is `.data.ask.response`; `result` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        },
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.value`, but \"ask\" is a human step and its answer is `.data.ask.response`; `value` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "mode choice",
+      "executor": "async://human/prompt/choice",
+      "later": "{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "mode review",
+      "executor": "async://human/review/doc",
+      "later": "{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "mode acknowledge",
+      "executor": "async://human/acknowledge/x",
+      "later": "{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "one finding per distinct reference",
+      "later": "{{ .data.ask.content }} and {{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "else if and else are judged",
+      "later": "{{ if .query.a }}x{{ else if .data.ask.text }}y{{ else }}{{ .data.ask.body }}{{ end }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.body`, but \"ask\" is a human step and its answer is `.data.ask.response`; `body` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        },
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.text`, but \"ask\" is a human step and its answer is `.data.ask.response`; `text` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "else with inside an if does not parse",
+      "later": "{{ if .query.a }}x{{ else with .data.ask.text }}{{ .data.ask.body }}{{ end }}",
+      "findings": []
+    },
+    {
+      "name": "a range pipeline is judged",
+      "later": "{{ range $i, $e := .data.ask.items }}{{ $e }}{{ end }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.items`, but \"ask\" is a human step and its answer is `.data.ask.response`; `items` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a with pipeline, not its else",
+      "later": "{{ with .data.ask.items }}{{ . }}{{ else }}{{ .data.ask.body }}{{ end }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.items`, but \"ask\" is a human step and its answer is `.data.ask.response`; `items` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "else with inside a with is not judged",
+      "later": "{{ with .query.a }}x{{ else with .data.ask.text }}{{ .data.ask.body }}{{ end }}",
+      "findings": []
+    },
+    {
+      "name": "break inside a range, then a root read",
+      "later": "{{ range .query.l }}{{ break }}{{ end }}{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a define body and a template argument",
+      "later": "{{ define \"x\" }}{{ .data.ask.body }}{{ end }}{{ template \"x\" .data.ask.arg }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.arg`, but \"ask\" is a human step and its answer is `.data.ask.response`; `arg` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        },
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.body`, but \"ask\" is a human step and its answer is `.data.ask.response`; `body` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a block pipeline and body",
+      "later": "{{ block \"b\" .data.ask.arg }}{{ .data.ask.body }}{{ end }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.arg`, but \"ask\" is a human step and its answer is `.data.ask.response`; `arg` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        },
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.body`, but \"ask\" is a human step and its answer is `.data.ask.response`; `body` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a variable declaration",
+      "later": "{{ $v := .data.ask.text }}{{ $v }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.text`, but \"ask\" is a human step and its answer is `.data.ask.response`; `text` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a parenthesised argument",
+      "later": "{{ upper (.data.ask.text) }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.text`, but \"ask\" is a human step and its answer is `.data.ask.response`; `text` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "trim markers",
+      "later": "{{- .data.ask.content -}}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a deeper chain",
+      "later": "{{ .data.ask.content.deep }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "a non-ASCII key",
+      "later": "{{ .data.ask.inhalt_ä }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.inhalt_ä`, but \"ask\" is a human step and its answer is `.data.ask.response`; `inhalt_ä` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "both kinds in the own post_processing",
+      "post": "{{ .step.response.content }}{{ .data.ask.text }}",
+      "findings": [
+        {
+          "field": "steps.ask.post_processing[0].picked",
+          "stepId": "ask",
+          "message": "human step \"ask\" reads `.step.response.content`, but its answer is `.step.response.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.step.response.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        },
+        {
+          "field": "steps.ask.post_processing[0].picked",
+          "stepId": "ask",
+          "message": "step \"ask\" reads `.data.ask.text`, but \"ask\" is a human step and its answer is `.data.ask.response`; `text` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "the own query reads .data",
+      "prompt": "{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.ask.query.prompt",
+          "stepId": "ask",
+          "message": "step \"ask\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "the own pre_processing reads .data",
+      "pre": "{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.ask.pre_processing[0].early",
+          "stepId": "ask",
+          "message": "step \"ask\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "the own condition reads .data",
+      "condition": "{{ eq .data.ask.content \"1\" }}",
+      "findings": [
+        {
+          "field": "steps.ask.next.conditions[0].if",
+          "stepId": "ask",
+          "message": "step \"ask\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "the else branch of an if",
+      "later": "{{ if .data.ask.response }}y{{ else }}{{ .data.ask.content }}{{ end }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "an empty mode segment parks",
+      "executor": "async://human//x",
+      "later": "{{ .data.ask.content }}",
+      "findings": [
+        {
+          "field": "steps.after.query.message",
+          "stepId": "after",
+          "message": "step \"after\" reads `.data.ask.content`, but \"ask\" is a human step and its answer is `.data.ask.response`; `content` renders \"<no value>\"",
+          "suggestion": "Did you mean `.data.ask.response`? A person's answer is committed as `response` (with `comments` when they wrote one, and `timed_out` when a default_response was applied), never as `content`, `text` or `answer`."
+        }
+      ]
+    },
+    {
+      "name": "the answer",
+      "post": "{{ .step.response.response }}",
+      "later": "{{ .data.ask.response }}",
+      "findings": []
+    },
+    {
+      "name": "a field inside the answer",
+      "later": "{{ .data.ask.response.city }}",
+      "findings": []
+    },
+    {
+      "name": "comments and timed_out",
+      "post": "{{ .step.response.comments }}",
+      "later": "{{ default .data.ask.timed_out false }}",
+      "findings": []
+    },
+    {
+      "name": "the whole step",
+      "later": "{{ toJson .data.ask }}",
+      "findings": []
+    },
+    {
+      "name": "a query runs before the park",
+      "prompt": "{{ .step.response.content }}",
+      "findings": []
+    },
+    {
+      "name": "pre_processing runs before the park",
+      "pre": "{{ .step.response.content }}",
+      "findings": []
+    },
+    {
+      "name": "a range body rebinds the dot",
+      "later": "{{ range .data.ask.response }}{{ .data.ask.content }}{{ end }}",
+      "findings": []
+    },
+    {
+      "name": "an if inside a range body",
+      "later": "{{ range .query.list }}{{ if .data.ask.text }}y{{ end }}{{ end }}",
+      "findings": []
+    },
+    {
+      "name": "a variable is not a root field",
+      "later": "{{ range .data.ask.response }}{{ $.data.ask.content }}{{ end }}",
+      "findings": []
+    },
+    {
+      "name": "index is not judged",
+      "later": "{{ index .data.ask \"content\" }}{{ index .data \"ask\" \"content\" }}",
+      "findings": []
+    },
+    {
+      "name": "a parenthesised chain",
+      "later": "{{ (.data.ask).content }}",
+      "findings": []
+    },
+    {
+      "name": "a number",
+      "later": "{{ add 1.5 .data.ask.response }}",
+      "findings": []
+    },
+    {
+      "name": "a string literal",
+      "later": "{{ \".data.ask.content\" }}",
+      "findings": []
+    },
+    {
+      "name": "a comment",
+      "later": "{{/* .data.ask.content */}}done",
+      "findings": []
+    },
+    {
+      "name": "announce does not park",
+      "executor": "async://human/announce",
+      "later": "{{ .data.ask.content }}",
+      "findings": []
+    },
+    {
+      "name": "announce with a resource does not park",
+      "executor": "async://human/announce/x",
+      "later": "{{ .data.ask.content }}",
+      "findings": []
+    },
+    {
+      "name": "an empty human URL",
+      "executor": "async://human/",
+      "later": "{{ .data.ask.content }}",
+      "findings": []
+    },
+    {
+      "name": "a non-human step's response",
+      "executor": "function://utils/log",
+      "post": "{{ .step.response.content }}",
+      "findings": []
+    },
+    {
+      "name": "a non-human async step's data",
+      "executor": "async://external/rest/x",
+      "later": "{{ .data.ask.content }}",
+      "findings": []
+    },
+    {
+      "name": "another step's .step.response",
+      "later": "{{ .step.response.content }}",
+      "findings": []
+    },
+    {
+      "name": "a data.set key",
+      "later": "{{ .data.picked }}",
+      "findings": []
+    },
+    {
+      "name": "a non-human step's data",
+      "later": "{{ .data.after.content }}",
+      "findings": []
+    },
+    {
+      "name": "an unknown function",
+      "later": "{{ nosuchfn .data.ask.content }}",
+      "findings": []
+    },
+    {
+      "name": "a syntax error",
+      "later": "{{ .data.ask.content ",
+      "findings": []
+    }
+  ]
+}

@@ -186,6 +186,18 @@ type rawSpec struct {
 		MessageFormat string `json:"messageFormat"`
 		Suggestion    string `json:"suggestion"`
 	} `json:"templateDefaultPiped"`
+	// HumanAnswerField feeds human_answer_field (AIgentFlow v2.878.0): the key set
+	// every human answer door commits, what makes a top-level step a human answer
+	// step, and the finding texts (%q is strconv.Quote, as in the reference).
+	HumanAnswerField struct {
+		Code              string   `json:"code"`
+		ExecutorPrefix    string   `json:"executorPrefix"`
+		NonParkingModes   []string `json:"nonParkingModes"`
+		AnswerKeys        []string `json:"answerKeys"`
+		DataMessageFormat string   `json:"dataMessageFormat"`
+		StepMessageFormat string   `json:"stepMessageFormat"`
+		SuggestionFormat  string   `json:"suggestionFormat"`
+	} `json:"humanAnswerField"`
 	// AtlasExecutor feeds the nexus:// (alias atlas://) rules (providers, resources and the seven
 	// finding texts).
 	AtlasExecutor atlasSpec `json:"atlasExecutor"`

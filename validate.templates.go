@@ -28,13 +28,14 @@ func validateTemplates(flow doc, iss *issues, opts Options) templateStats {
 	if steps == nil {
 		return stats
 	}
+	humanSteps := humanAnswerSteps(flow)
 
 	for _, stepID := range sortedKeys(steps) {
 		step, ok := asRecord(steps[stepID])
 		if !ok {
 			continue
 		}
-		w := templateWalker{stepID: stepID, iss: iss, stats: &stats, opts: opts}
+		w := templateWalker{stepID: stepID, iss: iss, stats: &stats, opts: opts, humanSteps: humanSteps}
 
 		if has(step, keyQuery) {
 			w.walk(stepField(stepID, keyQuery), get(step, keyQuery), true)
@@ -60,13 +61,15 @@ func validateTemplates(flow doc, iss *issues, opts Options) templateStats {
 }
 
 // templateWalker carries the per-step state of the template walk. demote marks
-// a walk inside a loop body, where every finding is a warning.
+// a walk inside a loop body, where every finding is a warning. humanSteps is the
+// flow's human answer steps (validate.humananswer.go).
 type templateWalker struct {
-	stepID string
-	iss    *issues
-	stats  *templateStats
-	opts   Options
-	demote bool
+	stepID     string
+	iss        *issues
+	stats      *templateStats
+	opts       Options
+	demote     bool
+	humanSteps map[string]bool
 }
 
 // walk visits every string leaf of an arbitrary value, mirroring the
@@ -167,6 +170,13 @@ func (w templateWalker) check(value, field string) {
 			Context:    "Template: " + value,
 			Suggestion: spec.TemplateDefaultPiped.Suggestion,
 		})
+	}
+	if len(problems) == 0 {
+		// The reference judges only a template that parses with the registered
+		// functions. A WARNING wherever it is: never an error, never demoted.
+		for _, issue := range humanAnswerFieldIssues(field, w.stepID, parsed, w.humanSteps) {
+			w.iss.warn(issue)
+		}
 	}
 	for _, problem := range problems {
 		if problem.isFunctionError {
