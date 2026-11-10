@@ -1,0 +1,19 @@
+aigentflow_version: '2.0.0'
+name: invalid-atlas-skills-object-template
+version: '1.0.0'
+description: >-
+  A skill object whose version is computed from a template is refused, and the atlas alias follows the same rule.
+start: s
+steps:
+  s:
+    executor: atlas://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: hello
+      skills:
+        - ref: '@acme/monthly-report'
+          version: '{{ .query.version }}'
+    next:
+      default: 'null'
+output:
+  - done

@@ -616,6 +616,21 @@ var conformanceCases = []conformanceCase{
 		file: "invalid-nexus-loop-substep-agent-not-literal.yaml", valid: false,
 		wantErrorCodes: []string{"atlas_agent_not_literal"},
 	},
+	// v0.25.0 — AIgentFlow v2.890.0: query.skills on an agent run is written out.
+	{file: "invalid-atlas-skills-not-literal.yaml", valid: false, wantErrorCodes: []string{"atlas_skills_not_literal"}},
+	{file: "invalid-atlas-skills-object-template.yaml", valid: false, wantErrorCodes: []string{"atlas_skills_not_literal"}},
+	{
+		// An error in a loop body too: the atlas rules are never demoted by position.
+		file: "invalid-nexus-loop-substep-skills-not-literal.yaml", valid: false,
+		wantErrorCodes: []string{"atlas_skills_not_literal"},
+	},
+	{
+		// The false-positive side: literal skills (a versioned object included),
+		// templated files on an agent run, templated skills / files on a capability step.
+		file: "valid-atlas-skills-lookalikes.yaml", valid: true,
+		forbidErrorCodes:   []string{"atlas_agent_missing", "atlas_agent_not_literal", "atlas_capabilities_not_literal", "atlas_capability_ref_invalid", "atlas_model_not_literal", "atlas_operation_unknown", "atlas_param_refused", "atlas_prompt_both", "atlas_prompt_missing", "atlas_skills_not_literal"},
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+	},
 	{
 		// The pre-2026-10-20 AigentChat shape names no Nexus operation.
 		file: "invalid-nexus-aigentchat-shape.yaml", valid: false,

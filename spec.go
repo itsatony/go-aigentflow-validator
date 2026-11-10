@@ -506,6 +506,7 @@ type atlasSpec struct {
 	PromptBoth             atlasRule `json:"promptBoth"`
 	CapabilityRefInvalid   atlasRule `json:"capabilityRefInvalid"`
 	ModelNotLiteral        atlasRule `json:"modelNotLiteral"`
+	SkillsNotLiteral       atlasRule `json:"skillsNotLiteral"`
 	ParamRefused           struct {
 		atlasRule
 		AgentKeys      []string `json:"agentKeys"`

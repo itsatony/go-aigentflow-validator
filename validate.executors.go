@@ -251,6 +251,12 @@ func checkAtlasStep(executor string, query any, field, stepID string, iss *issue
 		if anyTemplate(get(q, "model")) {
 			report(spec.AtlasExecutor.ModelNotLiteral)
 		}
+		// `skills` is fixed on the agent door only: it picks which of the
+		// organization's templates the run starts with. On a capability step a
+		// `skills` key is a tool argument and may be templated.
+		if anyTemplate(get(q, "skills")) {
+			report(spec.AtlasExecutor.SkillsNotLiteral)
+		}
 	default:
 		report(spec.AtlasExecutor.OperationUnknown, executor)
 		return

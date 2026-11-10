@@ -1,0 +1,23 @@
+aigentflow_version: '2.0.0'
+name: invalid-nexus-loop-substep-skills-not-literal
+version: '1.0.0'
+description: >-
+  A loop sub-step whose skill reference is computed from a template is refused as an error, as at the top level.
+start: spin
+steps:
+  spin:
+    loop:
+      while: '{{ lt .loop.index 2 }}'
+      max_iterations: 2
+      steps:
+        - id: run
+          executor: nexus://agent/run
+          query:
+            agent: '@acme/reporter'
+            prompt: 'Go.'
+            skills:
+              - ref: '{{ .query.skill }}'
+    next:
+      default: 'null'
+output:
+  - done

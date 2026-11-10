@@ -109,7 +109,7 @@ version rejected them has no way to understand it.
 | `input_schema` / `output_schema` | version, field names, types, constraint/type compatibility, `visible_when`, RE2 patterns |
 | `quality_gate` | rubric, threshold range, `on_fail` enum, self-goto, composite/parallel-member scope |
 | Removed surfaces | `executor_removed`, `agentic_param_removed` (v2.833.0); `signal_removed`, `flow_modification_removed`, the `removed_key_ignored` warning (v2.834.0); `campaign_removed` (v2.836.0); `orchestrator_removed` (v2.838.0: the `orchestrator:` block refused whole, the flow-level `tool_discovery` / `discoverable_tools`, and `next: orchestrator`) |
-| Nexus agent steps | `nexus://agent/run`, `nexus://capability/<ref>` and the `atlas://` alias: the `atlas_*` rules |
+| Nexus agent steps | `nexus://agent/run`, `nexus://capability/<ref>` and the `atlas://` alias: the `atlas_*` rules (an agent run's `skills` must be literal: `atlas_skills_not_literal`, v2.890.0) |
 | `executor_config` | a `${VAR}` reference may name only the variables of the key it is written under |
 | Examples | the optional top-level `examples:` block: ids, limits, input against `input_schema` (unknown / missing / wrong kind / enum), file references (https only), expectations, checkpoints, variants, credential-shaped literals (`example_*`, `examples_*`) |
 | Display name | the optional top-level `display_name` is at most 80 characters, counted in runes (`display_name_too_long`) |
