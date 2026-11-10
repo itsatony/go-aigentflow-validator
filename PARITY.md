@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.878.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.890.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -29,7 +29,34 @@ v0.20.1 (AIgentFlow v2.842.0), which makes `aiflow` a known executor scheme (bel
 v0.21.0 (AIgentFlow v2.851.0), which adds the `StoredBytes` option (below), then
 v0.22.0 (AIgentFlow v2.854.0), which adds six standard template functions (below), then
 v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below), then
-v0.24.0 (AIgentFlow v2.878.0), which adds one warning, `human_answer_field` (below).
+v0.24.0 (AIgentFlow v2.878.0), which adds one warning, `human_answer_field` (below), then
+v0.25.0 (AIgentFlow v2.890.0), which adds one error, `atlas_skills_not_literal` (below).
+
+> **v0.25.0 — `atlas_skills_not_literal` (new ERROR).** `specVersion` is `2.890.0`. Contract: the
+> reference's agent-run branch of its Nexus step rules, beside `atlas_model_not_literal`. Spec block:
+> `atlasExecutor.skillsNotLiteral` (code, message format, suggestion), in the spec copied byte for
+> byte from the JS port (0.35.0). On an agent run, `query.skills` names the organization's templates
+> the run starts with; like the agent, the model and the capabilities, that choice is fixed in the
+> flow, so data from a run's inputs or from outside can never pick it.
+>
+> - **Fires** in `checkAtlasStep` on a `nexus://agent/run` step (and its `atlas://agent/run`
+>   spelling), top level or loop sub-step, whose `query.skills` holds `{{` anywhere: a string entry,
+>   an object entry's `ref` or `version`, any nested value, or a templated scalar in place of the
+>   list (`anyTemplate`, the walk `capabilities` and `model` use).
+> - **Does not fire** on a `nexus://capability/<ref>` step (`skills` there is a tool argument), on
+>   literal skills (`['@a/s', {ref: '@a/t', version: '1.2.0'}]`), or on a templated `query.files`:
+>   files are run input, and no save rule judges them.
+> - **Severity**: an ERROR everywhere, never demoted in a loop body, like every atlas code.
+>   **Addressing**: the step (`steps.<id>`; a loop sub-step `steps.<id>.loop.steps[<index>]` with the
+>   composite step id). Message and suggestion are the reference's text, the step id quoted with
+>   `strconv.Quote`.
+>
+> Fixtures, byte-identical to the JS port's: `invalid-atlas-skills-not-literal.yaml` (a string entry),
+> `invalid-atlas-skills-object-template.yaml` (a templated `version`, the `atlas://` spelling),
+> `invalid-nexus-loop-substep-skills-not-literal.yaml` (a loop sub-step: an error, not a warning) and
+> the control `valid-atlas-skills-lookalikes.yaml` (literal skills with a versioned object, templated
+> `files` on an agent run, templated `skills` and `files` on a capability step; forbids every atlas
+> code). Test: `validate_v0250_test.go`.
 
 > **v0.24.0 — `human_answer_field` (new WARNING).** `specVersion` is `2.878.0`. Contract: the
 > reference's `humanAnswerFieldWarnings` (`validation.humananswer.go`), called from

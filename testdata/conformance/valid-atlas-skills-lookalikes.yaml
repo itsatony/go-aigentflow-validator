@@ -1,0 +1,36 @@
+aigentflow_version: '2.0.0'
+name: valid-atlas-skills-lookalikes
+version: '1.0.0'
+description: >-
+  Literal skills, including an object with a version, are fine; so are templated files on an agent
+  run, and templated skills or files on a capability step, where they are ordinary tool arguments.
+start: literal
+steps:
+  literal:
+    executor: nexus://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: 'Summarise {{ .query.topic }}.'
+      skills:
+        - '@acme/monthly-report'
+        - ref: '@acme/letterhead'
+          version: '1.2.0'
+    next:
+      default: files
+  files:
+    executor: nexus://agent/run
+    query:
+      agent: '@acme/reporter'
+      prompt: hello
+      files: '{{ .query.files }}'
+    next:
+      default: tool
+  tool:
+    executor: nexus://capability/web_search
+    query:
+      skills: '{{ .query.skills }}'
+      files: '{{ .query.files }}'
+    next:
+      default: 'null'
+output:
+  - done
