@@ -82,6 +82,7 @@ func validateFlowObject(flow map[string]any, opts Options, sources scalarSources
 	validateRemovedFlowKeys(flow, iss)
 	validateExecutors(flow, iss)
 	validateCatalogFlowSteps(flow, iss)
+	validateAssets(flow, iss)
 	validateQuerySchema(flow, iss)
 	validateResponseExpectations(flow, iss)
 	validateErrorStrategies(flow, iss)

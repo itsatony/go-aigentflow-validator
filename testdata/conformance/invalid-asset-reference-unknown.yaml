@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: invalid-asset-reference-unknown
+version: '1.0.0'
+description: >-
+  A step uses an asset the flow does not declare (a misspelt name is still a reference).
+start: only
+assets:
+  prompt:
+    content: hello
+steps:
+  only:
+    executor: function://data/create
+    query:
+      text: asset://promtp
+    next:
+      default: 'null'
+output:
+  - done

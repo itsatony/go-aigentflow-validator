@@ -1,0 +1,28 @@
+aigentflow_version: '2.0.0'
+name: invalid-asset-declaration
+version: '1.0.0'
+description: >-
+  A trove asset without its sha256 pin, an asset with two sources and a catalogue asset
+  without a version: each is asset_declaration_invalid.
+start: only
+assets:
+  unpinned:
+    trove_key: prompts/review.md
+  both:
+    content: hello
+    trove_key: prompts/review.md
+    sha256: 2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881
+  floating:
+    aiv_ref: acme/review-rubric
+    sha256: 2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881
+steps:
+  only:
+    executor: function://data/create
+    query:
+      a: asset://unpinned
+      b: asset://both
+      c: asset://floating
+    next:
+      default: 'null'
+output:
+  - done

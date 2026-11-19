@@ -200,6 +200,8 @@ type rawSpec struct {
 	} `json:"humanAnswerField"`
 	// CatalogFlow feeds the catalogue sub-flow and partial rules (v0.26.0, AIgentFlow 2.912.0).
 	CatalogFlow catalogFlowSpec `json:"catalogFlow"`
+	// AssetGrammar feeds the asset rules (v0.27.0, AIgentFlow 2.913.0).
+	AssetGrammar assetGrammarSpec `json:"assetGrammar"`
 	// AtlasExecutor feeds the nexus:// (alias atlas://) rules (providers, resources and the seven
 	// finding texts).
 	AtlasExecutor atlasSpec `json:"atlasExecutor"`
@@ -376,6 +378,9 @@ var (
 	// flow_version (v0.26.0).
 	catalogSegmentRe *regexp.Regexp
 	catalogVersionRe *regexp.Regexp
+	// assetNameRe / assetSHA256Re: an asset's name and a remote asset's pin (v0.27.0).
+	assetNameRe   *regexp.Regexp
+	assetSHA256Re *regexp.Regexp
 
 	fieldNameRe *regexp.Regexp
 	// executorURLRe is the ONE executor-URL shape, mirrored verbatim from the
@@ -442,6 +447,8 @@ func init() {
 	atlasCapabilityRefRe = regexp.MustCompile(spec.AtlasExecutor.CapabilityRefPattern)
 	catalogSegmentRe = regexp.MustCompile(spec.CatalogFlow.SegmentPattern)
 	catalogVersionRe = regexp.MustCompile(spec.CatalogFlow.VersionPattern)
+	assetNameRe = regexp.MustCompile(spec.AssetGrammar.NamePattern)
+	assetSHA256Re = regexp.MustCompile(spec.AssetGrammar.SHA256Pattern)
 	initExamples()
 }
 
@@ -507,6 +514,34 @@ type catalogFlowSpec struct {
 	RefInvalid       atlasRule `json:"refInvalid"`
 	VersionInvalid   atlasRule `json:"versionInvalid"`
 	VersionPlacement atlasRule `json:"versionPlacement"`
+}
+
+// assetGrammarSpec is the spec's assetGrammar block: the flow-level assets: key and
+// asset://<name> step values.
+type assetGrammarSpec struct {
+	ReferencePrefix    string   `json:"referencePrefix"`
+	NamePattern        string   `json:"namePattern"`
+	SHA256Pattern      string   `json:"sha256Pattern"`
+	MaxCount           int      `json:"maxCount"`
+	MaxBytes           int      `json:"maxBytes"`
+	Sites              []string `json:"sites"`
+	DeclarationInvalid struct {
+		Code          string `json:"code"`
+		MessageFormat string `json:"messageFormat"`
+		Suggestion    string `json:"suggestion"`
+		Problems      struct {
+			Name         string `json:"name"`
+			NoSource     string `json:"noSource"`
+			ManySources  string `json:"manySources"`
+			InlinePin    string `json:"inlinePin"`
+			SHA256       string `json:"sha256"`
+			TroveVersion string `json:"troveVersion"`
+			AivVersion   string `json:"aivVersion"`
+			AivRef       string `json:"aivRef"`
+		} `json:"problems"`
+	} `json:"declarationInvalid"`
+	PlacementOutside atlasRule `json:"placementOutside"`
+	ReferenceUnknown atlasRule `json:"referenceUnknown"`
 }
 
 // atlasSpec is the spec's atlasExecutor block.

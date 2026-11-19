@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.912.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.913.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -31,7 +31,36 @@ v0.22.0 (AIgentFlow v2.854.0), which adds six standard template functions (below
 v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below), then
 v0.24.0 (AIgentFlow v2.878.0), which adds one warning, `human_answer_field` (below), then
 v0.25.0 (AIgentFlow v2.890.0), which adds one error, `atlas_skills_not_literal` (below), then
-v0.26.0 (AIgentFlow v2.912.0), which adds catalogue sub-flows and partials: the `include` scheme, the `flow_version` step key and three errors (below).
+v0.26.0 (AIgentFlow v2.912.0), which adds catalogue sub-flows and partials: the `include` scheme, the `flow_version` step key and three errors (below), then
+v0.27.0 (AIgentFlow v2.913.0), which adds assets: the flow-level `assets` key and three errors (below).
+
+> **v0.27.0 — assets (three new ERRORS, one flow key).** `specVersion` is `2.913.0`. Contract: the
+> reference's `validateAssets` (validation.assets.go) and `AssetDeclarationProblem` (flow.assets.go).
+> Spec block: `assetGrammar` (`referencePrefix`, `namePattern`, `sha256Pattern`, `maxCount`,
+> `maxBytes`, `sites`, and the three rules; the declaration rule carries its problem texts), copied
+> byte for byte from the JS port (0.37.0); `assets` joins the `Flow` key set as `map<AssetDefinition>`,
+> a new type with the scalar keys `aiv_ref`, `content`, `sha256`, `trove_key`, `version`. A step string
+> value that is exactly `asset://<name>` (one token, no whitespace) is replaced by that asset's text
+> before the flow is validated or run.
+>
+> - **`asset_declaration_invalid`**, per asset sorted by name, field `assets.<name>`, message
+>   `asset %q: %s` with the FIRST problem in the reference's order (name, no source or a null
+>   declaration, more than one source, inline content with a pin, a remote asset without a 64-hex
+>   `sha256`, a `trove_key` with a `version`, an `aiv_ref` without a semver `version`, an `aiv_ref` that
+>   is not two catalogue segments). Fields are read as Go `string`s.
+> - **`asset_reference_placement`**, per step sorted by id: each distinct name referenced outside the
+>   step's `query` (any depth), `quality_gate.rubric` and a loop sub-step's `query`; field `steps.<id>`.
+> - **`asset_reference_unknown`**, per step after its placement findings: each distinct name referenced
+>   anywhere in the step that `assets` does not declare (a null declaration counts as undeclared).
+> - **Does not fire** on prose that mentions `asset://`, on a value with whitespace after the prefix,
+>   or on a map key. Existence, size, count and the sha256 match are the reference server's checks.
+> - **Severity**: ERRORS everywhere. The reference emits a step's unknown names in its reflection walk
+>   order (map order is random); this port sorts them (the contract is codes and verdict).
+>
+> Fixtures, byte-identical to the JS port's: `invalid-asset-declaration.yaml`,
+> `invalid-asset-reference-unknown.yaml`, `invalid-asset-reference-placement.yaml`,
+> `invalid-asset-loop-substep-placement.yaml` and the control `valid-assets.yaml` (forbids all three
+> codes and `unknown_yaml_key`). Test: `validate_v0270_test.go`.
 
 > **v0.26.0 — catalogue sub-flows and partials (three new ERRORS, one scheme, one key).**
 > `specVersion` is `2.912.0`. Contract: the reference's `validateCatalogFlowSteps`
