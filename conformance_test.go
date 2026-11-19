@@ -616,6 +616,19 @@ var conformanceCases = []conformanceCase{
 		file: "invalid-nexus-loop-substep-agent-not-literal.yaml", valid: false,
 		wantErrorCodes: []string{"atlas_agent_not_literal"},
 	},
+	// v0.28.0 — AIgentFlow v2.914.0: the inline size and the count are save-door rules.
+	{file: "invalid-asset-too-many.yaml", valid: false, wantErrorCodes: []string{"asset_declaration_invalid"}},
+	{
+		// Over the limit in BYTES (two-byte characters), under it in characters.
+		file: "invalid-asset-inline-too-large.yaml", valid: false,
+		wantErrorCodes: []string{"asset_declaration_invalid"},
+	},
+	{
+		// The false-positive side: exactly 32 assets, one inline at exactly the byte limit.
+		file: "valid-assets-at-the-limits.yaml", valid: true,
+		forbidErrorCodes:   []string{"asset_declaration_invalid", "asset_reference_unknown", "asset_reference_placement", codeUnknownYAMLKey},
+		forbidWarningCodes: []string{codeUnknownYAMLKey},
+	},
 	// v0.27.0 — AIgentFlow v2.913.0: assets.
 	{file: "invalid-asset-declaration.yaml", valid: false, wantErrorCodes: []string{"asset_declaration_invalid"}},
 	{file: "invalid-asset-reference-unknown.yaml", valid: false, wantErrorCodes: []string{"asset_reference_unknown"}},

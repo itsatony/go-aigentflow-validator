@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.913.0",
+  "specVersion": "2.914.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -601,7 +601,7 @@
     }
   },
   "assetGrammar": {
-    "$comment": "Assets (AIgentFlow 2.913.0): a flow-level assets: block names long step bodies kept outside the flow. Each asset sets exactly one source: inline content (no sha256, no version), trove_key (the running organization's storage, pinned by sha256, no version) or aiv_ref <org>/<name> (a published aigentverse entity, pinned by version and sha256). A reference is a step STRING VALUE (never a map key) that is exactly referencePrefix followed by one non-empty token with no whitespace; a longer string that mentions the prefix is prose. References may appear only in the step's query (any depth), its quality_gate rubric and a loop sub-step's query (sites). All findings are ERRORS. declarationInvalid: per asset sorted by name, field assets.<name>, message 'asset %q: %s' with the first problem in the order listed (name, noSource, manySources, inlinePin, sha256, troveVersion, aivVersion, aivRef); the aiv version and the two aiv_ref segments use catalogFlow's versionPattern and segmentPattern. Per step sorted by id, placementOutside (each distinct name referenced outside the sites, sorted), then referenceUnknown (each distinct name referenced anywhere in the step that assets does not declare, a null declaration included), field steps.<id>, the step id first and unquoted. Whether a remote asset exists, its size (maxBytes), the count bound (maxCount) and the sha256 match are AIgentFlow's server checks at /flows/validate and run start, not save-door rules.",
+    "$comment": "Assets (AIgentFlow 2.913.0): a flow-level assets: block names long step bodies kept outside the flow. Each asset sets exactly one source: inline content (no sha256, no version), trove_key (the running organization's storage, pinned by sha256, no version) or aiv_ref <org>/<name> (a published aigentverse entity, pinned by version and sha256). A reference is a step STRING VALUE (never a map key) that is exactly referencePrefix followed by one non-empty token with no whitespace; a longer string that mentions the prefix is prose. References may appear only in the step's query (any depth), its quality_gate rubric and a loop sub-step's query (sites). All findings are ERRORS. declarationInvalid: per asset sorted by name, field assets.<name>, message 'asset %q: %s' with the first problem in the order listed (name, noSource, manySources, inlinePin, inlineTooLarge, sha256, troveVersion, aivVersion, aivRef); inlineTooLarge is inline content longer than maxBytes BYTES (UTF-8), formatted with maxBytes. Before the per-asset findings, more than maxCount declared assets is ONE declarationInvalid finding at field assets (no step) with tooManyFormat (the count, then maxCount) and the same suggestion; the aiv version and the two aiv_ref segments use catalogFlow's versionPattern and segmentPattern. Per step sorted by id, placementOutside (each distinct name referenced outside the sites, sorted), then referenceUnknown (each distinct name referenced anywhere in the step that assets does not declare, a null declaration included), field steps.<id>, the step id first and unquoted. Whether a remote asset exists, a remote text's size and the sha256 match are AIgentFlow's server checks at /flows/validate and run start, not save-door rules (AIgentFlow 2.914.0 made the inline size and the count save-door rules).",
     "referencePrefix": "asset://",
     "namePattern": "^[a-z][a-z0-9_-]{0,63}$",
     "sha256Pattern": "^[0-9a-fA-F]{64}$",
@@ -612,11 +612,13 @@
       "code": "asset_declaration_invalid",
       "messageFormat": "asset %q: %s",
       "suggestion": "declare each asset with exactly one source: {content: ...}, {trove_key: ..., sha256: ...} or {aiv_ref: <org>/<name>, version: ..., sha256: ...}",
+      "tooManyFormat": "the flow declares %d assets, more than %d",
       "problems": {
         "name": "the name %q must be lowercase letters, digits, - and _, starting with a letter (at most 64)",
         "noSource": "it names no source: set exactly one of content, trove_key or aiv_ref",
         "manySources": "it names more than one source: set exactly one of content, trove_key or aiv_ref",
         "inlinePin": "inline content takes no sha256 or version",
+        "inlineTooLarge": "inline content is larger than %d bytes",
         "sha256": "a trove_key or aiv_ref asset needs its sha256 (64 hex characters) so the run reads exactly the text the flow was written for",
         "troveVersion": "a trove_key asset takes no version; its sha256 pins it",
         "aivVersion": "an aiv_ref asset needs its published version (MAJOR.MINOR.PATCH)",

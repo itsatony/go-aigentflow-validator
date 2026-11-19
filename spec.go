@@ -200,7 +200,7 @@ type rawSpec struct {
 	} `json:"humanAnswerField"`
 	// CatalogFlow feeds the catalogue sub-flow and partial rules (v0.26.0, AIgentFlow 2.912.0).
 	CatalogFlow catalogFlowSpec `json:"catalogFlow"`
-	// AssetGrammar feeds the asset rules (v0.27.0, AIgentFlow 2.913.0).
+	// AssetGrammar feeds the asset rules (v0.27.0, AIgentFlow 2.913.0; the inline size and count rules v0.28.0, AIgentFlow 2.914.0).
 	AssetGrammar assetGrammarSpec `json:"assetGrammar"`
 	// AtlasExecutor feeds the nexus:// (alias atlas://) rules (providers, resources and the seven
 	// finding texts).
@@ -529,15 +529,17 @@ type assetGrammarSpec struct {
 		Code          string `json:"code"`
 		MessageFormat string `json:"messageFormat"`
 		Suggestion    string `json:"suggestion"`
+		TooManyFormat string `json:"tooManyFormat"`
 		Problems      struct {
-			Name         string `json:"name"`
-			NoSource     string `json:"noSource"`
-			ManySources  string `json:"manySources"`
-			InlinePin    string `json:"inlinePin"`
-			SHA256       string `json:"sha256"`
-			TroveVersion string `json:"troveVersion"`
-			AivVersion   string `json:"aivVersion"`
-			AivRef       string `json:"aivRef"`
+			Name           string `json:"name"`
+			NoSource       string `json:"noSource"`
+			ManySources    string `json:"manySources"`
+			InlinePin      string `json:"inlinePin"`
+			InlineTooLarge string `json:"inlineTooLarge"`
+			SHA256         string `json:"sha256"`
+			TroveVersion   string `json:"troveVersion"`
+			AivVersion     string `json:"aivVersion"`
+			AivRef         string `json:"aivRef"`
 		} `json:"problems"`
 	} `json:"declarationInvalid"`
 	PlacementOutside atlasRule `json:"placementOutside"`
