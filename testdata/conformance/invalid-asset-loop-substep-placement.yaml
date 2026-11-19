@@ -1,0 +1,24 @@
+aigentflow_version: '2.0.0'
+name: invalid-asset-loop-substep-placement
+version: '1.0.0'
+description: >-
+  A loop sub-step's description may not come from an asset (its query may).
+start: repeat
+assets:
+  url:
+    content: function://data/create
+steps:
+  repeat:
+    loop:
+      while: '{{ lt .loop.iteration 1 }}'
+      max_iterations: 1
+      steps:
+        - id: child
+          executor: function://data/create
+          description: asset://url
+          query:
+            text: asset://url
+    next:
+      default: 'null'
+output:
+  - done

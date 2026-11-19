@@ -1,0 +1,18 @@
+aigentflow_version: '2.0.0'
+name: invalid-asset-reference-placement
+version: '1.0.0'
+description: >-
+  A step's description may not come from an asset; only a step's query, its quality_gate
+  rubric and a loop sub-step's query may.
+start: only
+assets:
+  url:
+    content: function://data/create
+steps:
+  only:
+    executor: function://data/create
+    description: asset://url
+    next:
+      default: 'null'
+output:
+  - done

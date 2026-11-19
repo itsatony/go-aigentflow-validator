@@ -1,0 +1,50 @@
+aigentflow_version: '2.0.0'
+name: valid-assets
+version: '1.0.0'
+description: >-
+  An inline, a trove and a catalogue asset, used in a query, a quality_gate rubric and a loop
+  sub-step's query; prose that mentions asset:// and a reference with a trailing space are
+  plain text: none of them is an asset finding.
+start: calc
+assets:
+  formula:
+    content: '6 * 7'
+  prompt:
+    trove_key: prompts/review.md
+    sha256: 2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881
+  rubric:
+    aiv_ref: acme/review-rubric
+    version: '1.0.0'
+    sha256: 2D711642B726B04401627CA9FBAC32F5C8530FB1903CC4DB02258717921A4881
+steps:
+  calc:
+    executor: script://run/expr
+    query:
+      lang: expr
+      expression: asset://formula
+      return_kind: number
+    next:
+      default: ask
+  ask:
+    executor: function://data/create
+    query:
+      prompt: asset://prompt
+      nested:
+        list: ['asset://prompt', 'see asset://nothing for details', 'asset://nothing ']
+    quality_gate:
+      rubric: asset://rubric
+    next:
+      default: repeat
+  repeat:
+    loop:
+      while: '{{ lt .loop.iteration 1 }}'
+      max_iterations: 1
+      steps:
+        - id: child
+          executor: function://data/create
+          query:
+            text: asset://prompt
+    next:
+      default: 'null'
+output:
+  - done
