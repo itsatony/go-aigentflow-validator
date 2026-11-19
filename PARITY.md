@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.913.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.914.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -32,7 +32,30 @@ v0.23.0, which adds the reference's "did you mean" to `unknown_yaml_key` (below)
 v0.24.0 (AIgentFlow v2.878.0), which adds one warning, `human_answer_field` (below), then
 v0.25.0 (AIgentFlow v2.890.0), which adds one error, `atlas_skills_not_literal` (below), then
 v0.26.0 (AIgentFlow v2.912.0), which adds catalogue sub-flows and partials: the `include` scheme, the `flow_version` step key and three errors (below), then
-v0.27.0 (AIgentFlow v2.913.0), which adds assets: the flow-level `assets` key and three errors (below).
+v0.27.0 (AIgentFlow v2.913.0), which adds assets: the flow-level `assets` key and three errors (below), then
+v0.28.0 (AIgentFlow v2.914.0), which makes the inline asset size and the asset count save-door findings of `asset_declaration_invalid` (below).
+
+> **v0.28.0 — the inline size and the count are save-door rules (no new code).** `specVersion` is
+> `2.914.0` (the AIgentFlow release that ships assets; 2.913.0 became a credential fix, so v0.27.0's
+> label names a release that does not carry them). Contract: the reference's `AssetDeclarationProblem`
+> and `validateAssets`, after AIgentFlow's critical review found the save door accepting what every run
+> then refused. Spec: `assetGrammar.declarationInvalid.problems.inlineTooLarge` and
+> `assetGrammar.declarationInvalid.tooManyFormat`; the `$comment` says both.
+>
+> - **Inline size**: right after the inline-pin problem and before the sha256 one, inline `content`
+>   longer than `maxBytes` (262144) **bytes** in UTF-8 is `asset "<name>": inline content is larger
+>   than 262144 bytes`. Go measures `len(string)`, the byte length, as the reference does.
+> - **Count**: before the per-asset findings, more than `maxCount` (32) declared assets is ONE finding at
+>   field `assets` (no step): `the flow declares <n> assets, more than 32`, with the declaration
+>   suggestion.
+> - **Does not fire** at exactly 32 assets or exactly 262144 bytes.
+>
+> Fixtures, byte-identical to the JS port's: `invalid-asset-too-many.yaml` (33 assets),
+> `invalid-asset-inline-too-large.yaml` (131073 two-byte characters: over the limit in bytes, under it
+> in characters, so a port that counts characters fails it) and the control
+> `valid-assets-at-the-limits.yaml` (32 assets, one inline of exactly 262144 bytes). The two large
+> fixtures are about 257 KiB each, under the corpus's largest (`examples-invalid-examples-block-too-large.yaml`,
+> 265 KiB). Test: `validate_v0280_test.go`.
 
 > **v0.27.0 — assets (three new ERRORS, one flow key).** `specVersion` is `2.913.0`. Contract: the
 > reference's `validateAssets` (validation.assets.go) and `AssetDeclarationProblem` (flow.assets.go).

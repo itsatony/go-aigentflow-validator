@@ -142,6 +142,9 @@ func assetDeclarationProblem(name string, raw any, path string, iss *issues) str
 		return p.ManySources
 	case content != "" && (sha != "" || version != ""):
 		return p.InlinePin
+	case len(content) > spec.AssetGrammar.MaxBytes:
+		// Go string length is the UTF-8 byte length, as the reference measures it.
+		return fmt.Sprintf(p.InlineTooLarge, spec.AssetGrammar.MaxBytes)
 	case content == "" && !assetSHA256Re.MatchString(sha):
 		return p.SHA256
 	case trove != "" && version != "":
@@ -158,6 +161,10 @@ func assetDeclarationProblem(name string, raw any, path string, iss *issues) str
 func validateAssets(flow doc, iss *issues) {
 	declared, _ := getRecord(flow, keyAssets)
 	rule := spec.AssetGrammar.DeclarationInvalid
+	if len(declared) > spec.AssetGrammar.MaxCount {
+		iss.error(Issue{Field: keyAssets, Code: rule.Code,
+			Message: fmt.Sprintf(rule.TooManyFormat, len(declared), spec.AssetGrammar.MaxCount), Suggestion: rule.Suggestion})
+	}
 	for _, name := range sortedKeys(declared) {
 		path := keyAssets + "." + name
 		if problem := assetDeclarationProblem(name, declared[name], path, iss); problem != "" {
