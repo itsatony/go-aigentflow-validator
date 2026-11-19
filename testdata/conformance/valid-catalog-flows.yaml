@@ -1,0 +1,42 @@
+aigentflow_version: '2.0.0'
+name: valid-catalog-flows
+version: '1.0.0'
+description: >-
+  A pinned catalogue sub-flow, a floating one, a templated one, a partial with a pinned
+  version, and a loop sub-step calling the catalogue: none of them is a catalogue finding.
+start: pinned
+steps:
+  pinned:
+    executor: flow://aiv/acme/summarise-doc
+    flow_version: '1.2.0'
+    query:
+      text: hello
+    next:
+      default: floating
+  floating:
+    executor: flow://aiv/acme_2/summarise-doc
+    next:
+      default: templated
+  templated:
+    executor: 'flow://aiv/{{ .query.org }}/summarise-doc'
+    next:
+      default: review
+  review:
+    executor: include://aiv/acme/review-text
+    flow_version: '0.3.0-rc.1'
+    query:
+      text: hello
+    next:
+      default: repeat
+  repeat:
+    loop:
+      while: '{{ lt .loop.iteration 1 }}'
+      max_iterations: 1
+      steps:
+        - id: child
+          executor: flow://aiv/acme/summarise-doc
+          flow_version: '2.0.0'
+    next:
+      default: 'null'
+output:
+  - done

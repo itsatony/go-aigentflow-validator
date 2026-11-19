@@ -1,0 +1,16 @@
+aigentflow_version: '2.0.0'
+name: invalid-catalog-flow-version-not-semver
+version: '1.0.0'
+description: >-
+  flow_version is a published semver; "1.2" is not one.
+start: call
+steps:
+  call:
+    executor: flow://aiv/acme/summarise-doc
+    flow_version: '1.2'
+    query:
+      text: hello
+    next:
+      default: 'null'
+output:
+  - done

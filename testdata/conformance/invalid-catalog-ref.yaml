@@ -1,0 +1,17 @@
+aigentflow_version: '2.0.0'
+name: invalid-catalog-ref
+version: '1.0.0'
+description: >-
+  A catalogue ref has exactly one org segment and one name segment.
+start: call
+steps:
+  call:
+    executor: flow://aiv/acme/team/summarise-doc
+    next:
+      default: part
+  part:
+    executor: include://aiv/acme
+    next:
+      default: 'null'
+output:
+  - done

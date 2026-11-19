@@ -616,6 +616,22 @@ var conformanceCases = []conformanceCase{
 		file: "invalid-nexus-loop-substep-agent-not-literal.yaml", valid: false,
 		wantErrorCodes: []string{"atlas_agent_not_literal"},
 	},
+	// v0.26.0 — AIgentFlow v2.912.0: catalogue sub-flows and partials.
+	{file: "invalid-catalog-flow-version-not-semver.yaml", valid: false, wantErrorCodes: []string{"flow_version_invalid"}},
+	{file: "invalid-catalog-flow-version-placement.yaml", valid: false, wantErrorCodes: []string{"flow_version_not_catalog"}},
+	{file: "invalid-catalog-ref.yaml", valid: false, wantErrorCodes: []string{"catalog_ref_invalid"}},
+	{
+		// An error in a loop body too.
+		file: "invalid-catalog-loop-substep-flow-version.yaml", valid: false,
+		wantErrorCodes: []string{"flow_version_not_catalog"},
+	},
+	{
+		// The false-positive side: pinned, floating, templated, a pre-release version,
+		// a partial (include is a known scheme) and a loop sub-step calling the catalogue.
+		file: "valid-catalog-flows.yaml", valid: true,
+		forbidErrorCodes:   []string{"catalog_ref_invalid", "flow_version_invalid", "flow_version_not_catalog"},
+		forbidWarningCodes: []string{codeUnknownExecScheme},
+	},
 	// v0.25.0 — AIgentFlow v2.890.0: query.skills on an agent run is written out.
 	{file: "invalid-atlas-skills-not-literal.yaml", valid: false, wantErrorCodes: []string{"atlas_skills_not_literal"}},
 	{file: "invalid-atlas-skills-object-template.yaml", valid: false, wantErrorCodes: []string{"atlas_skills_not_literal"}},
