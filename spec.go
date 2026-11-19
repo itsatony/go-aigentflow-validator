@@ -198,6 +198,8 @@ type rawSpec struct {
 		StepMessageFormat string   `json:"stepMessageFormat"`
 		SuggestionFormat  string   `json:"suggestionFormat"`
 	} `json:"humanAnswerField"`
+	// CatalogFlow feeds the catalogue sub-flow and partial rules (v0.26.0, AIgentFlow 2.912.0).
+	CatalogFlow catalogFlowSpec `json:"catalogFlow"`
 	// AtlasExecutor feeds the nexus:// (alias atlas://) rules (providers, resources and the seven
 	// finding texts).
 	AtlasExecutor atlasSpec `json:"atlasExecutor"`
@@ -370,6 +372,10 @@ var (
 
 	// atlasCapabilityRefRe is the shape of an atlas://capability/<ref> reference.
 	atlasCapabilityRefRe *regexp.Regexp
+	// catalogSegmentRe / catalogVersionRe: one segment of a catalogue ref and a
+	// flow_version (v0.26.0).
+	catalogSegmentRe *regexp.Regexp
+	catalogVersionRe *regexp.Regexp
 
 	fieldNameRe *regexp.Regexp
 	// executorURLRe is the ONE executor-URL shape, mirrored verbatim from the
@@ -434,6 +440,8 @@ func init() {
 	serverOwnedQueryKeys = newSet(spec.ServerOwnedQueryKeys.Keys)
 	functionOperations = newSet(spec.FunctionOperations.Operations)
 	atlasCapabilityRefRe = regexp.MustCompile(spec.AtlasExecutor.CapabilityRefPattern)
+	catalogSegmentRe = regexp.MustCompile(spec.CatalogFlow.SegmentPattern)
+	catalogVersionRe = regexp.MustCompile(spec.CatalogFlow.VersionPattern)
 	initExamples()
 }
 
@@ -488,6 +496,17 @@ type atlasRule struct {
 	Code          string `json:"code"`
 	MessageFormat string `json:"messageFormat"`
 	Suggestion    string `json:"suggestion"`
+}
+
+// catalogFlowSpec is the spec's catalogFlow block: flow://aiv/<org>/<name>,
+// include://aiv/<org>/<name> and the flow_version step key.
+type catalogFlowSpec struct {
+	RefPrefixes      []string  `json:"refPrefixes"`
+	SegmentPattern   string    `json:"segmentPattern"`
+	VersionPattern   string    `json:"versionPattern"`
+	RefInvalid       atlasRule `json:"refInvalid"`
+	VersionInvalid   atlasRule `json:"versionInvalid"`
+	VersionPlacement atlasRule `json:"versionPlacement"`
 }
 
 // atlasSpec is the spec's atlasExecutor block.

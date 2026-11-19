@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.890.0",
+  "specVersion": "2.912.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -28,6 +28,7 @@
     "homeassistant",
     "hosting",
     "http",
+    "include",
     "mcp",
     "messenger",
     "mock",
@@ -577,6 +578,27 @@
       "utils/log",
       "utils/parse-date"
     ]
+  },
+  "catalogFlow": {
+    "$comment": "Catalogue sub-flows and partials (AIgentFlow 2.912.0): flow://aiv/<org>/<name> runs a published aigentverse flow as a sub-flow, include://aiv/<org>/<name> is replaced by a published flow's steps before the flow is validated or run. The org is the aigentverse org handle. Both take exactly one org and one name segment (segmentPattern). The step key flow_version pins the published version (versionPattern, strict semver) and is allowed only on such a step; omitted, the newest published version is used. All findings are ERRORS, never demoted in a loop body. A templated executor URL is not judged. Field: steps.<id>.executor for refInvalid, steps.<id>.flow_version for the two version codes (a loop sub-step: steps.<id>.loop.steps.<sub>); the message takes the step id first. Whether the ref resolves, the output contract and the expansion need the catalogue and are AIgentFlow's server checks, not save-door rules.",
+    "refPrefixes": ["flow://aiv/", "include://aiv/"],
+    "segmentPattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+    "versionPattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?$",
+    "refInvalid": {
+      "code": "catalog_ref_invalid",
+      "messageFormat": "step %s: %s must be %s://aiv/<org>/<name> with one org segment and one name segment (letters, digits, - and _)",
+      "suggestion": "write the aigentverse org handle and the flow's name, e.g. flow://aiv/acme/summarise-doc"
+    },
+    "versionInvalid": {
+      "code": "flow_version_invalid",
+      "messageFormat": "step %s: flow_version %q is not a semver (MAJOR.MINOR.PATCH, e.g. 1.2.0)",
+      "suggestion": "write the published version, e.g. flow_version: \"1.2.0\", or remove flow_version to run the newest published version"
+    },
+    "versionPlacement": {
+      "code": "flow_version_not_catalog",
+      "messageFormat": "step %s: flow_version applies only to a catalogue step (flow://aiv/<org>/<name> or include://aiv/<org>/<name>), not to %s",
+      "suggestion": "remove flow_version, or address the child as flow://aiv/<org>/<name>"
+    }
   },
   "atlasExecutor": {
     "$comment": "nexus://<provider>/<resource> (alias atlas://, the same rules for both spellings since AIgentFlow 2.835.0; the scheme match is exact and case-sensitive against scheme and aliases): calls an agent or a capability in Nexus. An AigentChat-shaped nexus://<org>/<agent> (the executor removed in 2.819.0) is atlas_operation_unknown. Codes keep the atlas_ prefix. Providers are agent (the one resource is run) and capability (the resource is a capability reference). All findings are ERRORS, field = the step (loop sub-steps use the composite step id and the sub-step path). Templated executors, unparsable URLs and other schemes are skipped. A literal agent and literal capabilities keep a step from being steered by data: query.agent and every string anywhere in query.capabilities and query.model (and, on an agent run only, query.skills) may not contain templateActionOpen, while prompt, inputs, files and capability args may. On a capability step a skills key is an ordinary tool argument. agent, prompt and prompt_template count as present only when they are non-empty strings after trimming whitespace. A message format takes the quoted step id first. A URL the shared executor-URL shape refuses (a dot or colon in a reference, say) is still judged here, split at the first slash after the scheme.",
@@ -1479,6 +1501,7 @@
         "description": "scalar",
         "error_strategy": "ErrorStrategyDefinition",
         "executor": "scalar",
+        "flow_version": "scalar",
         "id": "scalar",
         "next": "NextLogicDefinition",
         "output_schema": "InputSchema",
@@ -1562,6 +1585,7 @@
         "error_strategy": "ErrorStrategyDefinition",
         "executor": "scalar",
         "failover": "FailoverConfig",
+        "flow_version": "scalar",
         "for_each": "ForEachDefinition",
         "loop": "LoopDefinition",
         "max_duration": "scalar",

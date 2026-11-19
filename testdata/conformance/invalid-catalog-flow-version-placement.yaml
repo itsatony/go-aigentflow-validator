@@ -1,0 +1,21 @@
+aigentflow_version: '2.0.0'
+name: invalid-catalog-flow-version-placement
+version: '1.0.0'
+description: >-
+  flow_version belongs only on a catalogue step, never on a model step or a stored sub-flow.
+start: ask
+steps:
+  ask:
+    executor: ai://openai/chat
+    flow_version: '1.2.0'
+    query:
+      prompt: hello
+    next:
+      default: child
+  child:
+    executor: flow://stored/flw_abc123
+    flow_version: '1.0.0'
+    next:
+      default: 'null'
+output:
+  - done
