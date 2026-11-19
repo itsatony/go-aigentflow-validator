@@ -7,71 +7,71 @@ description: >-
 start: only
 assets:
   a00:
-    content: "x"
+    content: 'x'
   a01:
-    content: "x"
+    content: 'x'
   a02:
-    content: "x"
+    content: 'x'
   a03:
-    content: "x"
+    content: 'x'
   a04:
-    content: "x"
+    content: 'x'
   a05:
-    content: "x"
+    content: 'x'
   a06:
-    content: "x"
+    content: 'x'
   a07:
-    content: "x"
+    content: 'x'
   a08:
-    content: "x"
+    content: 'x'
   a09:
-    content: "x"
+    content: 'x'
   a10:
-    content: "x"
+    content: 'x'
   a11:
-    content: "x"
+    content: 'x'
   a12:
-    content: "x"
+    content: 'x'
   a13:
-    content: "x"
+    content: 'x'
   a14:
-    content: "x"
+    content: 'x'
   a15:
-    content: "x"
+    content: 'x'
   a16:
-    content: "x"
+    content: 'x'
   a17:
-    content: "x"
+    content: 'x'
   a18:
-    content: "x"
+    content: 'x'
   a19:
-    content: "x"
+    content: 'x'
   a20:
-    content: "x"
+    content: 'x'
   a21:
-    content: "x"
+    content: 'x'
   a22:
-    content: "x"
+    content: 'x'
   a23:
-    content: "x"
+    content: 'x'
   a24:
-    content: "x"
+    content: 'x'
   a25:
-    content: "x"
+    content: 'x'
   a26:
-    content: "x"
+    content: 'x'
   a27:
-    content: "x"
+    content: 'x'
   a28:
-    content: "x"
+    content: 'x'
   a29:
-    content: "x"
+    content: 'x'
   a30:
-    content: "x"
+    content: 'x'
   a31:
-    content: "x"
+    content: 'x'
   a32:
-    content: "x"
+    content: 'x'
 steps:
   only:
     executor: function://data/create
