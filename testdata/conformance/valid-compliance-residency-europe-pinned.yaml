@@ -1,0 +1,28 @@
+aigentflow_version: '2.0.0'
+name: compliance-residency-europe-pinned
+version: '1.0.0'
+description: >-
+  AIgentFlow v2.917.0, the control for the EUROPE residency code. Under a
+  residency of ' europe ' (trimmed and upper-cased) every region-lane call is
+  pinned, by region alone and by enforce_region alone, so no warning of the
+  code compliance_residency_unenforced may appear.
+compliance:
+  residency: [' europe ']
+start: region_only
+steps:
+  region_only:
+    executor: ai://mistral/chat
+    query:
+      model: mistral-large-latest
+      prompt: 'hi'
+      region: eu
+    next:
+      default: enforce_only
+  enforce_only:
+    executor: ai://openai/chat
+    query:
+      model: gpt-5
+      prompt: 'hi'
+      enforce_region: true
+    next:
+      default: 'null'

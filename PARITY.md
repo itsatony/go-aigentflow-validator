@@ -7,7 +7,7 @@ This document defines how this Go implementation stays in step with two things:
    the MIT-licensed JavaScript port this library was ported *from*, and whose `PARITY.md` maps every
    rule back to the reference.
 
-**Tracks AIgentFlow flow schema: `v2.914.0`** (`specVersion` in
+**Tracks AIgentFlow flow schema: `v2.917.0`** (`specVersion` in
 [`spec/aigentflow-spec.json`](./spec/aigentflow-spec.json)), plus `server_owned_query_key`
 (v0.6.1, below) from the AIgentFlow release after v2.790.0, and `credential_endpoint_unpaired`
 (v0.6.2, below) from AIgentFlow v2.793.0 and the release after it, plus `display_name_too_long`
@@ -33,7 +33,23 @@ v0.24.0 (AIgentFlow v2.878.0), which adds one warning, `human_answer_field` (bel
 v0.25.0 (AIgentFlow v2.890.0), which adds one error, `atlas_skills_not_literal` (below), then
 v0.26.0 (AIgentFlow v2.912.0), which adds catalogue sub-flows and partials: the `include` scheme, the `flow_version` step key and three errors (below), then
 v0.27.0 (AIgentFlow v2.913.0), which adds assets: the flow-level `assets` key and three errors (below), then
-v0.28.0 (AIgentFlow v2.914.0), which makes the inline asset size and the asset count save-door findings of `asset_declaration_invalid` (below).
+v0.28.0 (AIgentFlow v2.914.0), which makes the inline asset size and the asset count save-door findings of `asset_declaration_invalid` (below), then
+v0.29.0 (AIgentFlow v2.917.0), which counts the `EUROPE` residency code as EU-bound for `compliance_residency_unenforced` (below).
+
+> **v0.29.0 — `EUROPE` is EU-bound (no new code).** `specVersion` is `2.917.0`. go-vaibstract
+> v1.369.0 split the residency codes: `EU` is the 27 member states only, and the new `EUROPE` is the
+> EU plus the GDPR-safe European countries (EEA, Switzerland, the UK, a few others). A vendor "EU" lane
+> that may process in EEA/CH (Mistral `eu`, the OpenAI EU lane, Azure EU Data Zone) is now `EUROPE`.
+> Such a code binds a call to a jurisdiction exactly as `EU` does, so the reference's
+> `euOnlyResidency` accepts it. Spec: `complianceResidency.euResidencyCodes` gains `EUROPE`,
+> byte-identical to the JS port's (0.39.0).
+>
+> - **Fires** under `['EUROPE']`, `['EU', 'EUROPE']`, `[' europe ']` and `['DE', 'Europe']` beside
+>   an unpinned region-lane call.
+> - **Does not fire** under `['EUROPE', 'US']` (not EU-bound), or on an unknown code such as `EEA`.
+>
+> Fixtures, byte-identical to the JS port's: `warn-compliance-residency-unenforced-europe.yaml` and
+> the control `valid-compliance-residency-europe-pinned.yaml`. Test: `validate_v0290_test.go`.
 
 > **v0.28.0 — the inline size and the count are save-door rules (no new code).** `specVersion` is
 > `2.914.0` (the AIgentFlow release that ships assets; 2.913.0 became a credential fix, so v0.27.0's
@@ -636,7 +652,7 @@ v0.28.0 (AIgentFlow v2.914.0), which makes the inline asset size and the asset c
 > not endpoint evidence, and added a catalogue-free warning for what it does not pin. **Ported:
 > that warning only** (WARNING, never an error, so no verdict changes). Rule, identical in both
 > ports: when `compliance.residency` is non-empty and every code (trimmed, upper-cased) is one of
-> `EU, DE, FR, IE, NL, IT, ES`, then for every top-level step and loop sub-step whose executor
+> `EU, DE, FR, IE, NL, IT, ES` (`EUROPE` joined the set in v0.29.0), then for every top-level step and loop sub-step whose executor
 > starts `ai://` (provider = the literal segment before the first `/`; empty or templated is
 > skipped), and for the orchestrator (provider = `execution.provider` of its exons frontmatter,
 > read by the configured `ExonsInspector`), if the provider is a **region-lane provider** and the
