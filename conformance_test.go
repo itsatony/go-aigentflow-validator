@@ -545,6 +545,9 @@ var conformanceCases = []conformanceCase{
 	{file: "warn-compliance-residency-unenforced-loop.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "valid-compliance-residency-pinned.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "valid-compliance-residency-silent-providers.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},
+	// v0.29.0 — AIgentFlow v2.917.0: EUROPE is EU-bound, alone or beside EU; the control is pinned.
+	{file: "warn-compliance-residency-unenforced-europe.yaml", valid: true, wantWarningCodes: []string{codeComplianceResidencyUnenforced}},
+	{file: "valid-compliance-residency-europe-pinned.yaml", valid: true, forbidWarningCodes: []string{codeComplianceResidencyUnenforced}},
 	{file: "warn-credential-endpoint-ai-step-query.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-ai-loop-sub-step.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},
 	{file: "warn-credential-endpoint-ai-executor-config.yaml", valid: true, wantWarningCodes: []string{codeCredentialEndpointUnpaired}},

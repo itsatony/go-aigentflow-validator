@@ -1,0 +1,20 @@
+aigentflow_version: '2.0.0'
+name: compliance-residency-unenforced-europe
+version: '1.0.0'
+description: >-
+  AIgentFlow v2.917.0. EUROPE (the EU-27 plus the GDPR-safe European
+  countries) binds a call to a jurisdiction exactly as EU does, so
+  a residency of EU or EUROPE is EU-bound and an unpinned call on a region-lane
+  provider (mistral) draws compliance_residency_unenforced. A warning, never an
+  error: the flow stays valid.
+compliance:
+  residency: ['EU', 'EUROPE']
+start: ask_mistral
+steps:
+  ask_mistral:
+    executor: ai://mistral/chat
+    query:
+      model: mistral-large-latest
+      prompt: 'hi'
+    next:
+      default: 'null'
