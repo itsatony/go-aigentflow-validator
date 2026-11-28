@@ -293,6 +293,8 @@ const (
 
 	// Save-door refusals this port carries and the JS port does not (yet).
 	codeReservedStepIDOrch = "reserved_step_id_orchestrator"
-	codeMockDelayInvalid   = "mock_delay_invalid"
-	codeOutputParamEmpty   = "output_param_empty"
+	// codeReservedStepIDFlowData is spec.ReservedStepIDFlowData.Code (v0.30.0).
+	codeReservedStepIDFlowData = "reserved_step_id_flow_data"
+	codeMockDelayInvalid       = "mock_delay_invalid"
+	codeOutputParamEmpty       = "output_param_empty"
 )

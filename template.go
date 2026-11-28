@@ -83,7 +83,7 @@ func parseGoTemplate(src string) ([]templateIssue, *template.Template) {
 	var unknown []string
 	var parsed *template.Template
 	for range maxUnknownFuncLoop {
-		t, err := template.New(templateName).Funcs(funcs).Parse(src)
+		t, err := template.New(templateName).Funcs(funcs).Parse(src) //nolint:gosec // G708 false positive: the validator only parses templates to inspect them; nothing is ever executed
 		if err == nil {
 			parsed = t
 			break

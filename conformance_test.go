@@ -250,6 +250,16 @@ var conformanceCases = []conformanceCase{
 		file: "invalid-reserved-step-id-orchestrator.yaml", valid: false,
 		wantErrorCodes: []string{codeReservedStepIDOrch},
 	},
+	// v0.30.0 — AIgentFlow v2.940.0: a step id that names engine state is refused;
+	// lookalikes (a non-leading `__`, a case variant) stay valid.
+	{
+		file: "invalid-reserved-step-id-flow-data.yaml", valid: false,
+		wantErrorCodes: []string{codeReservedStepIDFlowData},
+	},
+	{
+		file: "valid-step-id-flow-data-lookalikes.yaml", valid: true,
+		forbidErrorCodes: []string{codeReservedStepIDFlowData},
+	},
 	{
 		file: "invalid-mock-scenario-delay.yaml", valid: false,
 		wantErrorCodes: []string{codeMockDelayInvalid},
