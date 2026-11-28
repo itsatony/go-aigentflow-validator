@@ -171,6 +171,14 @@ type rawSpec struct {
 		MessageFormat string `json:"messageFormat"`
 		Suggestion    string `json:"suggestion"`
 	} `json:"flowDataReservedKeys"`
+	// ReservedStepIDFlowData feeds reserved_step_id_flow_data (AIgentFlow v2.940.0):
+	// a step id that names engine state, reserved as FlowDataReservedKeys reserves
+	// a data: key.
+	ReservedStepIDFlowData struct {
+		Code          string `json:"code"`
+		MessageFormat string `json:"messageFormat"`
+		Suggestion    string `json:"suggestion"`
+	} `json:"reservedStepIdFlowData"`
 	// FunctionOperations feeds unknown_function_operation (AIgentFlow v2.831.0).
 	FunctionOperations struct {
 		Code             string   `json:"code"`

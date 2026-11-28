@@ -1,0 +1,27 @@
+aigentflow_version: '2.0.0'
+name: step-id-flow-data-lookalikes
+version: '1.0.0'
+description: >-
+  Ids that only look like engine state stay valid: a double underscore that
+  does not lead, a name without the underscores, and a case variant of an
+  engine key (the reservation is case-sensitive).
+start: a__b
+steps:
+  a__b:
+    executor: function://utils/log
+    query:
+      message: 'legal'
+    next:
+      default: untrusted_steps
+  untrusted_steps:
+    executor: function://utils/log
+    query:
+      message: 'legal'
+    next:
+      default: Memory
+  Memory:
+    executor: function://utils/log
+    query:
+      message: 'legal'
+    next:
+      default: 'null'

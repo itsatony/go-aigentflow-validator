@@ -1,0 +1,27 @@
+aigentflow_version: '2.0.0'
+name: reserved-step-id-flow-data
+version: '1.0.0'
+description: >-
+  A step's output is stored under its id in .data, where the engine keeps its
+  own bookkeeping. A step id that names engine state (a leading underscore, or
+  an engine key such as memory) would overwrite it, so it is refused.
+start: __untrusted_steps
+steps:
+  __untrusted_steps:
+    executor: function://utils/log
+    query:
+      message: 'refused: leading double underscore'
+    next:
+      default: _loop_context
+  _loop_context:
+    executor: function://utils/log
+    query:
+      message: 'refused: leading underscore'
+    next:
+      default: memory
+  memory:
+    executor: function://utils/log
+    query:
+      message: 'refused: an engine key'
+    next:
+      default: 'null'

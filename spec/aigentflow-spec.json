@@ -1,6 +1,6 @@
 {
   "$comment": "Vendored enum surface mirrored from the AIgentFlow Go reference implementation. Regenerate / review on every flow-YAML schema change. See PARITY.md. Values here are public protocol/type names only.",
-  "specVersion": "2.917.0",
+  "specVersion": "2.940.0",
   "inputSchemaVersion": 1,
   "executorSchemes": [
     "a2a",
@@ -750,6 +750,12 @@
       { "prefix": "campaign.", "reason": "the `campaign.` namespace belongs to the campaign engine" },
       { "prefix": "voiceagent.", "reason": "the `voiceagent.` namespace belongs to the voice agent" }
     ]
+  },
+  "reservedStepIdFlowData": {
+    "$comment": "reserved_step_id_flow_data (ERROR): a top-level step id that names engine state. A step's output is committed under its id in the mission's .data namespace, where the engine keeps its own bookkeeping (taint lists, loop and run context), so such a step would overwrite it. Reserved exactly as flowDataReservedKeys reserves a data: key (its exact map and its prefixes, first prefix wins, same reasons). Not reported when the id already draws reserved_step_id_char or reserved_step_id_orchestrator. Loop sub-step ids are not covered: their outputs are stored under the parent step's id. The finding's field is the step's field; the message is messageFormat with the id quoted exactly as Go's %q (strconv.Quote) then the reason; the suggestion is verbatim. Reference: RefuseReservedStepID (AIgentFlow v2.940.0).",
+    "code": "reserved_step_id_flow_data",
+    "messageFormat": "step id %s is reserved (%s): a step's output is stored under its id in .data, where it would overwrite engine state",
+    "suggestion": "Rename the step (no leading `_` or `.`, and not one of the engine's own keys such as memory, org_id or current_flow)."
   },
   "credentialEndpointPairing": {
     "$comment": "credential_endpoint_unpaired (WARNING, never an error): the one statically certain shape of AIgentFlow's run-time credential/endpoint pairing refusal. ai: an ai://<provider>/... step (top-level or loop sub-step) whose query holds a non-empty string <provider>+providerBaseUrlParamSuffix while neither its query (genericKeyParam or <provider>+providerKeyParamSuffix, non-empty strings) nor executor_config.<provider>.api_key (a literal, not an env reference) supplies a key; and executor_config.<provider>.base_url for a provider in executorConfigProviders when it is a literal, the block has no literal api_key, and it is not the case that at least one step uses the provider and every such step brings its own query key. keylessProviders are exempt from both. families: a step whose executor resolves (the key protocol+familyKeySeparator+driver, else protocol) to a row. implicitServerCredential rows are never judged. A row warns when its secret (the first non-empty string secretParam in the query, else per configKey in order: executor_config api_key when configApiKeyParam is a secretParam, else the first non-empty string secretParam under extra) is exactly an env reference to a serverEnv name on a row with expandsServerEnvReferences, and its endpoint (the first non-empty string endpointParam in the query, else per configKey: base_url when configBaseUrlParam is an endpointParam, else the first non-empty string endpointParam under extra) is a literal: no templateActionOpen, not an env reference, and not of the same origin as a defaultEndpoint (lower-cased scheme://host:port, defaultPorts filled). serverEnv is the reference's per-family server-variable set, evaluated. Field formats are the reference's. Reference: validateCredentialEndpointPairing (DC-FORGE-231) and validateFamilyCredentialEndpointPairing (DC-FORGE-233).",

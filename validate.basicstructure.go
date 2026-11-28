@@ -2,6 +2,7 @@ package aifvalidate
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -108,6 +109,21 @@ func validateBasicStructure(flow doc, iss *issues) {
 				Message:    fmt.Sprintf("Step ID '%s' is reserved by the engine", stepID),
 				Suggestion: "Rename the step; 'orchestrator' is the orchestrator's own ID and a next: marker",
 			})
+		}
+
+		// A step's output is committed under its id in .data, where the engine
+		// keeps its bookkeeping (the untrusted-input taint lists among it): a step
+		// named like one of those keys would overwrite it (AIgentFlow v2.940.0).
+		// Reserved as a data: key is; not reported twice for an id the two rules
+		// above already refuse.
+		if !strings.Contains(stepID, reservedStepIDChar) && stepID != nextMarkerOrch {
+			if reason, reserved := flowDataKeyReservation(stepID); reserved {
+				iss.error(Issue{
+					Field: stepField(stepID), Code: spec.ReservedStepIDFlowData.Code, StepID: stepID,
+					Message:    fmt.Sprintf(spec.ReservedStepIDFlowData.MessageFormat, strconv.Quote(stepID), reason),
+					Suggestion: spec.ReservedStepIDFlowData.Suggestion,
+				})
+			}
 		}
 
 		step, isMap := asRecord(steps[stepID])

@@ -34,7 +34,25 @@ v0.25.0 (AIgentFlow v2.890.0), which adds one error, `atlas_skills_not_literal` 
 v0.26.0 (AIgentFlow v2.912.0), which adds catalogue sub-flows and partials: the `include` scheme, the `flow_version` step key and three errors (below), then
 v0.27.0 (AIgentFlow v2.913.0), which adds assets: the flow-level `assets` key and three errors (below), then
 v0.28.0 (AIgentFlow v2.914.0), which makes the inline asset size and the asset count save-door findings of `asset_declaration_invalid` (below), then
-v0.29.0 (AIgentFlow v2.917.0), which counts the `EUROPE` residency code as EU-bound for `compliance_residency_unenforced` (below).
+v0.29.0 (AIgentFlow v2.917.0), which counts the `EUROPE` residency code as EU-bound for `compliance_residency_unenforced` (below), then
+v0.30.0 (AIgentFlow v2.940.0), which adds one error, `reserved_step_id_flow_data` (below).
+
+> **v0.30.0 — a step id may not name engine state (one new error).** `specVersion` is `2.940.0`.
+> A step's output is stored under its id in the mission's `.data` namespace, the same map the engine
+> keeps its own bookkeeping in (the untrusted-input taint lists, loop and run context). A step named
+> like one of those keys would overwrite it. The reference refuses such an id at save and at run start
+> (`RefuseReservedStepID`); this library reports `reserved_step_id_flow_data` (ERROR).
+>
+> - **Reserved** exactly as `flowDataReservedKeys` reserves a `data:` key: its exact keys and its
+>   prefixes (`_`, `.`, the engine namespaces), with the same reasons.
+> - **Not reported twice:** an id that already draws `reserved_step_id_char` or
+>   `reserved_step_id_orchestrator` does not also draw this code.
+> - **Loop sub-step ids are not covered:** their outputs are stored under the parent step's id.
+> - **Does not fire** on lookalikes: `a__b`, `untrusted_steps`, `Memory` (matching is case-sensitive).
+>
+> Spec: `reservedStepIdFlowData` (code, messageFormat, suggestion). Fixtures, byte-identical to the
+> JS port's: `invalid-reserved-step-id-flow-data.yaml` and the control
+> `valid-step-id-flow-data-lookalikes.yaml`. Test: `validate_v0300_test.go`.
 
 > **v0.29.0 — `EUROPE` is EU-bound (no new code).** `specVersion` is `2.917.0`. go-vaibstract
 > v1.369.0 split the residency codes: `EU` is the 27 member states only, and the new `EUROPE` is the
@@ -1029,6 +1047,7 @@ v0.29.0 (AIgentFlow v2.917.0), which counts the `EUROPE` residency code as EU-bo
 > | Code | Reference rule |
 > | --- | --- |
 > | `reserved_step_id_orchestrator` | a top-level step may not be called `orchestrator` (v2.484.0) |
+> | `reserved_step_id_flow_data` | a top-level step id may not name engine state, reserved as a `data:` key is (v2.940.0) |
 > | `tool_discovery_invalid` | `tool_discovery` on the flow, the orchestrator or a step `query` must be `eager`, `lazy` or `off` (empty and templated values are skipped) |
 > | `mock_delay_invalid` | a `mock_scenarios` step `delay` must be a Go duration (`100` is refused, `100ms` is not; see divergence #15) |
 > | `output_param_empty` | an `output:` entry may not be the empty string (a YAML null entry saves) |
